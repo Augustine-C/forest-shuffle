@@ -1,0 +1,4841 @@
+@charset "UTF-8";
+
+#popin_showCards {
+    background-color: #fefdfd;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px #000;
+    position: relative
+}
+
+#popin_showCards .popin_closeicon {
+    align-items: center;
+    background-color: #573f3f;
+    border: 1px solid #573f3f;
+    border-radius: 50%;
+    color: #fff !important;
+    display: flex;
+    font-size: 90%;
+    height: 40px;
+    justify-content: center;
+    position: absolute;
+    right: -18px;
+    top: -18px;
+    width: 40px;
+    z-index: 2
+}
+
+#popin_showCards .popin_closeicon:hover {
+    color: #ccc !important;
+    text-decoration: none;
+    transform: scale(1.1)
+}
+
+#popin_showCards .popin_closeicon i {
+    margin-top: -2px
+}
+
+#popin_showCards h2 {
+    background: #926a6a;
+    border-bottom: 1px solid #573f3f;
+    border-radius: 8px 8px 0 0;
+    font-family: roboto;
+    font-size: 25px;
+    margin: 0;
+    padding: 11px 15px 3px;
+    text-align: center
+}
+
+#popin_showCards {
+    background-color: #fff;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-top: 1px solid #573f3f;
+    min-height: 51px;
+    text-align: right;
+    width: 750px
+}
+
+#popin_showCards #forestShuffle-choose-card {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-evenly;
+    padding: 10px
+}
+
+#popin_showCards #forestShuffle-choose-card .card,
+#popin_showCards #forestShuffle-choose-card .futurePlace.selectable {
+    height: calc(var(--card-in-hand-width) /.644);
+    position: relative;
+    width: var(--card-in-hand-width)
+}
+
+#popin_showCards #forestShuffle-choose-card .card:after,
+#popin_showCards #forestShuffle-choose-card .futurePlace.selectable:after {
+    align-items: center;
+    background: hsla(0, 0%, 82%, .745);
+    border-radius: 7px;
+    display: flex;
+    font: normal normal normal 14px FontAwesome;
+    font-size: calc(var(--card-width) /2);
+    height: 50%;
+    justify-content: center;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+    width: 50%;
+    z-index: 10
+}
+
+#popin_showCards #forestShuffle-choose-card .card.trash:after,
+#popin_showCards #forestShuffle-choose-card .trash.futurePlace.selectable:after {
+    content: "\f1f8"
+}
+
+#popin_showCards #forestShuffle-choose-card .card.keep:after,
+#popin_showCards #forestShuffle-choose-card .keep.futurePlace.selectable:after {
+    content: "\f063"
+}
+
+#popin_showCards #forestShuffle-choose-card .card.clearing:after,
+#popin_showCards #forestShuffle-choose-card .clearing.futurePlace.selectable:after {
+    content: "\f062"
+}
+
+#popin_showCards #forestShuffle-choose-card .card.left:after,
+#popin_showCards #forestShuffle-choose-card .left.futurePlace.selectable:after {
+    content: "\f060"
+}
+
+#popin_showCards #forestShuffle-choose-card .card.right:after,
+#popin_showCards #forestShuffle-choose-card .right.futurePlace.selectable:after {
+    content: "\f061"
+}
+
+#popin_showCards #forestShuffle-choose-card:hover .card,
+#popin_showCards #forestShuffle-choose-card:hover .card.selected,
+#popin_showCards #forestShuffle-choose-card:hover .futurePlace.selectable {
+    scale: 1
+}
+
+#popin_showCards #forestShuffle-choose-card:hover .card.selectable:hover,
+#popin_showCards #forestShuffle-choose-card:hover .selectable.futurePlace:hover {
+    scale: 1.05
+}
+
+#popin_showCards #forestShuffle-choose-card-footer {
+    align-items: center;
+    -moz-column-gap: 3%;
+    column-gap: 3%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-right: 2%
+}
+
+#popin_showCards .tinyHint {
+    font-family: roboto;
+    font-size: 25px;
+    margin: 0;
+    text-align: center
+}
+
+#popin_showCards .tinyHint:after {
+    color: red;
+    font-family: FontAwesome
+}
+
+#popin_showCards .tinyHint.validated:after {
+    color: green
+}
+
+#popin_showCards .tinyHint.trash:after {
+    content: "\f1f8"
+}
+
+#popin_showCards .tinyHint.keep:after {
+    content: "\f063"
+}
+
+#popin_showCards .tinyHint.clearing:after {
+    content: "\f062"
+}
+
+#popin_showCards .tinyHint.left:after {
+    content: "\f060"
+}
+
+#popin_showCards .tinyHint.right:after {
+    content: "\f061"
+}
+
+#deck,
+#discard {
+    height: calc(min(var(--card-width), var(--max-card-width)) /.644);
+    width: min(var(--card-width), var(--max-card-width))
+}
+
+#cards .card,
+#cards .futurePlace.selectable,
+#clearing .card,
+#clearing .futurePlace.selectable {
+    height: calc(var(--card-in-hand-width) /.644);
+    width: var(--card-in-hand-width)
+}
+
+.mobile_version #cards:not(.changed),
+body:not(.mobile_version) #cards.changed {
+    background-color: hsla(0, 0%, 51%, .4);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-top: 10px;
+    position: relative
+}
+
+:root {
+    --card-width: 120px;
+    --max-card-width: 250px;
+    --card-in-hand-width: 120px;
+    --card-on-table-width: 120px;
+    --superCard: 240px
+}
+
+#FOS_caution,
+[id^=player_name] .card,
+[id^=player_name] .futurePlace.selectable {
+    background-color: red;
+    border-radius: 5px;
+    font-weight: 600;
+    margin: 5px;
+    max-height: 30px;
+    padding: 5px;
+    text-align: center;
+    transition: max-height .5s, padding .5s
+}
+
+#FOS_caution:empty,
+[id^=player_name] .card:empty,
+[id^=player_name] .futurePlace.selectable:empty {
+    max-height: 0;
+    padding: 0
+}
+
+#FOS_caution:not(:empty):before,
+[id^=player_name] .card:not(:empty):before,
+[id^=player_name] .futurePlace.selectable:not(:empty):before {
+    content: "✖";
+    height: 20px;
+    position: absolute;
+    right: 10px;
+    width: 20px
+}
+
+#board {
+    background-image: url(img/board.jpg);
+    background-repeat: no-repeat;
+    background-size: contain;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: calc(var(--max-card-width) * 11);
+    position: relative;
+    width: calc(var(--card-width) * 11)
+}
+
+#board>.deckinfo {
+    left: 48.5%;
+    top: 0
+}
+
+#clearing {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-height: calc(min(var(--card-width), var(--max-card-width)) * 10/5.24934);
+    padding: calc(min(var(--card-width), var(--max-card-width)) * .1) calc(min(var(--card-width), var(--max-card-width)) * .2)
+}
+
+#clearing .card,
+#clearing .futurePlace.selectable {
+    -o-box-shadow: 5px 5px 5px 0 rgba(0, 0, 0, .7);
+    box-shadow: 5px 5px 5px 0 rgba(0, 0, 0, .7);
+    filter: progid: DXImageTransform.Microsoft.Shadow(color=#656565, Direction=134, Strength=30);
+    margin: 3px;
+    position: relative;
+    top: 0;
+    z-index: 1
+}
+
+#clearing .card.selectable,
+#clearing .selectable.futurePlace {
+    border: 2px solid blue;
+    cursor: pointer
+}
+
+#clearing .card.selected,
+#clearing .selected.futurePlace.selectable {
+    border: 2px solid green;
+    top: 10px
+}
+
+#tables {
+    display: flex;
+    flex-direction: column
+}
+
+[id^=FOStable_] {
+    display: flex;
+    flex-wrap: wrap;
+    min-height: calc(var(--card-on-table-width) /.644 * 2);
+    min-width: calc(var(--card-on-table-width) * 2);
+    transition: top 1s ease, left 1s ease
+}
+
+[id^=FOStable_] .treeContainer {
+    height: calc(var(--card-on-table-width) /.644 - 1px);
+    margin: calc(5px + var(--card-on-table-width) /.643/2) calc(5px + var(--card-on-table-width) /2);
+    position: relative;
+    width: var(--card-on-table-width)
+}
+
+[id^=FOStable_] .treeContainer .card,
+[id^=FOStable_] .treeContainer .futurePlace {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 3
+}
+
+[id^=FOStable_] .treeContainer .card.onTop,
+[id^=FOStable_] .treeContainer .futurePlace.onTop {
+    top: calc(var(--card-on-table-width) /.644/-1);
+    z-index: 1
+}
+
+[id^=FOStable_] .treeContainer .card.onTop.ready,
+[id^=FOStable_] .treeContainer .futurePlace.onTop.ready {
+    top: calc(2px + var(--card-on-table-width)/.644/-2)
+}
+
+[id^=FOStable_] .treeContainer .card.onTop .deckinfo,
+[id^=FOStable_] .treeContainer .futurePlace.onTop .deckinfo {
+    bottom: 70%;
+    right: 93%
+}
+
+[id^=FOStable_] .treeContainer .card.onRight,
+[id^=FOStable_] .treeContainer .futurePlace.onRight {
+    left: var(--card-on-table-width);
+    z-index: 1
+}
+
+[id^=FOStable_] .treeContainer .card.onRight.ready,
+[id^=FOStable_] .treeContainer .futurePlace.onRight.ready {
+    left: calc(var(--card-on-table-width)/2)
+}
+
+[id^=FOStable_] .treeContainer .card.onRight .deckinfo,
+[id^=FOStable_] .treeContainer .futurePlace.onRight .deckinfo {
+    bottom: 93%;
+    left: 60%
+}
+
+[id^=FOStable_] .treeContainer .card.onBottom,
+[id^=FOStable_] .treeContainer .futurePlace.onBottom {
+    top: calc(var(--card-on-table-width) /.644);
+    z-index: 1
+}
+
+[id^=FOStable_] .treeContainer .card.onBottom.ready,
+[id^=FOStable_] .treeContainer .futurePlace.onBottom.ready {
+    top: calc(var(--card-on-table-width)/.644/2)
+}
+
+[id^=FOStable_] .treeContainer .card.onBottom .deckinfo,
+[id^=FOStable_] .treeContainer .futurePlace.onBottom .deckinfo {
+    right: 93%;
+    top: 70%
+}
+
+[id^=FOStable_] .treeContainer .card.onLeft,
+[id^=FOStable_] .treeContainer .futurePlace.onLeft {
+    left: calc(var(--card-on-table-width) /-1);
+    z-index: 1
+}
+
+[id^=FOStable_] .treeContainer .card.onLeft.ready,
+[id^=FOStable_] .treeContainer .futurePlace.onLeft.ready {
+    left: calc(var(--card-on-table-width)/-2)
+}
+
+[id^=FOStable_] .treeContainer .card.onLeft .deckinfo,
+[id^=FOStable_] .treeContainer .futurePlace.onLeft .deckinfo {
+    bottom: 93%;
+    right: 60%
+}
+
+.fa6-square-xmark {
+    color: red
+}
+
+.fa6-square-check,
+.fa6-square-xmark {
+    font-size: 1.2em;
+    position: relative;
+    top: 2px
+}
+
+.fa6-square-check {
+    color: green
+}
+
+.winterCards {
+    font-weight: 600;
+    text-align: center
+}
+
+.winterCards #wCardStorage {
+    display: flex;
+    height: 62.1118012422px;
+    justify-content: space-around
+}
+
+.winterCards .card.wCard,
+.winterCards .wCard.futurePlace.selectable {
+    height: 62.1118012422px;
+    position: relative;
+    width: 40px
+}
+
+#cards {
+    background-color: hsla(0, 0%, 4%, .6);
+    bottom: 5px;
+    display: flex;
+    justify-content: flex-start;
+    position: fixed;
+    z-index: 100
+}
+
+#cards .card,
+#cards .futurePlace.selectable {
+    margin: 5px;
+    position: relative;
+    top: 0
+}
+
+#cards .card.selectable,
+#cards .selectable.futurePlace {
+    border: 2px solid blue;
+    cursor: pointer
+}
+
+#cards .card.selected,
+#cards .selected.futurePlace.selectable {
+    border: 2px solid green;
+    top: -10px
+}
+
+#cards .card.selectedToPay,
+#cards .selectedToPay.futurePlace.selectable {
+    border: 2px solid red;
+    filter: grayscale(80%);
+    transform: scale(.95)
+}
+
+.mobile_version #cards:not(.changed) #pin {
+    display: flex
+}
+
+.mobile_version #cards:not(.changed) #pin,
+body:not(.mobile_version) #cards.changed #pin {
+    background-color: hsla(0, 0%, 51%, .4);
+    border-radius: 0 0 5px 5px;
+    right: 0;
+    top: 100%
+}
+
+#pin {
+    align-items: center;
+    background-color: hsla(0, 0%, 4%, .6);
+    border-radius: 0 5px 5px 0;
+    display: flex;
+    height: 30px;
+    justify-content: flex-end;
+    position: absolute;
+    right: -30px;
+    top: 0;
+    width: 30px
+}
+
+.card.available.selectable:before,
+.card.ready.hare.selectable:before,
+.card.ready.toad.selectable:before,
+.futurePlace.selectable:before {
+    border: 2px dashed blue;
+    border-radius: 5%;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    content: "";
+    height: 100%;
+    position: absolute;
+    width: 100%
+}
+
+.card.available.selected:before,
+.card.ready.hare.selected:before,
+.card.ready.toad.selected:before,
+.futurePlace.selected:before {
+    border: 2px solid green;
+    border-radius: 5%;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    content: "";
+    height: 100%;
+    opacity: 100%;
+    position: absolute;
+    width: 100%
+}
+
+.card.available.selected:after,
+.card.ready.hare.selected:after,
+.card.ready.toad.selected:after,
+.futurePlace.selected:after {
+    background-image: url(img/arrows.png);
+    background-size: cover;
+    content: "";
+    height: calc(var(--card-on-table-width) /5);
+    position: absolute;
+    width: calc(var(--card-on-table-width)/5)
+}
+
+.card.available.selected.onLeft:after,
+.card.ready.hare.selected.onLeft:after,
+.card.ready.toad.selected.onLeft:after,
+.futurePlace.selected.onLeft:after {
+    background-position-x: 33.33%;
+    bottom: 100%
+}
+
+.card.available.selected.onRight:after,
+.card.ready.hare.selected.onRight:after,
+.card.ready.toad.selected.onRight:after,
+.futurePlace.selected.onRight:after {
+    background-position-x: 33.33%;
+    bottom: 100%;
+    right: 0
+}
+
+.card.available.selected.onTop:after,
+.card.ready.hare.selected.onTop:after,
+.card.ready.toad.selected.onTop:after,
+.futurePlace.selected.onTop:after {
+    background-position-x: 33.33%;
+    bottom: 100%;
+    left: 40%
+}
+
+.card.available.selected.onBottom:after,
+.card.ready.hare.selected.onBottom:after,
+.card.ready.toad.selected.onBottom:after,
+.futurePlace.selected.onBottom:after {
+    left: 40%;
+    top: 100%
+}
+
+.futurePlace {
+    border-radius: 10px;
+    opacity: 50%
+}
+
+.futurePlace.selected {
+    opacity: 1
+}
+
+#page-title .card,
+#page-title .futurePlace.selectable,
+#page-title .logCards,
+.hintText .alone,
+.hintText .withOthers {
+    display: none
+}
+
+.hintText.alone .alone,
+.hintText.withOthers .withOthers {
+    display: inline-block
+}
+
+.tooltip_container {
+    align-items: flex-end;
+    display: flex;
+    flex-direction: var(--orientation);
+    flex-wrap: wrap;
+    gap: 10px;
+    max-height: 100vh
+}
+
+.superCard+.hintText {
+    width: var(--superCard)
+}
+
+.active.futurePlace.selectable,
+.card.active {
+    border: 2px solid green
+}
+
+#deck,
+#discard {
+    background-image: url(img/vCards.jpg);
+    background-position: 100% 100%;
+    background-size: 700%;
+    border-bottom: 3px solid rgba(70, 54, 39, .952);
+    border-right: 3px solid rgba(70, 54, 39, .952);
+    position: absolute;
+    top: calc(min(var(--card-width), var(--max-card-width)) * .1)
+}
+
+#deck .card,
+#deck .flip-container,
+#deck .futurePlace.selectable,
+#discard .card,
+#discard .flip-container,
+#discard .futurePlace.selectable {
+    height: 100%;
+    position: absolute;
+    width: 100%
+}
+
+#deck {
+    left: calc(min(var(--card-width), var(--max-card-width)) * -.69)
+}
+
+#deck .deckinfo {
+    bottom: -6%;
+    right: 30%
+}
+
+#deck.selectable:before {
+    background-image: url(img/vCards.jpg);
+    background-position: 100% 100%;
+    background-size: 700%;
+    border: 1px solid blue;
+    content: "";
+    height: 100%;
+    position: absolute;
+    top: 0;
+    width: 100%
+}
+
+#deck.selected:before {
+    border: 1px solid green;
+    top: 15px
+}
+
+#discard {
+    right: calc(min(var(--card-width), var(--max-card-width)) * -.69)
+}
+
+#discard .deckinfo {
+    bottom: -6%;
+    right: 30%
+}
+
+.card,
+.futurePlace.selectable {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality
+}
+
+.treeContainer[data-id="1"],
+.treeContainer[data-id="2"],
+.treeContainer[data-id="3"],
+.treeContainer[data-id="4"],
+.treeContainer[data-id="5"],
+.treeContainer[data-id="6"],
+.treeContainer[data-id="7"],
+.treeContainer[data-id="8"],
+.treeContainer[data-id="9"] {
+    order: 50
+}
+
+.treeContainer[data-id="10"],
+.treeContainer[data-id="11"],
+.treeContainer[data-id="12"],
+.treeContainer[data-id="13"],
+.treeContainer[data-id="14"],
+.treeContainer[data-id="15"],
+.treeContainer[data-id="16"] {
+    order: 60
+}
+
+.treeContainer[data-id="17"],
+.treeContainer[data-id="18"],
+.treeContainer[data-id="19"],
+.treeContainer[data-id="20"],
+.treeContainer[data-id="21"],
+.treeContainer[data-id="22"] {
+    order: 70
+}
+
+.treeContainer[data-id="23"],
+.treeContainer[data-id="24"],
+.treeContainer[data-id="25"],
+.treeContainer[data-id="26"],
+.treeContainer[data-id="27"],
+.treeContainer[data-id="28"],
+.treeContainer[data-id="29"],
+.treeContainer[data-id="30"],
+.treeContainer[data-id="31"],
+.treeContainer[data-id="32"] {
+    order: 20
+}
+
+.treeContainer[data-id="33"],
+.treeContainer[data-id="34"],
+.treeContainer[data-id="35"],
+.treeContainer[data-id="36"],
+.treeContainer[data-id="37"],
+.treeContainer[data-id="38"],
+.treeContainer[data-id="39"],
+.treeContainer[data-id="40"],
+.treeContainer[data-id="41"],
+.treeContainer[data-id="42"] {
+    order: 10
+}
+
+.treeContainer[data-id="43"],
+.treeContainer[data-id="44"],
+.treeContainer[data-id="45"],
+.treeContainer[data-id="46"],
+.treeContainer[data-id="47"],
+.treeContainer[data-id="48"] {
+    order: 80
+}
+
+.treeContainer[data-id="49"],
+.treeContainer[data-id="50"],
+.treeContainer[data-id="51"],
+.treeContainer[data-id="52"],
+.treeContainer[data-id="53"],
+.treeContainer[data-id="54"],
+.treeContainer[data-id="55"] {
+    order: 30
+}
+
+.treeContainer[data-id="56"],
+.treeContainer[data-id="57"],
+.treeContainer[data-id="58"],
+.treeContainer[data-id="59"],
+.treeContainer[data-id="60"],
+.treeContainer[data-id="61"],
+.treeContainer[data-id="62"],
+.treeContainer[data-id="63"],
+.treeContainer[data-id="64"],
+.treeContainer[data-id="65"],
+.treeContainer[data-id="66"] {
+    order: 40
+}
+
+.treeContainer[data-id="162"],
+.treeContainer[data-id="163"],
+.treeContainer[data-id="164"],
+.treeContainer[data-id="165"],
+.treeContainer[data-id="166"],
+.treeContainer[data-id="167"],
+.treeContainer[data-id="168"] {
+    order: 45
+}
+
+.treeContainer[data-id="169"],
+.treeContainer[data-id="170"],
+.treeContainer[data-id="171"],
+.treeContainer[data-id="172"],
+.treeContainer[data-id="173"],
+.treeContainer[data-id="174"],
+.treeContainer[data-id="175"] {
+    order: 65
+}
+
+.treeContainer[data-id="0"] {
+    order: 1000
+}
+
+.hint {
+    height: 100%;
+    position: absolute;
+    width: 100%
+}
+
+.hint.onLeft,
+.hint.onRight {
+    width: 50%
+}
+
+.hint.onLeft {
+    left: 0
+}
+
+.hint.onRight {
+    right: 0
+}
+
+.hint.onBottom,
+.hint.onTop {
+    height: 50%
+}
+
+.hint.onTop {
+    top: 0
+}
+
+.hint.onBottom {
+    bottom: 0
+}
+
+.card,
+.futurePlace.selectable {
+    height: calc(var(--card-width) /.644);
+    width: var(--card-width)
+}
+
+.card[data-id="67"],
+.card[data-id="68"],
+.card[data-id="69"],
+[data-id="67"].futurePlace.selectable,
+[data-id="68"].futurePlace.selectable,
+[data-id="69"].futurePlace.selectable {
+    background-image: url(img/trees.jpg);
+    background-position-x: 100%;
+    background-position-x: 75%;
+    background-position-y: 100%;
+    background-position-y: 25%;
+    background-size: 500%
+}
+
+.card.vCard,
+.vCard.futurePlace.selectable {
+    background-image: url(img/vCards.jpg);
+    background-position-x: 100%;
+    background-position-y: 100%;
+    background-size: 700%
+}
+
+.card.vCard[data-id="114"],
+.vCard[data-id="114"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 100%
+}
+
+.card.vCard[data-id="115"],
+.vCard[data-id="115"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 100%
+}
+
+.card.vCard[data-id="116"],
+.vCard[data-id="116"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 100%
+}
+
+.card.vCard[data-id="117"],
+.vCard[data-id="117"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 100%
+}
+
+.card.vCard[data-id="118"],
+.vCard[data-id="118"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 100%
+}
+
+.card.vCard[data-id="119"],
+.vCard[data-id="119"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 100%
+}
+
+.card.vCard[data-id="120"],
+.vCard[data-id="120"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 83.3333333333%
+}
+
+.card.vCard[data-id="121"],
+.vCard[data-id="121"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 83.3333333333%
+}
+
+.card.vCard[data-id="122"],
+.vCard[data-id="122"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 83.3333333333%
+}
+
+.card.vCard[data-id="123"],
+.vCard[data-id="123"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 83.3333333333%
+}
+
+.card.vCard[data-id="124"],
+.vCard[data-id="124"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 83.3333333333%
+}
+
+.card.vCard[data-id="125"],
+.vCard[data-id="125"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 83.3333333333%
+}
+
+.card.vCard[data-id="126"],
+.vCard[data-id="126"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 83.3333333333%
+}
+
+.card.vCard[data-id="127"],
+.vCard[data-id="127"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 66.6666666667%
+}
+
+.card.vCard[data-id="128"],
+.vCard[data-id="128"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 66.6666666667%
+}
+
+.card.vCard[data-id="129"],
+.vCard[data-id="129"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 66.6666666667%
+}
+
+.card.vCard[data-id="130"],
+.vCard[data-id="130"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 66.6666666667%
+}
+
+.card.vCard[data-id="131"],
+.vCard[data-id="131"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 66.6666666667%
+}
+
+.card.vCard[data-id="132"],
+.vCard[data-id="132"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 66.6666666667%
+}
+
+.card.vCard[data-id="133"],
+.vCard[data-id="133"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 66.6666666667%
+}
+
+.card.vCard[data-id="134"],
+.vCard[data-id="134"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 50%
+}
+
+.card.vCard[data-id="135"],
+.vCard[data-id="135"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 50%
+}
+
+.card.vCard[data-id="136"],
+.vCard[data-id="136"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 50%
+}
+
+.card.vCard[data-id="137"],
+.vCard[data-id="137"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 50%
+}
+
+.card.vCard[data-id="138"],
+.vCard[data-id="138"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 50%
+}
+
+.card.vCard[data-id="139"],
+.vCard[data-id="139"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 50%
+}
+
+.card.vCard[data-id="140"],
+.vCard[data-id="140"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 50%
+}
+
+.card.vCard[data-id="141"],
+.vCard[data-id="141"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 33.3333333333%
+}
+
+.card.vCard[data-id="142"],
+.vCard[data-id="142"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 33.3333333333%
+}
+
+.card.vCard[data-id="143"],
+.vCard[data-id="143"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 33.3333333333%
+}
+
+.card.vCard[data-id="144"],
+.vCard[data-id="144"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 33.3333333333%
+}
+
+.card.vCard[data-id="145"],
+.vCard[data-id="145"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 33.3333333333%
+}
+
+.card.vCard[data-id="146"],
+.vCard[data-id="146"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 33.3333333333%
+}
+
+.card.vCard[data-id="147"],
+.vCard[data-id="147"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 33.3333333333%
+}
+
+.card.vCard[data-id="148"],
+.vCard[data-id="148"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 16.6666666667%
+}
+
+.card.vCard[data-id="149"],
+.vCard[data-id="149"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 16.6666666667%
+}
+
+.card.vCard[data-id="150"],
+.vCard[data-id="150"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 16.6666666667%
+}
+
+.card.vCard[data-id="151"],
+.vCard[data-id="151"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 16.6666666667%
+}
+
+.card.vCard[data-id="152"],
+.vCard[data-id="152"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 16.6666666667%
+}
+
+.card.vCard[data-id="153"],
+.vCard[data-id="153"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 16.6666666667%
+}
+
+.card.vCard[data-id="154"],
+.vCard[data-id="154"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 16.6666666667%
+}
+
+.card.vCard[data-id="155"],
+.vCard[data-id="155"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 0
+}
+
+.card.vCard[data-id="156"],
+.vCard[data-id="156"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 0
+}
+
+.card.vCard[data-id="157"],
+.vCard[data-id="157"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 0
+}
+
+.card.vCard[data-id="158"],
+.vCard[data-id="158"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 0
+}
+
+.card.vCard[data-id="159"],
+.vCard[data-id="159"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 0
+}
+
+.card.vCard[data-id="160"],
+.vCard[data-id="160"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 0
+}
+
+.card.vCard[data-id="161"],
+.vCard[data-id="161"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 0
+}
+
+.card.hCard,
+.hCard.futurePlace.selectable {
+    background-image: url(img/hCards.jpg);
+    background-position-x: 100%;
+    background-position-y: 100%;
+    background-size: 700%
+}
+
+.card.hCard[data-id="70"],
+.hCard[data-id="70"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 0
+}
+
+.card.hCard[data-id="71"],
+.hCard[data-id="71"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 0
+}
+
+.card.hCard[data-id="72"],
+.hCard[data-id="72"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 0
+}
+
+.card.hCard[data-id="73"],
+.hCard[data-id="73"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 0
+}
+
+.card.hCard[data-id="74"],
+.hCard[data-id="74"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 0
+}
+
+.card.hCard[data-id="75"],
+.hCard[data-id="75"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 0
+}
+
+.card.hCard[data-id="76"],
+.hCard[data-id="76"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 0
+}
+
+.card.hCard[data-id="77"],
+.hCard[data-id="77"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard[data-id="78"],
+.hCard[data-id="78"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard[data-id="79"],
+.hCard[data-id="79"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard[data-id="80"],
+.hCard[data-id="80"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard[data-id="81"],
+.hCard[data-id="81"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard[data-id="82"],
+.hCard[data-id="82"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard[data-id="83"],
+.hCard[data-id="83"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard[data-id="84"],
+.hCard[data-id="84"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard[data-id="85"],
+.hCard[data-id="85"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard[data-id="86"],
+.hCard[data-id="86"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard[data-id="87"],
+.hCard[data-id="87"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard[data-id="88"],
+.hCard[data-id="88"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard[data-id="89"],
+.hCard[data-id="89"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard[data-id="90"],
+.hCard[data-id="90"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard[data-id="91"],
+.hCard[data-id="91"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 50%
+}
+
+.card.hCard[data-id="92"],
+.hCard[data-id="92"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 50%
+}
+
+.card.hCard[data-id="93"],
+.hCard[data-id="93"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 50%
+}
+
+.card.hCard[data-id="94"],
+.hCard[data-id="94"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 50%
+}
+
+.card.hCard[data-id="95"],
+.hCard[data-id="95"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 50%
+}
+
+.card.hCard[data-id="96"],
+.hCard[data-id="96"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 50%
+}
+
+.card.hCard[data-id="97"],
+.hCard[data-id="97"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 50%
+}
+
+.card.hCard[data-id="98"],
+.hCard[data-id="98"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard[data-id="99"],
+.hCard[data-id="99"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard[data-id="100"],
+.hCard[data-id="100"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard[data-id="101"],
+.hCard[data-id="101"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard[data-id="102"],
+.hCard[data-id="102"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard[data-id="103"],
+.hCard[data-id="103"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard[data-id="104"],
+.hCard[data-id="104"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard[data-id="105"],
+.hCard[data-id="105"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard[data-id="106"],
+.hCard[data-id="106"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard[data-id="107"],
+.hCard[data-id="107"].futurePlace.selectable {
+    background-position-x: 33.3333333333%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard[data-id="108"],
+.hCard[data-id="108"].futurePlace.selectable {
+    background-position-x: 50%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard[data-id="109"],
+.hCard[data-id="109"].futurePlace.selectable {
+    background-position-x: 66.6666666667%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard[data-id="110"],
+.hCard[data-id="110"].futurePlace.selectable {
+    background-position-x: 83.3333333333%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard[data-id="111"],
+.hCard[data-id="111"].futurePlace.selectable {
+    background-position-x: 100%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard[data-id="112"],
+.hCard[data-id="112"].futurePlace.selectable {
+    background-position-x: 0;
+    background-position-y: 100%
+}
+
+.card.hCard[data-id="113"],
+.hCard[data-id="113"].futurePlace.selectable {
+    background-position-x: 16.6666666667%;
+    background-position-y: 100%
+}
+
+.card[data-id="1"],
+.card[data-id="2"],
+.card[data-id="3"],
+.card[data-id="4"],
+.card[data-id="5"],
+.card[data-id="6"],
+.card[data-id="7"],
+.card[data-id="8"],
+.card[data-id="9"],
+[data-id="1"].futurePlace.selectable,
+[data-id="2"].futurePlace.selectable,
+[data-id="3"].futurePlace.selectable,
+[data-id="4"].futurePlace.selectable,
+[data-id="5"].futurePlace.selectable,
+[data-id="6"].futurePlace.selectable,
+[data-id="7"].futurePlace.selectable,
+[data-id="8"].futurePlace.selectable,
+[data-id="9"].futurePlace.selectable {
+    background-image: url(img/trees.jpg);
+    background-position-x: 0;
+    background-position-y: 0;
+    background-size: 500%
+}
+
+.card[data-id="10"],
+.card[data-id="11"],
+.card[data-id="12"],
+.card[data-id="13"],
+.card[data-id="14"],
+.card[data-id="15"],
+.card[data-id="16"],
+[data-id="10"].futurePlace.selectable,
+[data-id="11"].futurePlace.selectable,
+[data-id="12"].futurePlace.selectable,
+[data-id="13"].futurePlace.selectable,
+[data-id="14"].futurePlace.selectable,
+[data-id="15"].futurePlace.selectable,
+[data-id="16"].futurePlace.selectable {
+    background-image: url(img/trees.jpg);
+    background-position-x: 25%;
+    background-position-y: 0;
+    background-size: 500%
+}
+
+.card[data-id="17"],
+.card[data-id="18"],
+.card[data-id="19"],
+.card[data-id="20"],
+.card[data-id="21"],
+.card[data-id="22"],
+[data-id="17"].futurePlace.selectable,
+[data-id="18"].futurePlace.selectable,
+[data-id="19"].futurePlace.selectable,
+[data-id="20"].futurePlace.selectable,
+[data-id="21"].futurePlace.selectable,
+[data-id="22"].futurePlace.selectable {
+    background-image: url(img/trees.jpg);
+    background-position-x: 50%;
+    background-position-y: 0;
+    background-size: 500%
+}
+
+.card[data-id="23"],
+.card[data-id="24"],
+.card[data-id="25"],
+.card[data-id="26"],
+.card[data-id="27"],
+.card[data-id="28"],
+.card[data-id="29"],
+.card[data-id="30"],
+.card[data-id="31"],
+.card[data-id="32"],
+[data-id="23"].futurePlace.selectable,
+[data-id="24"].futurePlace.selectable,
+[data-id="25"].futurePlace.selectable,
+[data-id="26"].futurePlace.selectable,
+[data-id="27"].futurePlace.selectable,
+[data-id="28"].futurePlace.selectable,
+[data-id="29"].futurePlace.selectable,
+[data-id="30"].futurePlace.selectable,
+[data-id="31"].futurePlace.selectable,
+[data-id="32"].futurePlace.selectable {
+    background-image: url(img/trees.jpg);
+    background-position-x: 75%;
+    background-position-y: 0;
+    background-size: 500%
+}
+
+.card[data-id="33"],
+.card[data-id="34"],
+.card[data-id="35"],
+.card[data-id="36"],
+.card[data-id="37"],
+.card[data-id="38"],
+.card[data-id="39"],
+.card[data-id="40"],
+.card[data-id="41"],
+.card[data-id="42"],
+[data-id="33"].futurePlace.selectable,
+[data-id="34"].futurePlace.selectable,
+[data-id="35"].futurePlace.selectable,
+[data-id="36"].futurePlace.selectable,
+[data-id="37"].futurePlace.selectable,
+[data-id="38"].futurePlace.selectable,
+[data-id="39"].futurePlace.selectable,
+[data-id="40"].futurePlace.selectable,
+[data-id="41"].futurePlace.selectable,
+[data-id="42"].futurePlace.selectable {
+    background-image: url(img/trees.jpg);
+    background-position-x: 100%;
+    background-position-y: 0;
+    background-size: 500%
+}
+
+.card[data-id="43"],
+.card[data-id="44"],
+.card[data-id="45"],
+.card[data-id="46"],
+.card[data-id="47"],
+.card[data-id="48"],
+[data-id="43"].futurePlace.selectable,
+[data-id="44"].futurePlace.selectable,
+[data-id="45"].futurePlace.selectable,
+[data-id="46"].futurePlace.selectable,
+[data-id="47"].futurePlace.selectable,
+[data-id="48"].futurePlace.selectable {
+    background-image: url(img/trees.jpg);
+    background-position-x: 0;
+    background-position-y: 25%;
+    background-size: 500%
+}
+
+.card[data-id="49"],
+.card[data-id="50"],
+.card[data-id="51"],
+.card[data-id="52"],
+.card[data-id="53"],
+.card[data-id="54"],
+.card[data-id="55"],
+[data-id="49"].futurePlace.selectable,
+[data-id="50"].futurePlace.selectable,
+[data-id="51"].futurePlace.selectable,
+[data-id="52"].futurePlace.selectable,
+[data-id="53"].futurePlace.selectable,
+[data-id="54"].futurePlace.selectable,
+[data-id="55"].futurePlace.selectable {
+    background-image: url(img/trees.jpg);
+    background-position-x: 25%;
+    background-position-y: 25%;
+    background-size: 500%
+}
+
+.card[data-id="56"],
+.card[data-id="57"],
+.card[data-id="58"],
+.card[data-id="59"],
+.card[data-id="60"],
+.card[data-id="61"],
+.card[data-id="62"],
+.card[data-id="63"],
+.card[data-id="64"],
+.card[data-id="65"],
+.card[data-id="66"],
+[data-id="56"].futurePlace.selectable,
+[data-id="57"].futurePlace.selectable,
+[data-id="58"].futurePlace.selectable,
+[data-id="59"].futurePlace.selectable,
+[data-id="60"].futurePlace.selectable,
+[data-id="61"].futurePlace.selectable,
+[data-id="62"].futurePlace.selectable,
+[data-id="63"].futurePlace.selectable,
+[data-id="64"].futurePlace.selectable,
+[data-id="65"].futurePlace.selectable,
+[data-id="66"].futurePlace.selectable {
+    background-image: url(img/trees.jpg);
+    background-position-x: 50%;
+    background-position-y: 25%;
+    background-size: 500%
+}
+
+.card[data-id="162"],
+.card[data-id="163"],
+.card[data-id="164"],
+.card[data-id="165"],
+.card[data-id="166"],
+.card[data-id="167"],
+.card[data-id="168"],
+[data-id="162"].futurePlace.selectable,
+[data-id="163"].futurePlace.selectable,
+[data-id="164"].futurePlace.selectable,
+[data-id="165"].futurePlace.selectable,
+[data-id="166"].futurePlace.selectable,
+[data-id="167"].futurePlace.selectable,
+[data-id="168"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 0;
+    background-position-y: 0;
+    background-size: 700%
+}
+
+.card[data-id="169"],
+.card[data-id="170"],
+.card[data-id="171"],
+.card[data-id="172"],
+.card[data-id="173"],
+.card[data-id="174"],
+.card[data-id="175"],
+[data-id="169"].futurePlace.selectable,
+[data-id="170"].futurePlace.selectable,
+[data-id="171"].futurePlace.selectable,
+[data-id="172"].futurePlace.selectable,
+[data-id="173"].futurePlace.selectable,
+[data-id="174"].futurePlace.selectable,
+[data-id="175"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 16.6666666667%;
+    background-position-y: 0;
+    background-size: 700%
+}
+
+.card[data-id="176"],
+[data-id="176"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 33.3333333333%;
+    background-position-y: 0;
+    background-size: 700%
+}
+
+.card[data-id="177"],
+[data-id="177"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 50%;
+    background-position-y: 0;
+    background-size: 700%
+}
+
+.card[data-id="178"],
+[data-id="178"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 66.6666666667%;
+    background-position-y: 0;
+    background-size: 700%
+}
+
+.card[data-id="179"],
+[data-id="179"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 83.3333333333%;
+    background-position-y: 0;
+    background-size: 700%
+}
+
+.card[data-id="180"],
+[data-id="180"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 100%;
+    background-position-y: 0;
+    background-size: 700%
+}
+
+.card[data-id="181"],
+[data-id="181"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 0;
+    background-position-y: 33.3333333333%;
+    background-size: 700%
+}
+
+.card[data-id="182"],
+[data-id="182"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 16.6666666667%;
+    background-position-y: 33.3333333333%;
+    background-size: 700%
+}
+
+.card[data-id="183"],
+[data-id="183"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 33.3333333333%;
+    background-position-y: 33.3333333333%;
+    background-size: 700%
+}
+
+.card[data-id="184"],
+[data-id="184"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 50%;
+    background-position-y: 33.3333333333%;
+    background-size: 700%
+}
+
+.card[data-id="185"],
+[data-id="185"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 66.6666666667%;
+    background-position-y: 33.3333333333%;
+    background-size: 700%
+}
+
+.card[data-id="186"],
+[data-id="186"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 83.3333333333%;
+    background-position-y: 33.3333333333%;
+    background-size: 700%
+}
+
+.card[data-id="187"],
+[data-id="187"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 100%;
+    background-position-y: 33.3333333333%;
+    background-size: 700%
+}
+
+.card[data-id="188"],
+[data-id="188"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 0;
+    background-position-y: 66.6666666667%;
+    background-size: 700%
+}
+
+.card[data-id="189"],
+[data-id="189"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 16.6666666667%;
+    background-position-y: 66.6666666667%;
+    background-size: 700%
+}
+
+.card[data-id="190"],
+[data-id="190"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 33.3333333333%;
+    background-position-y: 66.6666666667%;
+    background-size: 700%
+}
+
+.card[data-id="191"],
+[data-id="191"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 50%;
+    background-position-y: 66.6666666667%;
+    background-size: 700%
+}
+
+.card[data-id="192"],
+[data-id="192"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 66.6666666667%;
+    background-position-y: 66.6666666667%;
+    background-size: 700%
+}
+
+.card[data-id="193"],
+[data-id="193"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 83.3333333333%;
+    background-position-y: 66.6666666667%;
+    background-size: 700%
+}
+
+.card[data-id="194"],
+[data-id="194"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 100%;
+    background-position-y: 66.6666666667%;
+    background-size: 700%
+}
+
+.card[data-id="195"],
+[data-id="195"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 0;
+    background-position-y: 100%;
+    background-size: 700%
+}
+
+.card[data-id="196"],
+[data-id="196"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 16.6666666667%;
+    background-position-y: 100%;
+    background-size: 700%
+}
+
+.card[data-id="197"],
+[data-id="197"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 33.3333333333%;
+    background-position-y: 100%;
+    background-size: 700%
+}
+
+.card[data-id="198"],
+[data-id="198"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 50%;
+    background-position-y: 100%;
+    background-size: 700%
+}
+
+.card[data-id="199"],
+[data-id="199"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 66.6666666667%;
+    background-position-y: 100%;
+    background-size: 700%
+}
+
+.card[data-id="200"],
+[data-id="200"].futurePlace.selectable {
+    background-image: url(img/mountain.jpg);
+    background-position-x: 83.3333333333%;
+    background-position-y: 100%;
+    background-size: 700%
+}
+
+.card[data-id="198"],
+[data-id="198"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 0;
+    background-position-y: 0;
+    background-size: 600%
+}
+
+.card[data-id="199"],
+[data-id="199"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 20%;
+    background-position-y: 0;
+    background-size: 600%
+}
+
+.card[data-id="200"],
+[data-id="200"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 40%;
+    background-position-y: 0;
+    background-size: 600%
+}
+
+.card[data-id="201"],
+[data-id="201"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 60%;
+    background-position-y: 0;
+    background-size: 600%
+}
+
+.card[data-id="202"],
+[data-id="202"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 80%;
+    background-position-y: 0;
+    background-size: 600%
+}
+
+.card[data-id="203"],
+[data-id="203"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 100%;
+    background-position-y: 0;
+    background-size: 600%
+}
+
+.card[data-id="204"],
+[data-id="204"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 0;
+    background-position-y: 20%;
+    background-size: 600%
+}
+
+.card[data-id="205"],
+[data-id="205"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 20%;
+    background-position-y: 20%;
+    background-size: 600%
+}
+
+.card[data-id="206"],
+[data-id="206"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 40%;
+    background-position-y: 20%;
+    background-size: 600%
+}
+
+.card[data-id="207"],
+[data-id="207"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 60%;
+    background-position-y: 20%;
+    background-size: 600%
+}
+
+.card[data-id="208"],
+[data-id="208"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 80%;
+    background-position-y: 20%;
+    background-size: 600%
+}
+
+.card[data-id="209"],
+[data-id="209"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 100%;
+    background-position-y: 20%;
+    background-size: 600%
+}
+
+.card[data-id="210"],
+[data-id="210"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 0;
+    background-position-y: 40%;
+    background-size: 600%
+}
+
+.card[data-id="211"],
+[data-id="211"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 20%;
+    background-position-y: 40%;
+    background-size: 600%
+}
+
+.card[data-id="212"],
+[data-id="212"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 40%;
+    background-position-y: 40%;
+    background-size: 600%
+}
+
+.card[data-id="213"],
+[data-id="213"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 60%;
+    background-position-y: 40%;
+    background-size: 600%
+}
+
+.card[data-id="214"],
+[data-id="214"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 80%;
+    background-position-y: 40%;
+    background-size: 600%
+}
+
+.card[data-id="215"],
+[data-id="215"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 100%;
+    background-position-y: 40%;
+    background-size: 600%
+}
+
+.card[data-id="216"],
+[data-id="216"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 0;
+    background-position-y: 60%;
+    background-size: 600%
+}
+
+.card[data-id="217"],
+[data-id="217"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 20%;
+    background-position-y: 60%;
+    background-size: 600%
+}
+
+.card[data-id="218"],
+[data-id="218"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 40%;
+    background-position-y: 60%;
+    background-size: 600%
+}
+
+.card[data-id="219"],
+[data-id="219"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 60%;
+    background-position-y: 60%;
+    background-size: 600%
+}
+
+.card[data-id="220"],
+[data-id="220"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 80%;
+    background-position-y: 60%;
+    background-size: 600%
+}
+
+.card[data-id="221"],
+[data-id="221"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 100%;
+    background-position-y: 60%;
+    background-size: 600%
+}
+
+.card[data-id="222"],
+[data-id="222"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 0;
+    background-position-y: 80%;
+    background-size: 600%
+}
+
+.card[data-id="223"],
+[data-id="223"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 20%;
+    background-position-y: 80%;
+    background-size: 600%
+}
+
+.card[data-id="224"],
+[data-id="224"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 40%;
+    background-position-y: 80%;
+    background-size: 600%
+}
+
+.card[data-id="225"],
+[data-id="225"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 60%;
+    background-position-y: 80%;
+    background-size: 600%
+}
+
+.card[data-id="226"],
+[data-id="226"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 80%;
+    background-position-y: 80%;
+    background-size: 600%
+}
+
+.card[data-id="227"],
+[data-id="227"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 100%;
+    background-position-y: 80%;
+    background-size: 600%
+}
+
+.card[data-id="228"],
+[data-id="228"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 0;
+    background-position-y: 100%;
+    background-size: 600%
+}
+
+.card[data-id="229"],
+[data-id="229"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 20%;
+    background-position-y: 100%;
+    background-size: 600%
+}
+
+.card[data-id="230"],
+[data-id="230"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 40%;
+    background-position-y: 100%;
+    background-size: 600%
+}
+
+.card[data-id="231"],
+[data-id="231"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 60%;
+    background-position-y: 100%;
+    background-size: 600%
+}
+
+.card[data-id="232"],
+[data-id="232"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 80%;
+    background-position-y: 100%;
+    background-size: 600%
+}
+
+.card[data-id="233"],
+[data-id="233"].futurePlace.selectable {
+    background-image: url(img/woodlands.Jpg);
+    background-position-x: 100%;
+    background-position-y: 100%;
+    background-size: 600%
+}
+
+.card.vCard:not(.sapling).superCard,
+.vCard.futurePlace.selectable:not(.sapling).superCard {
+    border-radius: 15px;
+    height: calc(var(--superCard) /.644/2 - 5px);
+    width: var(--superCard)
+}
+
+.card.vCard:not(.sapling).superCard.logCard,
+.vCard.futurePlace.selectable:not(.sapling).superCard.logCard {
+    height: calc(var(--card-on-table-width) /.644/2);
+    width: var(--card-on-table-width)
+}
+
+.card.vCard:not(.sapling).superCard.onTop,
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop {
+    border-radius: 15px 15px 0 0;
+    display: block
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="114"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="114"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 92.3076923077%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="115"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="115"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 92.3076923077%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="116"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="116"] {
+    background-position-x: 50%;
+    background-position-y: 92.3076923077%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="117"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="117"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 92.3076923077%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="118"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="118"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 92.3076923077%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="119"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="119"] {
+    background-position-x: 0;
+    background-position-y: 92.3076923077%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="120"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="120"] {
+    background-position-x: 100%;
+    background-position-y: 76.9230769231%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="121"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="121"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 76.9230769231%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="122"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="122"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 76.9230769231%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="123"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="123"] {
+    background-position-x: 50%;
+    background-position-y: 76.9230769231%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="124"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="124"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 76.9230769231%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="125"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="125"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 76.9230769231%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="126"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="126"] {
+    background-position-x: 0;
+    background-position-y: 76.9230769231%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="127"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="127"] {
+    background-position-x: 100%;
+    background-position-y: 61.5384615385%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="128"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="128"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 61.5384615385%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="129"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="129"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 61.5384615385%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="130"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="130"] {
+    background-position-x: 50%;
+    background-position-y: 61.5384615385%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="131"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="131"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 61.5384615385%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="132"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="132"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 61.5384615385%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="133"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="133"] {
+    background-position-x: 0;
+    background-position-y: 61.5384615385%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="134"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="134"] {
+    background-position-x: 100%;
+    background-position-y: 46.1538461538%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="135"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="135"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 46.1538461538%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="136"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="136"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 46.1538461538%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="137"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="137"] {
+    background-position-x: 50%;
+    background-position-y: 46.1538461538%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="138"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="138"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 46.1538461538%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="139"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="139"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 46.1538461538%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="140"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="140"] {
+    background-position-x: 0;
+    background-position-y: 46.1538461538%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="141"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="141"] {
+    background-position-x: 100%;
+    background-position-y: 30.7692307692%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="142"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="142"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 30.7692307692%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="143"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="143"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 30.7692307692%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="144"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="144"] {
+    background-position-x: 50%;
+    background-position-y: 30.7692307692%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="145"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="145"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 30.7692307692%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="146"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="146"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 30.7692307692%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="147"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="147"] {
+    background-position-x: 0;
+    background-position-y: 30.7692307692%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="148"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="148"] {
+    background-position-x: 100%;
+    background-position-y: 15.3846153846%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="149"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="149"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 15.3846153846%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="150"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="150"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 15.3846153846%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="151"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="151"] {
+    background-position-x: 50%;
+    background-position-y: 15.3846153846%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="152"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="152"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 15.3846153846%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="153"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="153"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 15.3846153846%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="154"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="154"] {
+    background-position-x: 0;
+    background-position-y: 15.3846153846%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="155"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="155"] {
+    background-position-x: 100%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="156"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="156"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="157"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="157"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="158"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="158"] {
+    background-position-x: 50%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="159"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="159"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="160"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="160"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="161"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="161"] {
+    background-position-x: 0;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="185"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="185"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 28.5714285714%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="186"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="186"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 28.5714285714%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="187"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="187"] {
+    background-position-x: 100%;
+    background-position-y: 28.5714285714%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="188"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="188"] {
+    background-position-x: 0;
+    background-position-y: 57.1428571429%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="189"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="189"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 57.1428571429%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="190"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="190"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 57.1428571429%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="191"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="191"] {
+    background-position-x: 50%;
+    background-position-y: 57.1428571429%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="192"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="192"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 57.1428571429%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="193"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="193"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 57.1428571429%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="194"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="194"] {
+    background-position-x: 100%;
+    background-position-y: 57.1428571429%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="195"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="195"] {
+    background-position-x: 0;
+    background-position-y: 85.7142857143%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="196"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="196"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 85.7142857143%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="198"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="198"] {
+    background-position-x: 0;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="199"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="199"] {
+    background-position-x: 20%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="200"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="200"] {
+    background-position-x: 40%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="201"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="201"] {
+    background-position-x: 60%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="202"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="202"] {
+    background-position-x: 80%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="203"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="203"] {
+    background-position-x: 100%;
+    background-position-y: 0
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="204"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="204"] {
+    background-position-x: 0;
+    background-position-y: 18.1818181818%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="205"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="205"] {
+    background-position-x: 20%;
+    background-position-y: 18.1818181818%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="206"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="206"] {
+    background-position-x: 40%;
+    background-position-y: 18.1818181818%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="207"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="207"] {
+    background-position-x: 60%;
+    background-position-y: 18.1818181818%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="208"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="208"] {
+    background-position-x: 80%;
+    background-position-y: 18.1818181818%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="209"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="209"] {
+    background-position-x: 100%;
+    background-position-y: 18.1818181818%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="210"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="210"] {
+    background-position-x: 0;
+    background-position-y: 36.3636363636%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="211"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="211"] {
+    background-position-x: 20%;
+    background-position-y: 36.3636363636%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="212"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="212"] {
+    background-position-x: 40%;
+    background-position-y: 36.3636363636%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="213"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="213"] {
+    background-position-x: 60%;
+    background-position-y: 36.3636363636%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="214"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="214"] {
+    background-position-x: 80%;
+    background-position-y: 36.3636363636%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="215"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="215"] {
+    background-position-x: 100%;
+    background-position-y: 36.3636363636%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="216"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="216"] {
+    background-position-x: 0;
+    background-position-y: 54.5454545455%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="217"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="217"] {
+    background-position-x: 20%;
+    background-position-y: 54.5454545455%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="218"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="218"] {
+    background-position-x: 40%;
+    background-position-y: 54.5454545455%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="219"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="219"] {
+    background-position-x: 60%;
+    background-position-y: 54.5454545455%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="220"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="220"] {
+    background-position-x: 80%;
+    background-position-y: 54.5454545455%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="221"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="221"] {
+    background-position-x: 100%;
+    background-position-y: 54.5454545455%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="222"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="222"] {
+    background-position-x: 0;
+    background-position-y: 72.7272727273%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="223"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="223"] {
+    background-position-x: 20%;
+    background-position-y: 72.7272727273%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="224"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="224"] {
+    background-position-x: 40%;
+    background-position-y: 72.7272727273%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="225"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="225"] {
+    background-position-x: 60%;
+    background-position-y: 72.7272727273%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="226"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="226"] {
+    background-position-x: 80%;
+    background-position-y: 72.7272727273%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="227"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="227"] {
+    background-position-x: 100%;
+    background-position-y: 72.7272727273%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="228"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="228"] {
+    background-position-x: 0;
+    background-position-y: 90.9090909091%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="229"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="229"] {
+    background-position-x: 20%;
+    background-position-y: 90.9090909091%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="230"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="230"] {
+    background-position-x: 40%;
+    background-position-y: 90.9090909091%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="231"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="231"] {
+    background-position-x: 60%;
+    background-position-y: 90.9090909091%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="232"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="232"] {
+    background-position-x: 80%;
+    background-position-y: 90.9090909091%
+}
+
+.card.vCard:not(.sapling).superCard.onTop[data-id="233"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onTop[data-id="233"] {
+    background-position-x: 100%;
+    background-position-y: 90.9090909091%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom,
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom {
+    border-radius: 0 0 15px 15px;
+    display: block
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="114"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="114"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="115"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="115"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="116"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="116"] {
+    background-position-x: 50%;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="117"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="117"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="118"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="118"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="119"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="119"] {
+    background-position-x: 0;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="120"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="120"] {
+    background-position-x: 100%;
+    background-position-y: 84.6153846154%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="121"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="121"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 84.6153846154%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="122"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="122"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 84.6153846154%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="123"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="123"] {
+    background-position-x: 50%;
+    background-position-y: 84.6153846154%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="124"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="124"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 84.6153846154%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="125"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="125"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 84.6153846154%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="126"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="126"] {
+    background-position-x: 0;
+    background-position-y: 84.6153846154%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="127"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="127"] {
+    background-position-x: 100%;
+    background-position-y: 69.2307692308%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="128"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="128"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 69.2307692308%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="129"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="129"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 69.2307692308%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="130"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="130"] {
+    background-position-x: 50%;
+    background-position-y: 69.2307692308%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="131"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="131"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 69.2307692308%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="132"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="132"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 69.2307692308%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="133"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="133"] {
+    background-position-x: 0;
+    background-position-y: 69.2307692308%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="134"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="134"] {
+    background-position-x: 100%;
+    background-position-y: 53.8461538462%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="135"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="135"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 53.8461538462%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="136"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="136"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 53.8461538462%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="137"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="137"] {
+    background-position-x: 50%;
+    background-position-y: 53.8461538462%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="138"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="138"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 53.8461538462%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="139"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="139"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 53.8461538462%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="140"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="140"] {
+    background-position-x: 0;
+    background-position-y: 53.8461538462%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="141"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="141"] {
+    background-position-x: 100%;
+    background-position-y: 38.4615384615%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="142"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="142"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 38.4615384615%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="143"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="143"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 38.4615384615%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="144"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="144"] {
+    background-position-x: 50%;
+    background-position-y: 38.4615384615%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="145"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="145"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 38.4615384615%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="146"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="146"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 38.4615384615%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="147"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="147"] {
+    background-position-x: 0;
+    background-position-y: 38.4615384615%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="148"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="148"] {
+    background-position-x: 100%;
+    background-position-y: 23.0769230769%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="149"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="149"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 23.0769230769%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="150"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="150"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 23.0769230769%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="151"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="151"] {
+    background-position-x: 50%;
+    background-position-y: 23.0769230769%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="152"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="152"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 23.0769230769%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="153"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="153"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 23.0769230769%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="154"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="154"] {
+    background-position-x: 0;
+    background-position-y: 23.0769230769%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="155"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="155"] {
+    background-position-x: 100%;
+    background-position-y: 7.6923076923%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="156"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="156"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 7.6923076923%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="157"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="157"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 7.6923076923%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="158"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="158"] {
+    background-position-x: 50%;
+    background-position-y: 7.6923076923%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="159"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="159"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 7.6923076923%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="160"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="160"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 7.6923076923%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="161"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="161"] {
+    background-position-x: 0;
+    background-position-y: 7.6923076923%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="185"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="185"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 42.8571428571%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="186"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="186"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 42.8571428571%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="187"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="187"] {
+    background-position-x: 100%;
+    background-position-y: 42.8571428571%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="188"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="188"] {
+    background-position-x: 0;
+    background-position-y: 71.4285714286%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="189"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="189"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 71.4285714286%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="190"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="190"] {
+    background-position-x: 33.3333333333%;
+    background-position-y: 71.4285714286%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="191"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="191"] {
+    background-position-x: 50%;
+    background-position-y: 71.4285714286%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="192"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="192"] {
+    background-position-x: 66.6666666667%;
+    background-position-y: 71.4285714286%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="193"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="193"] {
+    background-position-x: 83.3333333333%;
+    background-position-y: 71.4285714286%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="194"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="194"] {
+    background-position-x: 100%;
+    background-position-y: 71.4285714286%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="195"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="195"] {
+    background-position-x: 0;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="196"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="196"] {
+    background-position-x: 16.6666666667%;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="198"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="198"] {
+    background-position-x: 0;
+    background-position-y: 9.0909090909%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="199"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="199"] {
+    background-position-x: 20%;
+    background-position-y: 9.0909090909%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="200"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="200"] {
+    background-position-x: 40%;
+    background-position-y: 9.0909090909%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="201"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="201"] {
+    background-position-x: 60%;
+    background-position-y: 9.0909090909%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="202"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="202"] {
+    background-position-x: 80%;
+    background-position-y: 9.0909090909%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="203"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="203"] {
+    background-position-x: 100%;
+    background-position-y: 9.0909090909%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="204"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="204"] {
+    background-position-x: 0;
+    background-position-y: 27.2727272727%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="205"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="205"] {
+    background-position-x: 20%;
+    background-position-y: 27.2727272727%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="206"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="206"] {
+    background-position-x: 40%;
+    background-position-y: 27.2727272727%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="207"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="207"] {
+    background-position-x: 60%;
+    background-position-y: 27.2727272727%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="208"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="208"] {
+    background-position-x: 80%;
+    background-position-y: 27.2727272727%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="209"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="209"] {
+    background-position-x: 100%;
+    background-position-y: 27.2727272727%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="210"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="210"] {
+    background-position-x: 0;
+    background-position-y: 45.4545454545%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="211"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="211"] {
+    background-position-x: 20%;
+    background-position-y: 45.4545454545%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="212"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="212"] {
+    background-position-x: 40%;
+    background-position-y: 45.4545454545%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="213"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="213"] {
+    background-position-x: 60%;
+    background-position-y: 45.4545454545%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="214"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="214"] {
+    background-position-x: 80%;
+    background-position-y: 45.4545454545%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="215"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="215"] {
+    background-position-x: 100%;
+    background-position-y: 45.4545454545%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="216"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="216"] {
+    background-position-x: 0;
+    background-position-y: 63.6363636364%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="217"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="217"] {
+    background-position-x: 20%;
+    background-position-y: 63.6363636364%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="218"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="218"] {
+    background-position-x: 40%;
+    background-position-y: 63.6363636364%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="219"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="219"] {
+    background-position-x: 60%;
+    background-position-y: 63.6363636364%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="220"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="220"] {
+    background-position-x: 80%;
+    background-position-y: 63.6363636364%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="221"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="221"] {
+    background-position-x: 100%;
+    background-position-y: 63.6363636364%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="222"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="222"] {
+    background-position-x: 0;
+    background-position-y: 81.8181818182%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="223"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="223"] {
+    background-position-x: 20%;
+    background-position-y: 81.8181818182%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="224"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="224"] {
+    background-position-x: 40%;
+    background-position-y: 81.8181818182%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="225"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="225"] {
+    background-position-x: 60%;
+    background-position-y: 81.8181818182%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="226"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="226"] {
+    background-position-x: 80%;
+    background-position-y: 81.8181818182%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="227"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="227"] {
+    background-position-x: 100%;
+    background-position-y: 81.8181818182%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="228"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="228"] {
+    background-position-x: 0;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="229"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="229"] {
+    background-position-x: 20%;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="230"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="230"] {
+    background-position-x: 40%;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="231"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="231"] {
+    background-position-x: 60%;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="232"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="232"] {
+    background-position-x: 80%;
+    background-position-y: 100%
+}
+
+.card.vCard:not(.sapling).superCard.onBottom[data-id="233"],
+.vCard.futurePlace.selectable:not(.sapling).superCard.onBottom[data-id="233"] {
+    background-position-x: 100%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard,
+.hCard.futurePlace.selectable:not(.sapling).superCard {
+    background-size: 1400%;
+    border-radius: 15px;
+    height: calc(var(--superCard) /.644 - 5px);
+    width: calc(var(--superCard)/2)
+}
+
+.card.hCard:not(.sapling).superCard.edge,
+.hCard.futurePlace.selectable:not(.sapling).superCard.edge {
+    background-size: 1200%
+}
+
+.card.hCard:not(.sapling).superCard.logCard,
+.hCard.futurePlace.selectable:not(.sapling).superCard.logCard {
+    height: calc(var(--card-on-table-width) /.644);
+    width: calc(var(--card-on-table-width)/2)
+}
+
+.card.hCard:not(.sapling).superCard.onLeft,
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft {
+    border-radius: 15px 0 0 15px
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="70"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="70"] {
+    background-position-x: 0;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="71"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="71"] {
+    background-position-x: 15.3846153846%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="72"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="72"] {
+    background-position-x: 30.7692307692%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="73"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="73"] {
+    background-position-x: 46.1538461538%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="74"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="74"] {
+    background-position-x: 61.5384615385%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="75"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="75"] {
+    background-position-x: 76.9230769231%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="76"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="76"] {
+    background-position-x: 92.3076923077%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="77"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="77"] {
+    background-position-x: 0;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="78"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="78"] {
+    background-position-x: 15.3846153846%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="79"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="79"] {
+    background-position-x: 30.7692307692%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="80"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="80"] {
+    background-position-x: 46.1538461538%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="81"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="81"] {
+    background-position-x: 61.5384615385%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="82"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="82"] {
+    background-position-x: 76.9230769231%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="83"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="83"] {
+    background-position-x: 92.3076923077%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="84"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="84"] {
+    background-position-x: 0;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="85"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="85"] {
+    background-position-x: 15.3846153846%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="86"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="86"] {
+    background-position-x: 30.7692307692%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="87"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="87"] {
+    background-position-x: 46.1538461538%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="88"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="88"] {
+    background-position-x: 61.5384615385%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="89"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="89"] {
+    background-position-x: 76.9230769231%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="90"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="90"] {
+    background-position-x: 92.3076923077%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="91"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="91"] {
+    background-position-x: 0;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="92"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="92"] {
+    background-position-x: 15.3846153846%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="93"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="93"] {
+    background-position-x: 30.7692307692%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="94"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="94"] {
+    background-position-x: 46.1538461538%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="95"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="95"] {
+    background-position-x: 61.5384615385%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="96"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="96"] {
+    background-position-x: 76.9230769231%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="97"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="97"] {
+    background-position-x: 92.3076923077%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="98"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="98"] {
+    background-position-x: 0;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="99"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="99"] {
+    background-position-x: 15.3846153846%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="100"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="100"] {
+    background-position-x: 30.7692307692%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="101"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="101"] {
+    background-position-x: 46.1538461538%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="102"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="102"] {
+    background-position-x: 61.5384615385%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="103"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="103"] {
+    background-position-x: 76.9230769231%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="104"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="104"] {
+    background-position-x: 92.3076923077%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="105"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="105"] {
+    background-position-x: 0;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="106"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="106"] {
+    background-position-x: 15.3846153846%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="107"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="107"] {
+    background-position-x: 30.7692307692%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="108"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="108"] {
+    background-position-x: 46.1538461538%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="109"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="109"] {
+    background-position-x: 61.5384615385%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="110"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="110"] {
+    background-position-x: 76.9230769231%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="111"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="111"] {
+    background-position-x: 92.3076923077%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="112"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="112"] {
+    background-position-x: 0;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="113"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="113"] {
+    background-position-x: 15.3846153846%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="176"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="176"] {
+    background-position-x: 30.7692307692%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="177"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="177"] {
+    background-position-x: 46.1538461538%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="178"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="178"] {
+    background-position-x: 61.5384615385%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="179"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="179"] {
+    background-position-x: 76.9230769231%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="180"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="180"] {
+    background-position-x: 92.3076923077%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="181"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="181"] {
+    background-position-x: 0;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="182"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="182"] {
+    background-position-x: 15.3846153846%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="183"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="183"] {
+    background-position-x: 30.7692307692%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="184"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="184"] {
+    background-position-x: 46.1538461538%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="197"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="197"] {
+    background-position-x: 30.7692307692%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="198"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="198"] {
+    background-position-x: 0;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="199"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="199"] {
+    background-position-x: 18.1818181818%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="200"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="200"] {
+    background-position-x: 36.3636363636%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="201"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="201"] {
+    background-position-x: 54.5454545455%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="202"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="202"] {
+    background-position-x: 72.7272727273%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="203"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="203"] {
+    background-position-x: 90.9090909091%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="204"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="204"] {
+    background-position-x: 0;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="205"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="205"] {
+    background-position-x: 18.1818181818%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="206"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="206"] {
+    background-position-x: 36.3636363636%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="207"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="207"] {
+    background-position-x: 54.5454545455%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="208"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="208"] {
+    background-position-x: 72.7272727273%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="209"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="209"] {
+    background-position-x: 90.9090909091%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="210"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="210"] {
+    background-position-x: 0;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="211"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="211"] {
+    background-position-x: 18.1818181818%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="212"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="212"] {
+    background-position-x: 36.3636363636%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="213"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="213"] {
+    background-position-x: 54.5454545455%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="214"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="214"] {
+    background-position-x: 72.7272727273%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="215"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="215"] {
+    background-position-x: 90.9090909091%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="216"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="216"] {
+    background-position-x: 0;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="217"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="217"] {
+    background-position-x: 18.1818181818%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="218"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="218"] {
+    background-position-x: 36.3636363636%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="219"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="219"] {
+    background-position-x: 54.5454545455%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="220"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="220"] {
+    background-position-x: 72.7272727273%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="221"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="221"] {
+    background-position-x: 90.9090909091%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="222"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="222"] {
+    background-position-x: 0;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="223"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="223"] {
+    background-position-x: 18.1818181818%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="224"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="224"] {
+    background-position-x: 36.3636363636%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="225"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="225"] {
+    background-position-x: 54.5454545455%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="226"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="226"] {
+    background-position-x: 72.7272727273%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="227"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="227"] {
+    background-position-x: 90.9090909091%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="228"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="228"] {
+    background-position-x: 0;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="229"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="229"] {
+    background-position-x: 18.1818181818%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="230"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="230"] {
+    background-position-x: 36.3636363636%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="231"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="231"] {
+    background-position-x: 54.5454545455%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="232"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="232"] {
+    background-position-x: 72.7272727273%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onLeft[data-id="233"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onLeft[data-id="233"] {
+    background-position-x: 90.9090909091%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onRight,
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight {
+    border-radius: 0 15px 15px 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="70"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="70"] {
+    background-position-x: 7.6923076923%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="71"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="71"] {
+    background-position-x: 23.0769230769%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="72"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="72"] {
+    background-position-x: 38.4615384615%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="73"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="73"] {
+    background-position-x: 53.8461538462%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="74"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="74"] {
+    background-position-x: 69.2307692308%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="75"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="75"] {
+    background-position-x: 84.6153846154%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="76"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="76"] {
+    background-position-x: 100%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="77"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="77"] {
+    background-position-x: 7.6923076923%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="78"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="78"] {
+    background-position-x: 23.0769230769%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="79"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="79"] {
+    background-position-x: 38.4615384615%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="80"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="80"] {
+    background-position-x: 53.8461538462%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="81"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="81"] {
+    background-position-x: 69.2307692308%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="82"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="82"] {
+    background-position-x: 84.6153846154%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="83"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="83"] {
+    background-position-x: 100%;
+    background-position-y: 16.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="84"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="84"] {
+    background-position-x: 7.6923076923%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="85"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="85"] {
+    background-position-x: 23.0769230769%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="86"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="86"] {
+    background-position-x: 38.4615384615%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="87"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="87"] {
+    background-position-x: 53.8461538462%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="88"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="88"] {
+    background-position-x: 69.2307692308%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="89"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="89"] {
+    background-position-x: 84.6153846154%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="90"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="90"] {
+    background-position-x: 100%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="91"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="91"] {
+    background-position-x: 7.6923076923%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="92"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="92"] {
+    background-position-x: 23.0769230769%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="93"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="93"] {
+    background-position-x: 38.4615384615%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="94"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="94"] {
+    background-position-x: 53.8461538462%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="95"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="95"] {
+    background-position-x: 69.2307692308%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="96"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="96"] {
+    background-position-x: 84.6153846154%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="97"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="97"] {
+    background-position-x: 100%;
+    background-position-y: 50%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="98"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="98"] {
+    background-position-x: 7.6923076923%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="99"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="99"] {
+    background-position-x: 23.0769230769%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="100"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="100"] {
+    background-position-x: 38.4615384615%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="101"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="101"] {
+    background-position-x: 53.8461538462%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="102"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="102"] {
+    background-position-x: 69.2307692308%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="103"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="103"] {
+    background-position-x: 84.6153846154%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="104"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="104"] {
+    background-position-x: 100%;
+    background-position-y: 66.6666666667%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="105"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="105"] {
+    background-position-x: 7.6923076923%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="106"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="106"] {
+    background-position-x: 23.0769230769%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="107"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="107"] {
+    background-position-x: 38.4615384615%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="108"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="108"] {
+    background-position-x: 53.8461538462%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="109"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="109"] {
+    background-position-x: 69.2307692308%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="110"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="110"] {
+    background-position-x: 84.6153846154%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="111"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="111"] {
+    background-position-x: 100%;
+    background-position-y: 83.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="112"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="112"] {
+    background-position-x: 7.6923076923%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="113"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="113"] {
+    background-position-x: 23.0769230769%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="176"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="176"] {
+    background-position-x: 38.4615384615%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="177"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="177"] {
+    background-position-x: 53.8461538462%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="178"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="178"] {
+    background-position-x: 69.2307692308%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="179"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="179"] {
+    background-position-x: 84.6153846154%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="180"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="180"] {
+    background-position-x: 100%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="181"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="181"] {
+    background-position-x: 7.6923076923%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="182"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="182"] {
+    background-position-x: 23.0769230769%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="183"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="183"] {
+    background-position-x: 38.4615384615%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="184"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="184"] {
+    background-position-x: 53.8461538462%;
+    background-position-y: 33.3333333333%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="197"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="197"] {
+    background-position-x: 38.4615384615%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="198"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="198"] {
+    background-position-x: 9.0909090909%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="199"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="199"] {
+    background-position-x: 27.2727272727%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="200"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="200"] {
+    background-position-x: 45.4545454545%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="201"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="201"] {
+    background-position-x: 63.6363636364%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="202"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="202"] {
+    background-position-x: 81.8181818182%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="203"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="203"] {
+    background-position-x: 100%;
+    background-position-y: 0
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="204"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="204"] {
+    background-position-x: 9.0909090909%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="205"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="205"] {
+    background-position-x: 27.2727272727%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="206"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="206"] {
+    background-position-x: 45.4545454545%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="207"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="207"] {
+    background-position-x: 63.6363636364%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="208"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="208"] {
+    background-position-x: 81.8181818182%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="209"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="209"] {
+    background-position-x: 100%;
+    background-position-y: 20%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="210"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="210"] {
+    background-position-x: 9.0909090909%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="211"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="211"] {
+    background-position-x: 27.2727272727%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="212"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="212"] {
+    background-position-x: 45.4545454545%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="213"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="213"] {
+    background-position-x: 63.6363636364%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="214"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="214"] {
+    background-position-x: 81.8181818182%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="215"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="215"] {
+    background-position-x: 100%;
+    background-position-y: 40%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="216"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="216"] {
+    background-position-x: 9.0909090909%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="217"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="217"] {
+    background-position-x: 27.2727272727%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="218"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="218"] {
+    background-position-x: 45.4545454545%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="219"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="219"] {
+    background-position-x: 63.6363636364%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="220"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="220"] {
+    background-position-x: 81.8181818182%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="221"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="221"] {
+    background-position-x: 100%;
+    background-position-y: 60%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="222"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="222"] {
+    background-position-x: 9.0909090909%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="223"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="223"] {
+    background-position-x: 27.2727272727%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="224"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="224"] {
+    background-position-x: 45.4545454545%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="225"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="225"] {
+    background-position-x: 63.6363636364%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="226"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="226"] {
+    background-position-x: 81.8181818182%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="227"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="227"] {
+    background-position-x: 100%;
+    background-position-y: 80%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="228"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="228"] {
+    background-position-x: 9.0909090909%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="229"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="229"] {
+    background-position-x: 27.2727272727%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="230"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="230"] {
+    background-position-x: 45.4545454545%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="231"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="231"] {
+    background-position-x: 63.6363636364%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="232"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="232"] {
+    background-position-x: 81.8181818182%;
+    background-position-y: 100%
+}
+
+.card.hCard:not(.sapling).superCard.onRight[data-id="233"],
+.hCard.futurePlace.selectable:not(.sapling).superCard.onRight[data-id="233"] {
+    background-position-x: 100%;
+    background-position-y: 100%
+}
+
+.back.futurePlace.selectable,
+.card.back,
+.card.sapling.logCard,
+.card.sapling[data-position=sapling],
+.sapling.logCard.futurePlace.selectable,
+.sapling[data-position=sapling].futurePlace.selectable {
+    background-image: url(img/vCards.jpg);
+    background-position: 100% 100%;
+    background-size: 700%
+}
+
+.superCard {
+    display: inline-block;
+    height: calc(var(--superCard) /.644 - 5px);
+    width: var(--superCard)
+}
+
+.tooltipable {
+    z-index: 4
+}
+
+#btn-sapling.disabled {
+    display: none
+}
+
+.empty {
+    filter: grayscale(100%)
+}
+
+.empty:before {
+    background-color: hsla(0, 3%, 94%, .25);
+    content: "";
+    height: 100%;
+    position: absolute;
+    width: 100%
+}
+
+.whiteblock {
+    border-radius: 10px
+}
+
+.player-infos {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    margin: 5px
+}
+
+.player-infos .counter {
+    display: inline-block;
+    font-family: roboto;
+    font-size: 1.5em;
+    margin-right: .5em;
+    text-align: center
+}
+
+.player-infos .counter:before {
+    background-size: cover;
+    border-radius: 2px;
+    content: "";
+    display: block;
+    float: left
+}
+
+.player-infos .counter.cave-counter:before {
+    background-image: url(img/cave.jpg);
+    background-repeat: no-repeat;
+    background-size: contain;
+    height: 30px;
+    width: 46.5838509317px
+}
+
+.player-infos .counter.cards-counter:before {
+    background-image: url(img/vCards.jpg);
+    background-position-x: 100%;
+    background-position-y: 100%;
+    background-size: 700%;
+    height: 30px;
+    width: 19.32px
+}
+
+.rewards-counter:after {
+    background: url(img/icons.png);
+    background-position: 100%;
+    background-size: cover;
+    content: "";
+    display: inline-block;
+    height: 20px;
+    position: relative;
+    top: 4px;
+    width: 20px
+}
+
+.deckinfo {
+    background: hsla(0, 0%, 100%, .678);
+    border-radius: 25%;
+    color: #503909;
+    font-weight: 600;
+    height: calc(min(var(--card-width), var(--max-card-width)) /4);
+    line-height: calc(min(var(--card-width), var(--max-card-width)) /4);
+    min-width: calc(min(var(--card-width), var(--max-card-width)) /4);
+    overflow: visible;
+    padding: 2px;
+    position: absolute;
+    text-align: center;
+    z-index: 99
+}
+
+.card,
+.futurePlace.selectable {
+    -o-box-shadow: 5px 5px 5px 0 rgba(0, 0, 0, .4);
+    box-shadow: 5px 5px 5px 0 rgba(0, 0, 0, .4);
+    filter: progid:DXImageTransform.Microsoft.Shadow(color=#656565, Direction=134, Strength=30)
+}
+
+#deck,
+#deck.selectable:before,
+#discard,
+.card,
+.futurePlace.selectable {
+    border-radius: 5%
+}
+
+.animate-on-transforms {
+    transition: all .5s ease-in-out
+}
+
+.flip-container {
+    background-color: transparent;
+    height: calc(var(--card-width) /.644);
+    perspective: 1000px;
+    width: var(--card-width)
+}
+
+.flip-container .flip-inner {
+    height: 100%;
+    position: relative;
+    transform: rotateY(0deg);
+    transform-style: preserve-3d;
+    transition: transform .4s;
+    width: 100%
+}
+
+.flip-container .flip-inner .flip-back,
+.flip-container .flip-inner .flip-front {
+    backface-visibility: hidden;
+    height: 100%;
+    position: absolute;
+    transform: rotateY(0deg);
+    width: 100%
+}
+
+.flip-container .flip-inner .flip-back,
+.flip-container.flipped .flip-inner {
+    transform: rotateY(180deg)
+}
+
+.help-marker {
+    background: hsla(0, 0%, 100%, .877);
+    border: 1px solid #000;
+    border-radius: 50%;
+    cursor: help;
+    font-size: large;
+    font-weight: 700;
+    position: absolute;
+    right: 2%;
+    text-align: center;
+    top: 13%;
+    z-index: 900
+}
+
+.help-marker,
+.help-marker svg {
+    height: calc(min(var(--card-in-hand-width), var(--max-card-width)) /6);
+    width: calc(min(var(--card-in-hand-width), var(--max-card-width))/6)
+}
+
+.onBottom .help-marker,
+.onTop .help-marker {
+    top: 26%
+}
+
+.onLeft .help-marker,
+.onRight .help-marker {
+    right: 4%
+}
+
+#ebd-body:not(.help-mode) .help-marker {
+    opacity: 0;
+    pointer-events: none
+}
+
+#player_board_config {
+    -o-border-image: none;
+    border-image: none;
+    position: relative
+}
+
+.player_config_row {
+    align-items: center;
+    border-bottom: 1px solid #000;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding: 6px 0
+}
+
+.player_config_row:last-child {
+    border-bottom: none
+}
+
+.player_config_row .slider {
+    margin-top: 5px
+}
+
+#help-mode-switch .checkbox {
+    display: none
+}
+
+#help-mode-switch .label {
+    background-color: #2c3037;
+    border-radius: 50px;
+    cursor: pointer;
+    display: inline-block;
+    height: 26px;
+    position: relative;
+    width: 50px
+}
+
+#help-mode-switch .label .ball {
+    background-color: #fff;
+    border-radius: 50%;
+    height: 22px;
+    left: 2px;
+    position: absolute;
+    top: 2px;
+    transform: translateX(0);
+    transition: transform .2s linear, color .7s linear;
+    width: 22px
+}
+
+#help-mode-switch .checkbox:checked+.label .ball {
+    transform: translateX(24px)
+}
+
+#help-mode-switch svg {
+    width: 27px
+}
+
+#show-settings {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    height: 40px;
+    justify-content: center;
+    width: 50px
+}
+
+#show-settings:hover {
+    color: grey
+}
+
+#show-settings svg {
+    height: 40px;
+    width: auto
+}
+
+#show-settings .fa-primary {
+    transform-origin: 216px 255px;
+    transition: transform 1s
+}
+
+#show-settings:hover .fa-primary {
+    transform: rotate(180deg)
+}
+
+#popin_showSettings_underlay {
+    background-color: #000 !important;
+    opacity: .6
+}
+
+#popin_showSettings {
+    background-color: #ebd5bd;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px #000;
+    position: relative
+}
+
+#popin_showSettings .rauha_popin_closeicon {
+    align-items: center;
+    background-color: #a47a77;
+    border: 1px solid #dfbda8;
+    border-radius: 50%;
+    color: #fff !important;
+    display: flex;
+    font-size: 90%;
+    height: 40px;
+    justify-content: center;
+    position: absolute;
+    right: -18px;
+    top: -18px;
+    width: 40px
+}
+
+#popin_showSettings .rauha_popin_closeicon:hover {
+    color: #ccc !important;
+    text-decoration: none;
+    transform: scale(1.1)
+}
+
+#popin_showSettings .rauha_popin_closeicon i {
+    margin-top: -2px
+}
+
+#popin_showSettings h2 {
+    background: #b79570;
+    border-bottom: 1px solid #734f2a;
+    border-radius: 8px 8px 0 0;
+    font-family: Oranienbaum;
+    font-size: 23px;
+    margin: 0;
+    padding: 7px 0;
+    text-align: center
+}
+
+#settings-controls-container {
+    position: relative;
+    text-align: center;
+    width: 550px
+}
+
+#settings-controls-container #settings-controls-header {
+    align-items: stretch;
+    display: flex
+}
+
+#settings-controls-container #settings-controls-header div {
+    background: #cca172;
+    border-bottom: 1px solid #000;
+    border-right: 1px solid #000;
+    cursor: pointer;
+    flex-grow: 1;
+    padding: 5px 8px
+}
+
+#settings-controls-container #settings-controls-header div:last-child {
+    border-right: none
+}
+
+#settings-controls-container #settings-controls-header div.open {
+    background: none;
+    border-bottom: none
+}
+
+#settings-controls-container #settings-controls-wrapper .settings-section {
+    display: none
+}
+
+#settings-controls-container #settings-controls-wrapper .settings-section.open {
+    display: block
+}
+
+#settings-controls-container .row-data {
+    align-items: center;
+    border: none;
+    border-bottom: 1px solid gray;
+    display: flex;
+    flex-flow: row;
+    justify-content: center
+}
+
+#settings-controls-container .row-data .row-label {
+    color: #000;
+    float: none;
+    padding: 2px 4px 0;
+    text-overflow: clip;
+    white-space: normal;
+    width: 100%
+}
+
+#settings-controls-container .row-data .row-value {
+    margin: 0;
+    width: 85%
+}
+
+#settings-controls-container .row-data .row-value.slider {
+    box-sizing: content-box;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: calc(85% - 40px)
+}
+
+#settings-controls-container .row-data.row-data-switch .row-value {
+    padding: 6px 0
+}
+
+#settings-controls-container .row-data label.switch {
+    display: block
+}
+
+#settings-controls-container .row-data label.switch input {
+    display: none
+}
+
+#settings-controls-container .row-data label.switch .slider {
+    background-color: #a6a6a6;
+    border-radius: 34px;
+    cursor: pointer;
+    height: 27px;
+    margin: auto;
+    position: relative;
+    transition: .4s;
+    width: 55px
+}
+
+#settings-controls-container .row-data label.switch .slider:before {
+    background-color: #fff;
+    border-radius: 50%;
+    bottom: 4px;
+    content: "";
+    height: 19px;
+    left: 4px;
+    position: absolute;
+    transition: .4s;
+    width: 19px
+}
+
+#settings-controls-container .row-data label.switch input:checked+.slider {
+    background-color: #2196f3
+}
+
+#settings-controls-container .row-data label.switch input:checked+.slider:before {
+    left: 30px
+}
+
+#card-overlay {
+    align-items: center;
+    background-color: rgba(0, 0, 0, .3);
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    transition: opacity .6s;
+    width: 100%;
+    z-index: 4000
+}
+
+#card-overlay .card,
+#card-overlay .futurePlace.selectable {
+    height: calc(var(--card-width) /.644 * 1.5);
+    width: calc(var(--card-width) * 1.5)
+}
+
+#card-overlay.active {
+    opacity: 1;
+    pointer-events: none
+}

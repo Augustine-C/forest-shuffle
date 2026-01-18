@@ -1,0 +1,213 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.code {
+  font-family: monospace;
+  font-size: 2em;
+  background: #444;
+  padding: 5px 10px;
+  border-radius: 4px;
+  letter-spacing: 2px;
+}
+
+.player-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.player-list li {
+  background: #333;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.primary-btn {
+  background-color: #646cff;
+  padding: 0.8em 1.5em;
+  font-size: 1.2em;
+}
+
+.turn-indicator {
+  font-size: 1.5rem;
+  padding: 10px;
+  background: #444;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.my-turn {
+  background: #2a6f2a;
+  /* Green for your turn */
+  font-weight: bold;
+  animation: pulse 2s infinite;
+}
+
+.action-btn {
+  background-color: #e6a23c;
+  color: white;
+  padding: 10px 20px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 5px;
+}
+
+.action-btn:hover {
+  background-color: #d6922c;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(42, 111, 42, 0.7);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(42, 111, 42, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(42, 111, 42, 0);
+  }
+}
+
+.card {
+  border: 1px solid #555;
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 10px;
+  width: 120px;
+  min-height: 160px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.card.selected {
+  border: 3px solid #646cff;
+  box-shadow: 0 0 10px #646cff;
+}
+
+.card.cost-selected {
+  border: 3px solid #ff4646;
+  opacity: 0.7;
+}
+
+.card.type-tree {
+  border-color: #2e7d32;
+}
+
+.card.type-split {
+  border-color: #827717;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.card-type {
+  font-size: 0.7rem;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+.split-info {
+  font-size: 0.7rem;
+  background: #1a1a1a;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.forest-grid {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 20px 0;
+}
+
+.tree-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.middle-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.slot {
+  width: 120px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed #444;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.slot:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.slot.left,
+.slot.right {
+  width: 40px;
+  height: 160px;
+}
+
+.action-btn.primary {
+  background-color: #646cff;
+}
