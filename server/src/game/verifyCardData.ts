@@ -56,6 +56,14 @@ const hareSpec = getSpeciesData('European Hare');
 console.log(`  European Hare species:`, hareSpec);
 console.log();
 
+const missingSpecies = Array.from(new Set(
+    Object.values(CARDS_DATA).flatMap(card => card.species).filter(Boolean)
+)).filter(name => !getSpeciesData(name));
+
+if (missingSpecies.length > 0) {
+    throw new Error(`Missing species data: ${missingSpecies.join(', ')}`);
+}
+
 // Test 5: Deck filtering
 console.log('🃏 Deck Filtering:');
 const basicCards = getCardsByDeck([BASIC_DECK]);

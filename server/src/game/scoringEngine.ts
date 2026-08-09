@@ -45,13 +45,13 @@ export function calculatePlayerScore(player: Player, gameState: GameState): numb
     // 1. Calculate points for each card in forest
     player.forest.forEach(treeSlot => {
         // Points for the tree itself
-        totalPoints += calculateCardPoints(treeSlot.tree, player, gameState);
+        if (!treeSlot.isSapling) totalPoints += calculateCardPoints(treeSlot.tree, player, gameState);
 
         // Points for attached cards
-        if (treeSlot.top) totalPoints += calculateCardPoints(treeSlot.top, player, gameState);
-        if (treeSlot.bottom) totalPoints += calculateCardPoints(treeSlot.bottom, player, gameState);
-        if (treeSlot.left) totalPoints += calculateCardPoints(treeSlot.left, player, gameState);
-        if (treeSlot.right) totalPoints += calculateCardPoints(treeSlot.right, player, gameState);
+        if (treeSlot.top) totalPoints += calculateCardPoints(treeSlot.top, player, gameState, treeSlot.speciesIndices?.top);
+        if (treeSlot.bottom) totalPoints += calculateCardPoints(treeSlot.bottom, player, gameState, treeSlot.speciesIndices?.bottom);
+        if (treeSlot.left) totalPoints += calculateCardPoints(treeSlot.left, player, gameState, treeSlot.speciesIndices?.left);
+        if (treeSlot.right) totalPoints += calculateCardPoints(treeSlot.right, player, gameState, treeSlot.speciesIndices?.right);
     });
 
     // 2. Add points for cards in cave (1 point each)
@@ -66,17 +66,9 @@ export function calculatePlayerScore(player: Player, gameState: GameState): numb
 /**
  * Calculate points for a specific card
  */
-export function calculateCardPoints(card: EnhancedCard, player: Player, gameState: GameState): number {
-    let cardTotal = 0;
-
-    card.species.forEach((s) => {
-        const pointsText = s.speciesData.points;
-        if (!pointsText) return;
-
-        cardTotal += parseAndCalculatePoints(pointsText, card, player, gameState);
-    });
-
-    return cardTotal;
+export function calculateCardPoints(card: EnhancedCard, player: Player, gameState: GameState, speciesIndex = 0): number {
+    const pointsText = card.species[speciesIndex]?.speciesData.points;
+    return pointsText ? parseAndCalculatePoints(pointsText, card, player, gameState) : 0;
 }
 
 /**

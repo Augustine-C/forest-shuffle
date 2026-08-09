@@ -13,6 +13,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
     const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState<number>(0);
     const [costCardIds, setCostCardIds] = useState<number[]>([]);
+    const [clearingCardIds, setClearingCardIds] = useState<number[]>([]);
 
     const myPlayer = gameState.players.find((p: Player) => p.id === playerId);
     const otherPlayers = gameState.players.filter((p: Player) => p.id !== playerId);
@@ -59,10 +60,19 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     };
 
     const handleDrawTwo = () => {
-        socket.emit('draw_card', { roomCode, playerId });
+        socket.emit('draw_card', { roomCode, playerId, clearingCardIds });
+        setClearingCardIds([]);
     };
 
-    const handlePlayCard = (treeIndex?: number, slot?: string) => {
+    const handleClearingCardClick = (cardId: number) => {
+        if (!isMyTurn || selectedCardId !== null) return;
+        setClearingCardIds(current => current.includes(cardId)
+            ? current.filter(id => id !== cardId)
+            : current.length < 2 ? [...current, cardId] : current
+        );
+    };
+
+    const handlePlayCard = (treeIndex?: number, slot?: string, asSapling = false) => {
         if (selectedCardId === null || !selectedCard) return;
 
         let speciesIndex = selectedSpeciesIndex;
@@ -76,7 +86,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             }
         }
 
-        const requiredCost = selectedCard.species[speciesIndex]?.speciesData.cost || 0;
+        const requiredCost = asSapling ? 0 : selectedCard.species[speciesIndex]?.speciesData.cost || 0;
         if (costCardIds.length < requiredCost) {
             alert(`Need ${requiredCost} cards for cost. Selected ${costCardIds.length}.`);
             return;
@@ -89,7 +99,8 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             costCardIds,
             speciesIndex,
             targetTreeIndex: treeIndex,
-            targetSlot: slot
+            targetSlot: slot,
+            asSapling
         });
 
         // Reset local state
@@ -107,7 +118,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                 <div className="final-scores">
                     {gameState.players.map(p => (
                         <div key={p.id}>
-                            {p.name}: {p.id === playerId ? 'You' : ''}
+                            {p.name}: {gameState.finalScores?.[p.id] ?? 0} points {p.id === playerId ? '(You)' : ''}
                         </div>
                     ))}
                 </div>
@@ -130,7 +141,11 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             <div className="actions">
                 {isMyTurn && (
                     <>
-                        <button className="action-btn" onClick={handleDrawTwo}>Draw 2 Cards</button>
+                        <button className="action-btn" onClick={handleDrawTwo}>
+                            {clearingCardIds.length > 0
+                                ? `Take ${clearingCardIds.length} + Draw ${2 - clearingCardIds.length}`
+                                : 'Draw 2 Cards'}
+                        </button>
                         {selectedCard && selectedCard.orientation === 'Tree' && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
                                 Plant {selectedCard.species[0].name} (Pay {selectedCard.species[0].speciesData.cost})
@@ -141,6 +156,11 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                                 Play Sapling
                             </button>
                         )}
+                        {selectedCard && (
+                            <button className="action-btn" onClick={() => handlePlayCard(undefined, undefined, true)}>
+                                Play as Sapling
+                            </button>
+                        )}
                     </>
                 )}
             </div>
@@ -149,7 +169,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                 <h3>Opponents</h3>
                 {otherPlayers.map((p: Player) => (
                     <div key={p.id} className="opponent">
-                        👤 {p.name} - Hand: {p.hand?.length || 0} cards | Forest: {p.forest.length} trees
+                        👤 {p.name} - Hand: {p.handCount ?? p.hand.length} cards | Forest: {p.forest.length} trees
                     </div>
                 ))}
             </div>
@@ -158,7 +178,14 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                 <h3>Clearing (Market)</h3>
                 <div className="clearing-cards">
                     {gameState.clearing.length === 0 ? <p>Empty</p> :
-                        gameState.clearing.map((c, i) => <Card key={i} card={c} />)
+                        gameState.clearing.map(c => (
+                            <Card
+                                key={c.cardId}
+                                card={c}
+                                isCostSelected={clearingCardIds.includes(c.cardId)}
+                                onClick={() => handleClearingCardClick(c.cardId)}
+                            />
+                        ))
                     }
                 </div>
             </div>
@@ -183,7 +210,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                                         {slot.left ? <div className="slot-left-wrapper"><Card card={slot.left} slot="left" /></div> : (showLeft ? <span className="placement-icon">+</span> : '')}
                                     </div>
                                     <div className="tree-card">
-                                        <Card card={slot.tree} />
+                                        {slot.isSapling ? <div className="card sapling-card">Sapling</div> : <Card card={slot.tree} />}
                                     </div>
                                     <div className="slot right" onClick={() => showRight && handlePlayCard(treeIndex, 'right')}>
                                         {slot.right ? <div className="slot-right-wrapper"><Card card={slot.right} slot="right" /></div> : (showRight ? <span className="placement-icon">+</span> : '')}

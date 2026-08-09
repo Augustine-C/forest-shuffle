@@ -2,27 +2,39 @@ import { useState, useEffect } from 'react';
 import { socket } from './services/socket';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
+import type { Player, SerializedGameState } from '../../shared/types';
 import './App.css';
 
+interface SavedSession {
+  roomCode: string;
+  playerId: string;
+}
+
+function loadSavedSession(): SavedSession | null {
+  try {
+    const value = localStorage.getItem('forest_shuffle_session');
+    return value ? JSON.parse(value) as SavedSession : null;
+  } catch {
+    localStorage.removeItem('forest_shuffle_session');
+    return null;
+  }
+}
+
 function App() {
+  const [savedSession] = useState(loadSavedSession);
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [gameStarted, setGameStarted] = useState(false);
-  const [gameState, setGameState] = useState<any>(null); // Use proper type later
-  const [playerId, setPlayerId] = useState(socket.id);
+  const [gameState, setGameState] = useState<SerializedGameState | null>(null);
+  const [playerId, setPlayerId] = useState<string | undefined>(savedSession?.playerId ?? socket.id);
 
-  const [roomCode, setRoomCode] = useState<string | null>(null);
-  const [players, setPlayers] = useState<any[]>([]);
+  const [roomCode, setRoomCode] = useState<string | null>(savedSession?.roomCode ?? null);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [isHost, setIsHost] = useState(false);
 
   useEffect(() => {
     // Check for existing session
-    const savedSession = localStorage.getItem('forest_shuffle_session');
     if (savedSession) {
-      const { roomCode: savedRoom, playerId: savedId } = JSON.parse(savedSession);
-      console.log('Found saved session:', savedRoom, savedId);
-      setRoomCode(savedRoom);
-      setPlayerId(savedId);
-      socket.emit('rejoin_game', { roomCode: savedRoom, playerId: savedId });
+      socket.emit('rejoin_game', savedSession);
     }
 
     function onConnect() {
@@ -33,13 +45,13 @@ function App() {
       setIsConnected(false);
     }
 
-    function onGameStart({ gameState }: { gameState: any }) {
+    function onGameStart({ gameState }: { gameState: SerializedGameState }) {
       console.log('Game started!', gameState);
       setGameState(gameState);
       setGameStarted(true);
     }
 
-    function onGameStateUpdate(gameState: any) {
+    function onGameStateUpdate(gameState: SerializedGameState) {
       console.log('Game state updated:', gameState);
       setGameState(gameState);
       if (gameState.gameEnded) {
@@ -63,7 +75,7 @@ function App() {
       localStorage.setItem('forest_shuffle_session', JSON.stringify({ roomCode, playerId: currentPlayerId }));
     }
 
-    function onPlayerListUpdate(players: any[]) {
+    function onPlayerListUpdate(players: Player[]) {
       console.log('Player list updated:', players);
       setPlayers(players);
     }
@@ -98,7 +110,7 @@ function App() {
       socket.off('player_list_update', onPlayerListUpdate);
       socket.off('error', onError);
     };
-  }, []);
+  }, [savedSession]);
 
   return (
     <>
@@ -116,6 +128,7 @@ function App() {
           roomCode={roomCode}
           players={players}
           isHost={isHost}
+          playerId={playerId}
         />
       )}
     </>

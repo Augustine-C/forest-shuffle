@@ -1,15 +1,16 @@
 import { EnhancedCard, getCardCost } from './cards';
 import { createDeck } from './deck';
-import { executeEffect, executeBonus, drawCardsOneByOne } from './effectsEngine';
+import { executeEffect, executeBonus, drawCardsOneByOne, revealCardToClearing } from './effectsEngine';
 import { calculatePlayerScore } from './scoringEngine';
-import { countFullyOccupiedTrees } from './cardMatching';
 
 export interface PlacedTree {
     tree: EnhancedCard;
+    isSapling?: boolean;
     top?: EnhancedCard;
     bottom?: EnhancedCard;
     left?: EnhancedCard;
     right?: EnhancedCard;
+    speciesIndices?: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>;
 }
 
 export interface Player {
@@ -56,7 +57,18 @@ export class GameState {
     }
 
     startGame() {
+        if (this.players.size < 2 || this.players.size > 5) {
+            throw new Error('Forest Shuffle requires 2-5 players');
+        }
+        this.deck = createDeck(this.players.size);
+        this.clearing = [];
+        this.winterCardsDrawn = 0;
+        this.gameEnded = false;
+        this.activePlayerIndex = 0;
         this.players.forEach(player => {
+            player.hand = [];
+            player.forest = [];
+            player.cave = [];
             // Draw 6 cards for each player
             this.drawCards(6, player);
         });
@@ -90,12 +102,30 @@ export class GameState {
     }
 
     // Actions
-    playerDrawsTwo() {
+    playerDrawsTwo(clearingCardIds: number[] = []) {
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
         const player = this.players.get(activePlayerId);
         if (!player) return;
 
-        this.drawCards(2);
+        if (clearingCardIds.length > 2 || new Set(clearingCardIds).size !== clearingCardIds.length) {
+            throw new Error('Choose at most two distinct clearing cards');
+        }
+        if (player.hand.length + clearingCardIds.length > 10) {
+            throw new Error('Selected clearing cards exceed the hand limit');
+        }
+
+        const clearingIndexes = clearingCardIds.map(cardId =>
+            this.clearing.findIndex(card => card.cardId === cardId)
+        );
+        if (clearingIndexes.some(index => index < 0)) {
+            throw new Error('A selected card is no longer in the clearing');
+        }
+
+        clearingIndexes.sort((a, b) => b - a).forEach(index => {
+            const [card] = this.clearing.splice(index, 1);
+            player.hand.push(card);
+        });
+        this.drawCards(2 - clearingCardIds.length);
 
         this.nextTurn();
     }
@@ -115,29 +145,61 @@ export class GameState {
         costCardIds: number[],
         speciesIndex: number = 0,
         targetTreeIndex?: number,
-        targetSlot?: 'top' | 'bottom' | 'left' | 'right'
+        targetSlot?: 'top' | 'bottom' | 'left' | 'right',
+        asSapling: boolean = false
     ) {
         const player = this.players.get(playerId);
-        if (!player) return;
+        if (!player) throw new Error('Player not found');
 
         // 1. Find the card in hand by cardId
         const cardIndex = player.hand.findIndex(c => c.cardId === cardIdNum);
-        if (cardIndex === -1) return;
+        if (cardIndex === -1) throw new Error('Card is not in player hand');
         const cardToPlay = player.hand[cardIndex];
 
+        if (!Number.isInteger(speciesIndex) || !cardToPlay.species[speciesIndex]) {
+            throw new Error('Invalid card side');
+        }
+
         // 2. Validate and Pay Cost
-        const requiredCost = getCardCost(cardToPlay, speciesIndex);
+        const requiredCost = asSapling ? 0 : getCardCost(cardToPlay, speciesIndex);
 
         if (player.hand.length - 1 < requiredCost) {
             throw new Error(`Not enough cards! Need ${requiredCost}, have ${player.hand.length - 1}`);
         }
 
         // Validate cost cards provided
-        if (costCardIds.length < requiredCost) {
-            throw new Error("Insufficient payment selected");
+        if (costCardIds.length !== requiredCost) {
+            throw new Error(`Payment must contain exactly ${requiredCost} cards`);
+        }
+
+        if (new Set(costCardIds).size !== costCardIds.length) {
+            throw new Error('Payment contains duplicate cards');
+        }
+        if (costCardIds.includes(cardIdNum)) {
+            throw new Error('The played card cannot pay for itself');
+        }
+        if (costCardIds.some(id => !player.hand.some(card => card.cardId === id))) {
+            throw new Error('Payment contains a card that is not in hand');
+        }
+
+        let targetTree: PlacedTree | undefined;
+        if (!asSapling && cardToPlay.isSplitCard) {
+            if (targetTreeIndex === undefined || targetSlot === undefined) {
+                throw new Error('Split cards require a target tree and slot');
+            }
+            const validSlots = cardToPlay.orientation === 'vCard'
+                ? ['top', 'bottom']
+                : ['left', 'right'];
+            if (!validSlots.includes(targetSlot)) {
+                throw new Error('Card orientation is incompatible with target slot');
+            }
+            targetTree = player.forest[targetTreeIndex];
+            if (!targetTree) throw new Error('Target tree does not exist');
+            if (targetTree[targetSlot]) throw new Error('Target slot is already occupied');
         }
 
         // Remove cost cards from hand and add to clearing
+        const paymentCards = costCardIds.map(cid => player.hand.find(card => card.cardId === cid)!);
         costCardIds.forEach(cid => {
             const idx = player.hand.findIndex(c => c.cardId === cid);
             if (idx !== -1) {
@@ -152,20 +214,21 @@ export class GameState {
 
         // 3. Place the card
         let placedTree: PlacedTree | undefined = undefined;
-        if (cardToPlay.orientation === 'Tree') {
+        if (asSapling) {
+            placedTree = { tree: cardToPlay, isSapling: true };
+            player.forest.push(placedTree);
+        } else if (cardToPlay.orientation === 'Tree') {
             // Playing as a tree
             placedTree = { tree: cardToPlay };
             player.forest.push(placedTree);
         } else if (cardToPlay.isSplitCard) {
             // Playing a split card (hCard or vCard) on a tree
-            if (targetTreeIndex !== undefined && targetSlot !== undefined) {
-                placedTree = player.forest[targetTreeIndex];
-                if (placedTree) {
-                    placedTree[targetSlot] = cardToPlay;
-                }
-            } else {
-                throw new Error("Split cards require a target tree and slot");
-            }
+            placedTree = targetTree;
+            placedTree![targetSlot!] = cardToPlay;
+            placedTree!.speciesIndices = {
+                ...placedTree!.speciesIndices,
+                [targetSlot!]: speciesIndex
+            };
         } else {
             // Playing as sapling (face down)
             placedTree = { tree: cardToPlay };
@@ -173,7 +236,12 @@ export class GameState {
         }
 
         // 4. Execute Effect
-        if (placedTree) {
+        if (cardToPlay.orientation === 'Tree' && !asSapling) {
+            revealCardToClearing(this);
+            if (this.gameEnded) return;
+        }
+
+        if (placedTree && !asSapling) {
             const effectResult = executeEffect({
                 gameState: this,
                 player,
@@ -189,11 +257,23 @@ export class GameState {
             }
 
             // Check for bonus if tree is completed
-            if (placedTree.top && placedTree.bottom && placedTree.left && placedTree.right) {
-                this.triggerTreeBonuses(player, placedTree);
+            const playedSpecies = cardToPlay.species[speciesIndex];
+            const bonusActive = requiredCost > 0 && paymentCards.every(payment =>
+                payment.species.some(species => species.treeSymbol === playedSpecies.treeSymbol)
+            );
+            const bonusResult = bonusActive ? executeBonus({
+                gameState: this,
+                player,
+                card: cardToPlay,
+                speciesIndex,
+                targetTree: placedTree,
+                targetSlot
+            }) : undefined;
+            if (bonusResult?.cardsDrawn) {
+                drawCardsOneByOne(this, player, bonusResult.cardsDrawn);
             }
 
-            if (effectResult.extraTurn) {
+            if (effectResult.extraTurn || bonusResult?.extraTurn) {
                 // Handle extra turn logic (don't call nextTurn)
                 return;
             }
@@ -211,30 +291,6 @@ export class GameState {
         if (!this.gameEnded) {
             this.activePlayerIndex = (this.activePlayerIndex + 1) % this.players.size;
         }
-    }
-
-    private triggerTreeBonuses(player: Player, tree: PlacedTree) {
-        const parts = [tree.tree, tree.top, tree.bottom, tree.left, tree.right];
-        parts.forEach(card => {
-            if (card) {
-                // Find which species was played (index)
-                // For trees it's always 0. For attached cards we might need to know which half.
-                // Simplified: execute bonus for all species on the card if they have one.
-                card.species.forEach((_, idx) => {
-                    const bonusResult = executeBonus({
-                        gameState: this,
-                        player,
-                        card,
-                        speciesIndex: idx,
-                        targetTree: tree
-                    });
-
-                    if (bonusResult.cardsDrawn > 0) {
-                        drawCardsOneByOne(this, player, bonusResult.cardsDrawn);
-                    }
-                });
-            }
-        });
     }
 
     calculateScores(): Map<string, number> {

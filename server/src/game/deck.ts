@@ -48,12 +48,14 @@ export function createDeck(
     const pile2 = shuffledDeck.slice(thirdSize, thirdSize * 2);
     let pile3 = shuffledDeck.slice(thirdSize * 2);
 
-    // Add Winter cards to Pile 3 and shuffle
-    pile3.push(...winterCards);
+    // Shuffle two winter cards into the bottom pile, then place the third on
+    // top of that pile as required by setup.
+    const guaranteedWinter = winterCards[0];
+    pile3.push(...winterCards.slice(1));
     pile3 = shuffle(pile3);
 
     // Stack: Pile 1 (top) -> Pile 2 -> Pile 3 (bottom with winter cards)
-    return [...pile1, ...pile2, ...pile3];
+    return [...pile1, ...pile2, guaranteedWinter, ...pile3];
 }
 
 /**

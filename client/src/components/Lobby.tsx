@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { socket } from '../services/socket';
+import type { Player } from '../../../shared/types';
 
 interface LobbyProps {
     roomCode: string | null;
-    players: any[];
+    players: Player[];
     isHost: boolean;
+    playerId: string | undefined;
 }
 
-export default function Lobby({ roomCode, players, isHost }: LobbyProps) {
+export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProps) {
     const [joinRoomCode, setJoinRoomCode] = useState('');
     const [playerName, setPlayerName] = useState('');
 
@@ -23,7 +25,7 @@ export default function Lobby({ roomCode, players, isHost }: LobbyProps) {
 
     const handleStartGame = () => {
         if (roomCode) {
-            socket.emit('start_game', { roomCode });
+            socket.emit('start_game', { roomCode, playerId });
         }
     };
 

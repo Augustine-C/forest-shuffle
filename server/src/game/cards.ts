@@ -122,18 +122,12 @@ export function createEnhancedCard(cardId: number): EnhancedCard | null {
         .filter(name => name) // Filter empty species names (winter cards)
         .map((name, index) => {
             const speciesData = getSpeciesData(name);
+            if (!speciesData) {
+                throw new Error(`Missing species data for card ${cardId}: ${name}`);
+            }
             return {
                 name,
-                speciesData: speciesData || {
-                    name,
-                    nb: 0,
-                    tags: [],
-                    cost: 0,
-                    type: cardData.type,
-                    effect: '',
-                    bonus: '',
-                    points: '',
-                },
+                speciesData,
                 treeSymbol: (cardData.tree_symbol && cardData.tree_symbol[index]) || '',
             };
         });

@@ -5,14 +5,15 @@
 
 import { GameState } from './gameState';
 import { createEnhancedCard, getSpeciesData } from './cards';
+import assert from 'node:assert/strict';
 
 async function runTest() {
     console.log('🧪 Starting Forest Shuffle Game Logic Integration Test\n');
 
     // 1. Setup Game
     const game = new GameState(2);
-    game.addPlayer('p1', 'Alice');
-    game.addPlayer('p2', 'Bob');
+    game.addPlayer('p1', 'socket1', 'Alice', true);
+    game.addPlayer('p2', 'socket2', 'Bob');
     game.startGame();
 
     const alice = game.players.get('p1')!;
@@ -40,11 +41,8 @@ async function runTest() {
     console.log(`Alice hand size after play: ${alice.hand.length}`);
     // Expected: before - 1 (played) - 1 (cost) + 1 (drawn) = before - 1
 
-    if (alice.hand.length === handSizeBeforePlay - 1) {
-        console.log('✅ Birch played and effect (Receive 1 card) executed correctly!');
-    } else {
-        console.log(`❌ Birch effect failed. Hand size: ${alice.hand.length}, Expected: ${handSizeBeforePlay - 1}`);
-    }
+    assert.equal(alice.hand.length, handSizeBeforePlay - 1);
+    console.log('✅ Birch played and effect (Receive 1 card) executed correctly!');
 
     // 3. Test: Play a split card on a tree
     const blackberriesId = 128; // One of the Blackberries split cards
@@ -58,11 +56,9 @@ async function runTest() {
     game.playCard('p1', blackberriesId, [], speciesIndex, 0, 'bottom');
 
     const tree = alice.forest[0];
-    if (tree.bottom?.cardId === blackberriesId) {
-        console.log('✅ Blackberries placed successfully on the Birch!');
-    } else {
-        console.log('❌ Failed to place split card');
-    }
+    assert.equal(tree.bottom?.cardId, blackberriesId);
+    assert.equal(tree.speciesIndices?.bottom, speciesIndex);
+    console.log('✅ Blackberries placed successfully on the Birch!');
 
     // 4. Test: Scoring
     const pointsText = blackberriesCard.species[speciesIndex].speciesData.points;
@@ -74,11 +70,8 @@ async function runTest() {
 
     // Alice has: 1 Birch (0 pts), 1 Blackberries (2 pts per plant).
     // Alice has 1 plant (the blackberries).
-    if (aliceScore === 2) {
-        console.log('✅ Scoring for plants works correctly!');
-    } else {
-        console.log(`⚠️ Expected 2 points, got ${aliceScore}. Check point rules.`);
-    }
+    assert.equal(aliceScore, 2);
+    console.log('✅ Scoring for plants works correctly!');
 
     // 5. Test: Winter cards
     console.log('\n--- Testing Winter Card Detection ---');
@@ -93,11 +86,10 @@ async function runTest() {
         console.log(`Winter cards drawn: ${game.winterCardsDrawn}`);
         console.log(`Game ended: ${game.gameEnded}`);
 
-        if (game.gameEnded && game.winterCardsDrawn === 3) {
-            console.log('✅ Game ended correctly after 3 winter cards!');
-        } else {
-            console.log('❌ Game did not end or winter count mismatch');
-        }
+        assert.equal(game.gameEnded, true);
+        assert.equal(game.winterCardsDrawn, 3);
+        assert.equal(alice.hand.some(card => card.isWinterCard), false);
+        console.log('✅ Game ended correctly after 3 winter cards!');
     }
 
     console.log('\n🏁 Integration Test Complete!');

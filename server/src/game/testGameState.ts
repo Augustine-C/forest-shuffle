@@ -5,6 +5,7 @@
 
 import { GameState } from './gameState';
 import { getCardById, getCardCost } from './cards';
+import assert from 'node:assert/strict';
 
 console.log('🎮 Testing GameState with EnhancedCard integration\n');
 
@@ -15,9 +16,10 @@ console.log(`  ✅ GameState created with ${game.deck.length} cards in deck`);
 
 // Test 2: Add players
 console.log('\nTest 2: Add Players');
-game.addPlayer('player1', 'Alice');
-game.addPlayer('player2', 'Bob');
+game.addPlayer('player1', 'socket1', 'Alice', true);
+game.addPlayer('player2', 'socket2', 'Bob');
 console.log(`  ✅ Added ${game.players.size} players`);
+assert.equal(game.players.size, 2);
 
 // Test 3: Start game (deal initial hands)
 console.log('\nTest 3: Start Game');
@@ -27,6 +29,8 @@ const player2 = game.players.get('player2')!;
 console.log(`  ✅ Player 1 hand: ${player1.hand.length} cards`);
 console.log(`  ✅ Player 2 hand: ${player2.hand.length} cards`);
 console.log(`  ✅ Deck remaining: ${game.deck.length} cards`);
+assert.equal(player1.hand.length, 6);
+assert.equal(player2.hand.length, 6);
 
 // Test 4: Examine sample cards
 console.log('\nTest 4: Sample Cards from Hand');
@@ -56,6 +60,7 @@ console.log(`  Winter cards: ${wCards}`);
 console.log('\nTest 6: Draw Cards');
 const drawn = game.drawCards(2);
 console.log(`  ✅ Drew ${drawn.length} cards`);
+assert.equal(drawn.length, 2);
 console.log(`  Deck remaining: ${game.deck.length}`);
 
 console.log('\n✅ All GameState tests passed!');

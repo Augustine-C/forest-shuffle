@@ -22,12 +22,11 @@ cd ../server && npm ci
 
 Run local development in two terminals with `npm run dev` from `server/` (port 3000) and `client/` (Vite, normally port 5173). Use `npm run build` in each directory to type-check and compile. In `client/`, `npm run lint` runs ESLint and `npm run preview` serves the production build.
 
-The server's `npm test` is currently a placeholder. Run the existing checks directly:
+Run the server's complete scripted checks with:
 
 ```bash
 cd server
-npx ts-node src/game/testGameState.ts
-npx ts-node src/game/testIntegration.ts
+npm test
 ```
 
 ## Coding Style & Naming Conventions
@@ -36,7 +35,7 @@ TypeScript strict mode is enabled. Use 2 spaces in client code and follow the su
 
 ## Testing Guidelines
 
-Add deterministic checks near the game engine and name runnable scripts `test*.ts`. Cover normal play plus invalid turns, payment, placement, effects, scoring, and winter-card termination. Before submitting, run both builds, client lint, and relevant test scripts. If introducing a test framework, add a working `npm test` script in the same change.
+Add deterministic assertions near the game engine and name runnable scripts `test*.ts`. Cover normal play plus invalid turns, payment, placement, effects, scoring, and winter-card termination. Before submitting, run both builds, client lint, and `npm test` in `server/`.
 
 ## Commit & Pull Request Guidelines
 

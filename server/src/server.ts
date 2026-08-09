@@ -17,7 +17,7 @@ const io = new Server(httpServer, {
 });
 
 // Serve static files from client dist
-const clientDist = path.join(__dirname, '../../client/dist');
+const clientDist = path.resolve(process.cwd(), '../client/dist');
 app.use(express.static(clientDist));
 
 const games = new Map<string, GameState>(); // RoomID -> GameState
@@ -26,6 +26,16 @@ const roomMetadata = new Map<string, { status: 'LOBBY' | 'PLAYING' | 'ENDED' }>(
 // Helper to generate room code
 const generateRoomCode = () => Math.random().toString(36).substring(2, 6).toUpperCase();
 const generatePlayerId = () => Math.random().toString(36).substring(2, 10);
+
+const getPlayerList = (game: GameState) => Array.from(game.players.values()).map(player => ({
+    id: player.id,
+    name: player.name,
+    isHost: player.isHost,
+    hand: [],
+    handCount: player.hand.length,
+    forest: [],
+    cave: []
+}));
 
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
@@ -47,13 +57,13 @@ io.on('connection', (socket) => {
         socket.emit('game_created', { roomCode, currentPlayerId: playerId });
 
         // Broadcast player list
-        const playersList = Array.from(gameState.players.values());
-        io.to(roomCode).emit('player_list_update', playersList);
+        io.to(roomCode).emit('player_list_update', getPlayerList(gameState));
 
         console.log(`Game created: ${roomCode} by ${playerName} (${playerId})`);
     });
 
-    socket.on('join_game', ({ roomCode, playerName }) => {
+    socket.on('join_game', ({ roomCode: requestedRoomCode, playerName }) => {
+        const roomCode = String(requestedRoomCode).trim().toUpperCase();
         const game = games.get(roomCode);
         const meta = roomMetadata.get(roomCode);
 
@@ -65,14 +75,17 @@ io.on('connection', (socket) => {
             socket.emit('error', 'Game already started');
             return;
         }
+        if (game.players.size >= 5) {
+            socket.emit('error', 'Room is full');
+            return;
+        }
 
         const playerId = generatePlayerId();
         game.addPlayer(playerId, socket.id, playerName, false);
         socket.join(roomCode);
 
         socket.emit('game_joined', { roomCode, currentPlayerId: playerId });
-        const playersList = Array.from(game.players.values());
-        io.to(roomCode).emit('player_list_update', playersList);
+        io.to(roomCode).emit('player_list_update', getPlayerList(game));
 
         console.log(`${playerName} (${playerId}) joined ${roomCode}`);
     });
@@ -101,59 +114,67 @@ io.on('connection', (socket) => {
         // Sync state back to player
         if (meta.status === 'LOBBY') {
             socket.emit('game_joined', { roomCode, currentPlayerId: playerId, isHost: player.isHost });
-            const playersList = Array.from(game.players.values());
-            socket.emit('player_list_update', playersList);
+            socket.emit('player_list_update', getPlayerList(game));
         } else {
             // Sync host info even if game already started for UI consistency
             socket.emit('game_joined', { roomCode, currentPlayerId: playerId, isHost: player.isHost });
-            socket.emit('game_start', { gameState: getSerializedState(game) });
+            socket.emit('game_start', { gameState: getSerializedState(game, playerId) });
         }
     });
 
-    const getSerializedState = (game: GameState) => ({
-        players: Array.from(game.players.values()),
+    const getSerializedState = (game: GameState, viewerId: string) => ({
+        players: Array.from(game.players.values()).map(player => ({
+            id: player.id,
+            name: player.name,
+            isHost: player.isHost,
+            hand: player.id === viewerId ? player.hand : [],
+            handCount: player.hand.length,
+            forest: player.forest,
+            cave: player.cave
+        })),
         clearing: game.clearing,
         activePlayerIndex: game.activePlayerIndex,
         deckCount: game.deck.length,
         winterCardsDrawn: game.winterCardsDrawn,
-        gameEnded: game.gameEnded
+        gameEnded: game.gameEnded,
+        finalScores: game.gameEnded ? Object.fromEntries(game.calculateScores()) : undefined
     });
 
-    socket.on('start_game', ({ roomCode }) => {
+    const emitGameEvent = (roomCode: string, game: GameState, event: 'game_start' | 'game_state_update') => {
+        game.players.forEach(player => {
+            const state = getSerializedState(game, player.id);
+            io.to(player.socketId).emit(event, event === 'game_start' ? { gameState: state } : state);
+        });
+    };
+
+    const isAuthorizedPlayer = (game: GameState, playerId: string) =>
+        game.players.get(playerId)?.socketId === socket.id;
+
+    socket.on('start_game', ({ roomCode, playerId }) => {
         const game = games.get(roomCode);
         const meta = roomMetadata.get(roomCode);
-        if (game && meta) {
+        const player = game?.players.get(playerId);
+        if (game && meta && player?.socketId === socket.id && player.isHost && meta.status === 'LOBBY') {
             meta.status = 'PLAYING';
             try {
                 game.startGame(); // Deals cards
             } catch (e) {
                 console.error("Error starting game:", e);
             }
-            io.to(roomCode).emit('game_start', { gameState: getSerializedState(game) });
+            emitGameEvent(roomCode, game, 'game_start');
             console.log(`Game ${roomCode} started. Deal complete.`);
         }
+        else socket.emit('error', 'Only the host can start a lobby game');
     });
 
-    socket.on('draw_card', ({ roomCode, playerId }) => {
+    socket.on('draw_card', ({ roomCode, playerId, clearingCardIds = [] }) => {
         const game = games.get(roomCode);
         const meta = roomMetadata.get(roomCode);
         if (!game || meta?.status !== 'PLAYING') return;
-
-        // Verify active player
-        const activePlayerId = Array.from(game.players.keys())[game.activePlayerIndex];
-        if (activePlayerId !== playerId) {
-            socket.emit('error', 'Not your turn!');
+        if (!isAuthorizedPlayer(game, playerId)) {
+            socket.emit('error', 'Player session does not match this connection');
             return;
         }
-
-        game.playerDrawsTwo();
-        io.to(roomCode).emit('game_state_update', getSerializedState(game));
-    });
-
-    socket.on('play_card', ({ roomCode, playerId, cardId, costCardIds, speciesIndex, targetTreeIndex, targetSlot }) => {
-        const game = games.get(roomCode);
-        const meta = roomMetadata.get(roomCode);
-        if (!game || meta?.status !== 'PLAYING') return;
 
         // Verify active player
         const activePlayerId = Array.from(game.players.keys())[game.activePlayerIndex];
@@ -163,8 +184,34 @@ io.on('connection', (socket) => {
         }
 
         try {
-            game.playCard(activePlayerId, cardId, costCardIds, speciesIndex, targetTreeIndex, targetSlot);
-            io.to(roomCode).emit('game_state_update', getSerializedState(game));
+            game.playerDrawsTwo(clearingCardIds);
+            if (game.gameEnded) meta.status = 'ENDED';
+            emitGameEvent(roomCode, game, 'game_state_update');
+        } catch (error) {
+            socket.emit('error', (error as Error).message);
+        }
+    });
+
+    socket.on('play_card', ({ roomCode, playerId, cardId, costCardIds, speciesIndex, targetTreeIndex, targetSlot, asSapling = false }) => {
+        const game = games.get(roomCode);
+        const meta = roomMetadata.get(roomCode);
+        if (!game || meta?.status !== 'PLAYING') return;
+        if (!isAuthorizedPlayer(game, playerId)) {
+            socket.emit('error', 'Player session does not match this connection');
+            return;
+        }
+
+        // Verify active player
+        const activePlayerId = Array.from(game.players.keys())[game.activePlayerIndex];
+        if (activePlayerId !== playerId) {
+            socket.emit('error', 'Not your turn!');
+            return;
+        }
+
+        try {
+            game.playCard(activePlayerId, cardId, costCardIds, speciesIndex, targetTreeIndex, targetSlot, asSapling);
+            if (game.gameEnded) meta.status = 'ENDED';
+            emitGameEvent(roomCode, game, 'game_state_update');
         } catch (e) {
             console.error("Error playing card:", e);
             socket.emit('error', (e as Error).message || 'Invalid play');

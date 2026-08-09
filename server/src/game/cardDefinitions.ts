@@ -56,6 +56,22 @@ export const EDGE_DECK: DeckType = 'edge';
 export const CARDS_DATA: Record<number, CardData> = cardsDataJson as Record<number, CardData>;
 export const SPECIES_DATA: Record<string, SpeciesData> = speciesDataJson as Record<string, SpeciesData>;
 
+// Card records use display names (for example "European Hare"), while generated
+// keys omit punctuation and spaces ("EuropeanHare"). Normalize the generated
+// keys rather than record names because expansion variants can share a name.
+const normalizeSpeciesKey = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, '');
+const SPECIES_BY_NORMALIZED_KEY = Object.entries(SPECIES_DATA).reduce<Record<string, SpeciesData>>(
+    (index, [key, species]) => {
+        const normalizedKey = normalizeSpeciesKey(key);
+        if (index[normalizedKey]) {
+            throw new Error(`Duplicate normalized species key: ${key}`);
+        }
+        index[normalizedKey] = species;
+        return index;
+    },
+    {}
+);
+
 // ===== Helper Functions =====
 
 /**
@@ -69,7 +85,7 @@ export function getCardById(cardId: number): CardData | undefined {
  * Get species data by species name
  */
 export function getSpeciesData(speciesName: string): SpeciesData | undefined {
-    return SPECIES_DATA[speciesName];
+    return SPECIES_DATA[speciesName] ?? SPECIES_BY_NORMALIZED_KEY[normalizeSpeciesKey(speciesName)];
 }
 
 /**

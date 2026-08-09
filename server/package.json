@@ -2,11 +2,16 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/server/src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run test:game && npm run test:integration && npm run test:validation && npm run verify:data",
+    "test:game": "ts-node src/game/testGameState.ts",
+    "test:integration": "ts-node src/game/testIntegration.ts",
+    "test:validation": "ts-node src/game/testValidation.ts",
+    "verify:data": "ts-node src/game/verifyCardData.ts",
     "dev": "ts-node src/server.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "start": "node dist/server/src/server.js"
   },
   "keywords": [],
   "author": "",

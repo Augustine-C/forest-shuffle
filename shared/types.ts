@@ -52,16 +52,20 @@ export interface EnhancedCard {
 
 export interface PlacedTree {
     tree: EnhancedCard;
+    isSapling?: boolean;
     top?: EnhancedCard;
     bottom?: EnhancedCard;
     left?: EnhancedCard;
     right?: EnhancedCard;
+    speciesIndices?: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>;
 }
 
 export interface Player {
     id: string;
     name: string;
+    isHost?: boolean;
     hand: EnhancedCard[];
+    handCount?: number;
     forest: PlacedTree[];
     cave: EnhancedCard[];
 }
@@ -73,4 +77,5 @@ export interface SerializedGameState {
     deckCount: number;
     winterCardsDrawn: number;
     gameEnded: boolean;
+    finalScores?: Record<string, number>;
 }

@@ -66,6 +66,8 @@ export function executeEffect(context: EffectContext): EffectResult {
     // Pattern: "Place all cards from the clearing in your cave"
     if (effectText.includes('Place all cards from the clearing in your cave')) {
         const clearingCards = [...context.gameState.clearing];
+        context.player.cave.push(...clearingCards);
+        context.gameState.clearing = [];
         result.cardsMoved = clearingCards;
         result.message = `Moved ${clearingCards.length} cards from clearing to cave`;
         return result;
@@ -171,6 +173,7 @@ export function executeEffect(context: EffectContext): EffectResult {
     // Pattern: "Remove all cards in the clearing from the game"
     if (effectText.includes('Remove all cards in the clearing from the game')) {
         result.cardsMoved = [...context.gameState.clearing];
+        context.gameState.clearing = [];
         result.message = `Removed ${result.cardsMoved.length} cards from game`;
         return result;
     }
@@ -277,7 +280,7 @@ export function drawCardsOneByOne(
 ): EnhancedCard[] {
     const drawn: EnhancedCard[] = [];
 
-    for (let i = 0; i < count; i++) {
+    while (drawn.length < count && !gameState.gameEnded) {
         if (player.hand.length >= 10) {
             console.log(`✋ Hand limit reached (10 cards). Skipping draw.`);
             // Note: We don't shift the card if we can't take it, or we shift and put back? 
@@ -288,9 +291,6 @@ export function drawCardsOneByOne(
         const card = gameState.deck.shift();
         if (!card) break; // Deck empty
 
-        drawn.push(card);
-        player.hand.push(card);
-
         // Check for winter card
         if (card.isWinterCard) {
             gameState.winterCardsDrawn++;
@@ -300,8 +300,28 @@ export function drawCardsOneByOne(
                 gameState.gameEnded = true;
                 console.log('❄️❄️❄️ Game ends - all winter cards drawn!');
             }
+            continue;
         }
+
+        drawn.push(card);
+        player.hand.push(card);
     }
 
     return drawn;
+}
+
+/** Reveal one non-winter card into the clearing, replacing winter cards. */
+export function revealCardToClearing(gameState: GameState): EnhancedCard | undefined {
+    while (!gameState.gameEnded) {
+        const card = gameState.deck.shift();
+        if (!card) return undefined;
+        if (card.isWinterCard) {
+            gameState.winterCardsDrawn++;
+            if (gameState.winterCardsDrawn >= 3) gameState.gameEnded = true;
+            continue;
+        }
+        gameState.clearing.push(card);
+        return card;
+    }
+    return undefined;
 }

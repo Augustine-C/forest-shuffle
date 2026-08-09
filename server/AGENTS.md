@@ -19,7 +19,7 @@ npx ts-node src/game/testIntegration.ts
 npx ts-node src/game/verifyCardData.ts
 ```
 
-`npm run dev` starts port `3000` by default; override it with `PORT`. `npm test` is a failing placeholder and should not be cited as validation until a real runner is configured.
+Prefer `npm test` to run the full suite, including action-validation checks. `npm run dev` starts port `3000` by default; override it with `PORT`. After `npm run build`, `npm start` runs the compiled server.
 
 ## Code and Game-Rule Conventions
 
