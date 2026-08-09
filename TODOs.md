@@ -66,7 +66,7 @@ This document records gaps found by comparing the game implementation with the b
   - Silver Fir attached-card totals when slots contain multiple cards.
   - Nightingale on shrubs and Cuckoo placement-dependent behavior.
 
-- [ ] Implement forest-wide and opponent-relative scoring.
+- [x] Implement forest-wide and opponent-relative scoring.
   - Most trees and most Lindens, including ties.
   - Tree-species thresholds and tree saplings where the rule includes them.
   - Matching tree symbols and multi-type symbol scoring.

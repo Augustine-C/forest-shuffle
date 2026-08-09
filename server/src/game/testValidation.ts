@@ -830,6 +830,23 @@ function scoreAttachedSet(cardIds: number[], speciesIndex: number): number {
     assert.equal(scoreAttachedSet([118, 121, 146, 118].slice(0, count), 1), expected);
 });
 
+function createTestVioletBee(cardId: number): EnhancedCard {
+    const beeSource = createEnhancedCard(70)!;
+    return {
+        ...beeSource,
+        cardId,
+        species: [{
+            ...beeSource.species[0],
+            name: 'Violet Carpenter Bee',
+            speciesData: {
+                ...beeSource.species[0].speciesData,
+                name: 'Violet Carpenter Bee',
+                points: ''
+            }
+        }]
+    };
+}
+
 function scoreHorseChestnuts(count: number, addBee = false): number {
     const setGame = new GameState(2);
     setGame.addPlayer('set', 'socket-set', 'Set Tester', true);
@@ -839,21 +856,7 @@ function scoreHorseChestnuts(count: number, addBee = false): number {
         tree: createEnhancedCard(56 + index)!
     }));
     if (addBee) {
-        const beeSource = createEnhancedCard(70)!;
-        const bee: EnhancedCard = {
-            ...beeSource,
-            cardId: 9001,
-            species: [{
-                ...beeSource.species[0],
-                name: 'Violet Carpenter Bee',
-                speciesData: {
-                    ...beeSource.species[0].speciesData,
-                    name: 'Violet Carpenter Bee',
-                    points: ''
-                }
-            }]
-        };
-        setPlayer.forest[0].left = [{ card: bee, speciesIndex: 0 }];
+        setPlayer.forest[0].left = [{ card: createTestVioletBee(9001), speciesIndex: 0 }];
     }
     return setGame.calculateScores().get('set')!;
 }
@@ -963,5 +966,90 @@ positionalPlayer.forest = [{
 assert.equal(calculateCardPoints(nightingale, positionalPlayer, positionalGame), 5);
 positionalPlayer.forest[0].tree = createEnhancedCard(41)!;
 assert.equal(calculateCardPoints(nightingale, positionalPlayer, positionalGame), 0);
+
+const forestWideGame = new GameState(2);
+forestWideGame.addPlayer('wide', 'socket-wide', 'Forest-wide Tester', true);
+forestWideGame.addPlayer('rival', 'socket-rival', 'Rival Tester');
+const widePlayer = forestWideGame.players.get('wide')!;
+const rivalPlayer = forestWideGame.players.get('rival')!;
+widePlayer.forest = [{ tree: createEnhancedCard(1)! }, { tree: createEnhancedCard(2)! }];
+rivalPlayer.forest = [{ tree: createEnhancedCard(3)! }, { tree: createEnhancedCard(4)! }];
+assert.equal(calculateCardPoints(widePlayer.forest[0].tree, widePlayer, forestWideGame), 3);
+rivalPlayer.forest.push({ tree: createEnhancedCard(5)! });
+assert.equal(calculateCardPoints(widePlayer.forest[0].tree, widePlayer, forestWideGame), 1);
+widePlayer.forest[0].left = [{ card: createTestVioletBee(9003), speciesIndex: 0 }];
+assert.equal(calculateCardPoints(widePlayer.forest[0].tree, widePlayer, forestWideGame), 3);
+
+const beech = createEnhancedCard(41)!;
+widePlayer.forest = [
+    { tree: beech, left: [{ card: createTestVioletBee(9004), speciesIndex: 0 }] },
+    { tree: createEnhancedCard(42)! },
+    { tree: createEnhancedCard(33)! }
+];
+assert.equal(calculateCardPoints(beech, widePlayer, forestWideGame), 5);
+
+const woodpecker = createEnhancedCard(115)!;
+widePlayer.forest = [
+    { tree: createEnhancedCard(41)!, top: [{ card: woodpecker, speciesIndex: 0 }] },
+    { tree: createEnhancedCard(42)!, left: [{ card: createTestVioletBee(9005), speciesIndex: 0 }] }
+];
+rivalPlayer.forest = [
+    { tree: createEnhancedCard(1)! },
+    { tree: createEnhancedCard(2)! },
+    { tree: createEnhancedCard(3)! }
+];
+assert.equal(calculateCardPoints(woodpecker, widePlayer, forestWideGame), 10);
+
+const moss = createEnhancedCard(114)!;
+widePlayer.forest = Array.from({ length: 9 }, (_, index) => ({
+    tree: createEnhancedCard(index + 1)!
+}));
+widePlayer.forest[0].bottom = [{ card: moss, speciesIndex: 1 }];
+widePlayer.forest[1].left = [{ card: createTestVioletBee(9006), speciesIndex: 0 }];
+assert.equal(calculateCardPoints(moss, widePlayer, forestWideGame, 1), 10);
+
+const redDeer = createEnhancedCard(81)!;
+widePlayer.forest = [
+    { tree: createEnhancedCard(1)!, isSapling: true },
+    { tree: createEnhancedCard(41)!, left: [{ card: redDeer, speciesIndex: 0 }] }
+];
+assert.equal(calculateCardPoints(redDeer, widePlayer, forestWideGame), 2);
+
+const matchingRoeDeer = createEnhancedCard(76)!;
+widePlayer.forest = [{
+    tree: createEnhancedCard(41)!,
+    left: [{ card: matchingRoeDeer, speciesIndex: 1 }]
+}];
+assert.equal(calculateCardPoints(matchingRoeDeer, widePlayer, forestWideGame, 1), 6);
+
+const bison = createEnhancedCard(223)!;
+widePlayer.forest = [
+    { tree: createEnhancedCard(12)!, left: [{ card: bison, speciesIndex: 0 }] },
+    { tree: createEnhancedCard(41)! }
+];
+assert.equal(calculateCardPoints(bison, widePlayer, forestWideGame), 6);
+
+const goldenEagle = createEnhancedCard(189)!;
+widePlayer.forest = [{
+    tree: createEnhancedCard(1)!,
+    top: [{ card: goldenEagle, speciesIndex: 0 }],
+    left: [{ card: createEnhancedCard(70)!, speciesIndex: 0 }],
+    bottom: [{ card: createEnhancedCard(125)!, speciesIndex: 1 }]
+}];
+assert.equal(calculateCardPoints(goldenEagle, widePlayer, forestWideGame), 2);
+
+const lynx = createEnhancedCard(83)!;
+const wildBoar = createEnhancedCard(74)!;
+widePlayer.forest = [{
+    tree: createEnhancedCard(1)!,
+    left: [
+        { card: lynx, speciesIndex: 0 },
+        { card: matchingRoeDeer, speciesIndex: 1 },
+        { card: wildBoar, speciesIndex: 0 },
+        { card: createEnhancedCard(99)!, speciesIndex: 1 }
+    ]
+}];
+assert.equal(calculateCardPoints(lynx, widePlayer, forestWideGame), 10);
+assert.equal(calculateCardPoints(wildBoar, widePlayer, forestWideGame), 10);
 
 console.log('✅ Game action validation checks passed');

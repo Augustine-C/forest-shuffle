@@ -188,7 +188,7 @@ export function calculateCardPoints(
         case 'Goshawk': return countCardsWithTag(player.forest, 'Bird') * 3;
         case 'Great Spotted Woodpecker': return hasMostTrees(player, gameState) ? 10 : 0;
         case 'Hedgehog': return countCardsWithTag(player.forest, 'Butterfly') * 2;
-        case 'Moss': return player.forest.length >= 10 ? 10 : 0;
+        case 'Moss': return effectiveTreeCount(player) >= 10 ? 10 : 0;
         case 'Red Squirrel': return isCardOnTreeType(player.forest, card.cardId, 'Oak') ? 5 : 0;
         case 'Stag Beetle': return countCardsWithTag(player.forest, 'Paw');
         case 'Tree Ferns': return countCardsWithTag(player.forest, 'Amphibian') * 6;
@@ -201,7 +201,7 @@ export function calculateCardPoints(
         case 'Fallow Deer': return countCardsWithTag(player.forest, 'Cloven-hoofed animal') * 3;
         case 'Gnat': return countCardsWithTag(player.forest, 'Bat');
         case 'Lynx': return countSpeciesByName(player.forest, 'Roe Deer') > 0 ? 10 : 0;
-        case 'Red Deer': return countCardsWithAnyTag(player, ['Tree', 'Plant']);
+        case 'Red Deer': return player.forest.length + countCardsWithTag(player.forest, 'Plant');
         case 'Red Fox': return countHares(player) * 2;
         case 'Roe Deer': return countMatchingTreeSymbols(player, species.treeSymbol) * 3;
         case 'Wild Boar': return countSpeciesByName(player.forest, 'Squeaker') > 0 ? 10 : 0;
@@ -209,7 +209,7 @@ export function calculateCardPoints(
         case 'Linden': return hasMostSpecies(player, gameState, 'Linden') ? 3 : 1;
         case 'Oak': return getTreeSpecies(player.forest).size >= 8 ? 10 : 0;
         case 'Silver Fir': return countAttachedCards(player.forest, card.cardId) * 2;
-        case 'Beech': return countSpeciesByName(player.forest, 'Beech') >= 4 ? 5 : 0;
+        case 'Beech': return effectiveTreeSpeciesCount(player, 'Beech') >= 4 ? 5 : 0;
         case 'Sycamore': return player.forest.length;
         case 'Horse Chestnut': return 0;
         case 'Pinus cembra': return countCardsWithTag(player.forest, 'Mountain');
@@ -281,15 +281,30 @@ function countHares(player: Player): number {
 
 function hasMostTrees(player: Player, gameState: GameState): boolean {
     return Array.from(gameState.players.values()).every(other =>
-        player.forest.length >= other.forest.length
+        effectiveTreeCount(player) >= effectiveTreeCount(other)
     );
 }
 
 function hasMostSpecies(player: Player, gameState: GameState, speciesName: string): boolean {
-    const playerCount = countSpeciesByName(player.forest, speciesName);
+    const playerCount = effectiveTreeSpeciesCount(player, speciesName);
     return Array.from(gameState.players.values()).every(other =>
-        playerCount >= countSpeciesByName(other.forest, speciesName)
+        playerCount >= effectiveTreeSpeciesCount(other, speciesName)
     );
+}
+
+function effectiveTreeCount(player: Player): number {
+    return player.forest.length + countVioletCarpenterBees(player.forest);
+}
+
+function effectiveTreeSpeciesCount(player: Player, speciesName: string): number {
+    return countSpeciesByName(player.forest, speciesName) +
+        countVioletCarpenterBeesAtTreeSpecies(player.forest, speciesName);
+}
+
+function countVioletCarpenterBees(forest: PlacedTree[]): number {
+    return getAllPlacedCards(forest).filter(placedCard =>
+        getPlacedSpecies(placedCard)?.speciesData.name === 'Violet Carpenter Bee'
+    ).length;
 }
 
 function countAttachedCards(forest: PlacedTree[], cardId: number): number {
