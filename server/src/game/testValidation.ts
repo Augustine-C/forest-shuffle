@@ -1409,4 +1409,51 @@ expansionSqueakerGame.pendingAction = {
 expansionSqueakerGame.playPendingFreeCard('squeaker', 225, 1, 0, 'right');
 assert.equal(expansionSqueakerPlayer.forest[0].right?.[0].card.cardId, 225);
 
+const atomicGame = new GameState(2);
+atomicGame.addPlayer('atomic', 'socket-atomic', 'Atomic Tester', true);
+atomicGame.addPlayer('other', 'socket-other', 'Other Tester');
+const atomicPlayer = atomicGame.players.get('atomic')!;
+atomicPlayer.hand = [createEnhancedCard(116)!, createEnhancedCard(30)!];
+atomicGame.deck = [createEnhancedCard(31)!];
+atomicGame.clearing = [createEnhancedCard(32)!];
+const zonesBeforeInvalidPlacement = JSON.stringify({
+    hand: atomicPlayer.hand,
+    forest: atomicPlayer.forest,
+    cave: atomicPlayer.cave,
+    clearing: atomicGame.clearing,
+    deck: atomicGame.deck
+});
+assert.throws(
+    () => atomicGame.playCard('atomic', 116, [30], 0, 0, 'top'),
+    /Target tree does not exist/
+);
+assert.equal(JSON.stringify({
+    hand: atomicPlayer.hand,
+    forest: atomicPlayer.forest,
+    cave: atomicPlayer.cave,
+    clearing: atomicGame.clearing,
+    deck: atomicGame.deck
+}), zonesBeforeInvalidPlacement);
+
+atomicGame.playerDrawsTwo('atomic');
+const zonesBeforeStaleDraw = JSON.stringify({
+    hand: atomicPlayer.hand,
+    forest: atomicPlayer.forest,
+    cave: atomicPlayer.cave,
+    clearing: atomicGame.clearing,
+    deck: atomicGame.deck
+});
+assert.throws(
+    () => atomicGame.resolvePendingAction('atomic', [9999], false, 'clearing'),
+    /no longer in the clearing/
+);
+assert.equal(JSON.stringify({
+    hand: atomicPlayer.hand,
+    forest: atomicPlayer.forest,
+    cave: atomicPlayer.cave,
+    clearing: atomicGame.clearing,
+    deck: atomicGame.deck
+}), zonesBeforeStaleDraw);
+assert.equal(atomicGame.pendingAction?.kind, 'chooseDrawSource');
+
 console.log('✅ Game action validation checks passed');
