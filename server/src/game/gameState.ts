@@ -2,6 +2,7 @@ import { EnhancedCard, getCardCost } from './cards';
 import { createDeck } from './deck';
 import { executeEffect, executeBonus, drawCardsOneByOne, revealCardToClearing } from './effectsEngine';
 import { calculatePlayerScore } from './scoringEngine';
+import type { PendingAction } from '../../../shared/types';
 
 export interface PlacedTree {
     tree: EnhancedCard;
@@ -30,6 +31,9 @@ export class GameState {
     activePlayerIndex: number;
     winterCardsDrawn: number;
     gameEnded: boolean;
+    pendingAction?: PendingAction;
+    private pendingActions: PendingAction[];
+    private retainTurnAfterPendingAction: boolean;
 
     constructor(playerCount: number = 2) {
         this.players = new Map();
@@ -38,6 +42,8 @@ export class GameState {
         this.activePlayerIndex = 0;
         this.winterCardsDrawn = 0;
         this.gameEnded = false;
+        this.pendingActions = [];
+        this.retainTurnAfterPendingAction = false;
     }
 
     addPlayer(id: string, socketId: string, name: string, isHost: boolean = false) {
@@ -64,6 +70,9 @@ export class GameState {
         this.clearing = [];
         this.winterCardsDrawn = 0;
         this.gameEnded = false;
+        this.pendingAction = undefined;
+        this.pendingActions = [];
+        this.retainTurnAfterPendingAction = false;
         this.activePlayerIndex = 0;
         this.players.forEach(player => {
             player.hand = [];
@@ -102,7 +111,8 @@ export class GameState {
     }
 
     // Actions
-    playerDrawsTwo(clearingCardIds: number[] = []) {
+    playerDrawsTwo(playerId: string, clearingCardIds: number[] = []) {
+        this.assertActionAllowed(playerId);
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
         const player = this.players.get(activePlayerId);
         if (!player) return;
@@ -148,6 +158,7 @@ export class GameState {
         targetSlot?: 'top' | 'bottom' | 'left' | 'right',
         asSapling: boolean = false
     ) {
+        this.assertActionAllowed(playerId);
         const player = this.players.get(playerId);
         if (!player) throw new Error('Player not found');
 
@@ -273,10 +284,23 @@ export class GameState {
                 drawCardsOneByOne(this, player, bonusResult.cardsDrawn);
             }
 
-            if (effectResult.extraTurn || bonusResult?.extraTurn) {
-                // Handle extra turn logic (don't call nextTurn)
+            if (this.gameEnded) {
+                this.clearPendingActions();
                 return;
             }
+
+            const pendingActions = [
+                ...this.createPendingActions(player, effectResult.bonusActions),
+                ...this.createPendingActions(player, bonusResult?.bonusActions ?? [])
+            ];
+            if (pendingActions.length > 0) {
+                this.pendingActions = pendingActions;
+                this.pendingAction = this.pendingActions.shift();
+                this.retainTurnAfterPendingAction = effectResult.extraTurn || Boolean(bonusResult?.extraTurn);
+                return;
+            }
+
+            if (effectResult.extraTurn || bonusResult?.extraTurn) return;
         }
 
         // 5. Update Clearing Wipe Logic
@@ -285,6 +309,88 @@ export class GameState {
         }
 
         this.nextTurn();
+    }
+
+    resolvePendingAction(playerId: string, cardIds: number[] = [], decline: boolean = false) {
+        if (this.gameEnded) throw new Error('The game has ended');
+        const action = this.pendingAction;
+        if (!action) throw new Error('There is no pending action');
+        if (action.playerId !== playerId) throw new Error('This pending action belongs to another player');
+
+        const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
+        if (activePlayerId !== playerId) throw new Error('Not your turn');
+        if (decline) {
+            if (!action.optional) throw new Error('This action cannot be declined');
+            if (cardIds.length > 0) throw new Error('Do not select cards when declining an action');
+            this.completePendingAction();
+            return;
+        }
+
+        if (new Set(cardIds).size !== cardIds.length) {
+            throw new Error('Selection contains duplicate cards');
+        }
+        if (cardIds.length !== action.count) {
+            throw new Error(`Select exactly ${action.count} card(s)`);
+        }
+
+        const player = this.players.get(playerId)!;
+        if (action.destination === 'hand' && player.hand.length + cardIds.length > 10) {
+            throw new Error('Selected cards exceed the hand limit');
+        }
+        const indexes = cardIds.map(cardId => this.clearing.findIndex(card => card.cardId === cardId));
+        if (indexes.some(index => index < 0)) {
+            throw new Error('A selected card is no longer in the clearing');
+        }
+
+        const selectedCards = indexes.map(index => this.clearing[index]);
+        indexes.sort((a, b) => b - a).forEach(index => this.clearing.splice(index, 1));
+        if (action.destination === 'hand') player.hand.push(...selectedCards);
+        else player.cave.push(...selectedCards);
+
+        this.completePendingAction();
+    }
+
+    private assertActionAllowed(playerId: string) {
+        if (this.gameEnded) throw new Error('The game has ended');
+        const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
+        if (activePlayerId !== playerId) throw new Error('Not your turn');
+        if (this.pendingAction) throw new Error('Resolve the pending action first');
+    }
+
+    private createPendingActions(player: Player, actionCodes: string[]): PendingAction[] {
+        return actionCodes.flatMap(actionCode => {
+            const match = actionCode.match(/^SELECT_(\d+)_FROM_CLEARING_TO_(HAND|CAVE)$/);
+            if (!match) return [];
+
+            const destination = match[2] === 'HAND' ? 'hand' : 'cave';
+            const capacity = destination === 'hand' ? Math.max(0, 10 - player.hand.length) : this.clearing.length;
+            const count = Math.min(Number(match[1]), this.clearing.length, capacity);
+            if (count === 0) return [];
+            return [{
+                kind: 'selectClearingCards' as const,
+                playerId: player.id,
+                destination,
+                count,
+                optional: true,
+                prompt: `${destination === 'hand' ? 'Take' : 'Place'} ${count} clearing card(s) ${destination === 'hand' ? 'into your hand' : 'in your cave'}`
+            }];
+        });
+    }
+
+    private completePendingAction() {
+        this.pendingAction = this.pendingActions.shift();
+        if (this.pendingAction) return;
+
+        const retainTurn = this.retainTurnAfterPendingAction;
+        this.retainTurnAfterPendingAction = false;
+        if (this.clearing.length >= 10) this.clearing = [];
+        if (!retainTurn) this.nextTurn();
+    }
+
+    private clearPendingActions() {
+        this.pendingAction = undefined;
+        this.pendingActions = [];
+        this.retainTurnAfterPendingAction = false;
     }
 
     nextTurn() {

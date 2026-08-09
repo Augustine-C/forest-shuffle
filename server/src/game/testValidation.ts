@@ -21,6 +21,7 @@ assert.equal(alice.hand.includes(birch), true, 'rejected actions must not mutate
 
 const payment = alice.hand.find(card => card.cardId !== birch.cardId && card.cardId !== blackberries.cardId)!;
 game.playCard('p1', birch.cardId, [payment.cardId], 0);
+game.activePlayerIndex = 0;
 
 assert.throws(
     () => game.playCard('p1', blackberries.cardId, [], 1, 0, 'left'),
@@ -64,5 +65,67 @@ bonusPlayer.hand = [roeDeer, birchPayment, jayPayment];
 bonusGame.deck = [normal];
 bonusGame.playCard('bonus', roeDeer.cardId, [birchPayment.cardId, jayPayment.cardId], 1, 0, 'right');
 assert.equal(bonusPlayer.hand.length, 1, 'matching payment colors should activate the draw bonus');
+
+const pendingGame = new GameState(2);
+pendingGame.addPlayer('pending', 'socket-pending', 'Pending Tester', true);
+pendingGame.addPlayer('other', 'socket-other', 'Other Tester');
+const pendingPlayer = pendingGame.players.get('pending')!;
+pendingPlayer.forest = [{ tree: createEnhancedCard(23)! }];
+const beardedVulture = createEnhancedCard(190)!;
+const pendingPayment = createEnhancedCard(24)!;
+const caveCardOne = createEnhancedCard(25)!;
+const caveCardTwo = createEnhancedCard(26)!;
+pendingPlayer.hand = [beardedVulture, pendingPayment];
+pendingGame.clearing = [caveCardOne, caveCardTwo];
+
+pendingGame.playCard('pending', beardedVulture.cardId, [pendingPayment.cardId], 0, 0, 'top');
+assert.equal(pendingGame.pendingAction?.kind, 'selectClearingCards');
+assert.equal(pendingGame.pendingAction?.destination, 'cave');
+assert.equal(pendingGame.pendingAction?.count, 2);
+assert.equal(pendingGame.activePlayerIndex, 0, 'a pending selection must keep the active turn open');
+assert.throws(
+    () => pendingGame.playerDrawsTwo('pending'),
+    /Resolve the pending action first/
+);
+assert.throws(
+    () => pendingGame.resolvePendingAction('pending', [caveCardOne.cardId]),
+    /Select exactly 2 card/
+);
+assert.equal(pendingPlayer.cave.length, 0, 'an invalid pending selection must be atomic');
+
+pendingGame.resolvePendingAction('pending', [caveCardOne.cardId, caveCardTwo.cardId]);
+assert.deepEqual(
+    pendingPlayer.cave.map(card => card.cardId).sort((a, b) => a - b),
+    [caveCardOne.cardId, caveCardTwo.cardId].sort((a, b) => a - b)
+);
+assert.equal(pendingGame.pendingAction, undefined);
+assert.equal(pendingGame.activePlayerIndex, 1, 'the turn advances after the final pending action');
+
+const handSelectionGame = new GameState(2);
+handSelectionGame.addPlayer('hand', 'socket-hand', 'Hand Tester', true);
+handSelectionGame.addPlayer('other', 'socket-other', 'Other Tester');
+const handPlayer = handSelectionGame.players.get('hand')!;
+handPlayer.forest = [{ tree: createEnhancedCard(23)! }];
+const magpie = createEnhancedCard(214)!;
+const magpiePayment = createEnhancedCard(24)!;
+const marketCard = createEnhancedCard(25)!;
+handPlayer.hand = [magpie, magpiePayment];
+handSelectionGame.clearing = [marketCard];
+handSelectionGame.playCard('hand', magpie.cardId, [magpiePayment.cardId], 0, 0, 'top');
+assert.equal(handSelectionGame.pendingAction?.destination, 'hand');
+handSelectionGame.resolvePendingAction('hand', [marketCard.cardId]);
+assert.equal(handPlayer.hand.some(card => card.cardId === marketCard.cardId), true);
+
+const declineGame = new GameState(2);
+declineGame.addPlayer('decline', 'socket-decline', 'Decline Tester', true);
+declineGame.addPlayer('other', 'socket-other', 'Other Tester');
+const declinePlayer = declineGame.players.get('decline')!;
+declinePlayer.forest = [{ tree: createEnhancedCard(23)! }];
+declinePlayer.hand = [createEnhancedCard(190)!, createEnhancedCard(24)!];
+declineGame.clearing = [createEnhancedCard(25)!, createEnhancedCard(26)!];
+declineGame.playCard('decline', 190, [24], 0, 0, 'top');
+declineGame.resolvePendingAction('decline', [], true);
+assert.equal(declinePlayer.cave.length, 0);
+assert.equal(declineGame.activePlayerIndex, 1);
 
 console.log('✅ Game action validation checks passed');

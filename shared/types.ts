@@ -70,6 +70,17 @@ export interface Player {
     cave: EnhancedCard[];
 }
 
+export interface PendingClearingSelection {
+    kind: 'selectClearingCards';
+    playerId: string;
+    destination: 'hand' | 'cave';
+    count: number;
+    optional: boolean;
+    prompt: string;
+}
+
+export type PendingAction = PendingClearingSelection;
+
 export interface SerializedGameState {
     players: Player[];
     clearing: EnhancedCard[];
@@ -77,5 +88,6 @@ export interface SerializedGameState {
     deckCount: number;
     winterCardsDrawn: number;
     gameEnded: boolean;
+    pendingAction?: PendingAction;
     finalScores?: Record<string, number>;
 }

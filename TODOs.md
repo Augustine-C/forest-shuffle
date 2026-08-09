@@ -7,7 +7,7 @@ This document records gaps found by comparing the game implementation with the b
 - [ ] Implement pending effect and bonus actions end to end.
   - Consume the `bonusActions` produced by `server/src/game/effectsEngine.ts` instead of discarding them in `GameState.playCard()`.
   - Add server events, validation, serialized pending-action state, and client controls for:
-    - selecting clearing cards for a hand or cave;
+    - [x] selecting clearing cards for a hand or cave;
     - playing one eligible card for free;
     - playing any number of eligible cards for free;
     - playing multiple cards while paying their combined costs (Mole);

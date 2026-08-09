@@ -40,3 +40,19 @@
 .read-the-docs {
   color: #888;
 }
+
+.pending-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border: 2px solid #c58b2a;
+  border-radius: 0.75rem;
+  background: rgba(197, 139, 42, 0.12);
+}
+
+.pending-action span {
+  flex-basis: 100%;
+}

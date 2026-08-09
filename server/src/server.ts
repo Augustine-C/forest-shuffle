@@ -137,6 +137,7 @@ io.on('connection', (socket) => {
         deckCount: game.deck.length,
         winterCardsDrawn: game.winterCardsDrawn,
         gameEnded: game.gameEnded,
+        pendingAction: game.pendingAction,
         finalScores: game.gameEnded ? Object.fromEntries(game.calculateScores()) : undefined
     });
 
@@ -184,7 +185,25 @@ io.on('connection', (socket) => {
         }
 
         try {
-            game.playerDrawsTwo(clearingCardIds);
+            game.playerDrawsTwo(playerId, clearingCardIds);
+            if (game.gameEnded) meta.status = 'ENDED';
+            emitGameEvent(roomCode, game, 'game_state_update');
+        } catch (error) {
+            socket.emit('error', (error as Error).message);
+        }
+    });
+
+    socket.on('resolve_pending_action', ({ roomCode, playerId, cardIds = [], decline = false }) => {
+        const game = games.get(roomCode);
+        const meta = roomMetadata.get(roomCode);
+        if (!game || meta?.status !== 'PLAYING') return;
+        if (!isAuthorizedPlayer(game, playerId)) {
+            socket.emit('error', 'Player session does not match this connection');
+            return;
+        }
+
+        try {
+            game.resolvePendingAction(playerId, cardIds, decline);
             if (game.gameEnded) meta.status = 'ENDED';
             emitGameEvent(roomCode, game, 'game_state_update');
         } catch (error) {

@@ -53,6 +53,7 @@ async function runTest() {
     console.log(`\n--- Alice plays Blackberries (vCard half) on the Birch ---`);
     console.log(`Playing species index: ${speciesIndex} (${blackberriesCard.species[speciesIndex].name})`);
 
+    game.activePlayerIndex = 0;
     game.playCard('p1', blackberriesId, [], speciesIndex, 0, 'bottom');
 
     const tree = alice.forest[0];

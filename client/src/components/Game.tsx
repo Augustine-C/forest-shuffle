@@ -23,6 +23,8 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const isMyTurn = activePlayer?.id === playerId;
 
     const selectedCard = myPlayer?.hand.find((c: EnhancedCard) => c.cardId === selectedCardId);
+    const pendingAction = gameState.pendingAction;
+    const myPendingAction = pendingAction?.playerId === playerId ? pendingAction : undefined;
 
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
@@ -66,10 +68,22 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
 
     const handleClearingCardClick = (cardId: number) => {
         if (!isMyTurn || selectedCardId !== null) return;
+        const selectionLimit = myPendingAction?.count ?? 2;
         setClearingCardIds(current => current.includes(cardId)
             ? current.filter(id => id !== cardId)
-            : current.length < 2 ? [...current, cardId] : current
+            : current.length < selectionLimit ? [...current, cardId] : current
         );
+    };
+
+    const handlePendingAction = (decline: boolean) => {
+        if (!myPendingAction || !playerId) return;
+        socket.emit('resolve_pending_action', {
+            roomCode,
+            playerId,
+            cardIds: decline ? [] : clearingCardIds,
+            decline
+        });
+        setClearingCardIds([]);
     };
 
     const handlePlayCard = (treeIndex?: number, slot?: string, asSapling = false) => {
@@ -107,6 +121,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
         setSelectedCardId(null);
         setSelectedSpeciesIndex(0);
         setCostCardIds([]);
+        setClearingCardIds([]);
     };
 
     if (!myPlayer) return <div>Error: Player not found in game state</div>;
@@ -139,7 +154,25 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             </div>
 
             <div className="actions">
-                {isMyTurn && (
+                {isMyTurn && myPendingAction && (
+                    <div className="pending-action">
+                        <strong>{myPendingAction.prompt}</strong>
+                        <span>Select exactly {myPendingAction.count} card(s) from the clearing.</span>
+                        <button
+                            className="action-btn primary"
+                            disabled={clearingCardIds.length !== myPendingAction.count}
+                            onClick={() => handlePendingAction(false)}
+                        >
+                            Confirm selection
+                        </button>
+                        {myPendingAction.optional && (
+                            <button className="action-btn" onClick={() => handlePendingAction(true)}>
+                                Decline
+                            </button>
+                        )}
+                    </div>
+                )}
+                {isMyTurn && !gameState.pendingAction && (
                     <>
                         <button className="action-btn" onClick={handleDrawTwo}>
                             {clearingCardIds.length > 0
@@ -162,6 +195,9 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                             </button>
                         )}
                     </>
+                )}
+                {isMyTurn && gameState.pendingAction && !myPendingAction && (
+                    <span>Waiting for the pending action to be resolved.</span>
                 )}
             </div>
 
