@@ -197,6 +197,7 @@ export interface SerializedGameState {
     gameEnded: boolean;
     turnNumber: number;
     startingPlayerId: string;
+    includedDecks: DeckType[];
     pendingAction?: PendingAction;
     finalScores?: Record<string, number>;
 }

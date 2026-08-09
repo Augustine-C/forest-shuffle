@@ -280,6 +280,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                 </div>
                 <div className="deck-info">
                     🎴 Deck: {gameState.deckCount} cards | ❄️ Winter: {gameState.winterCardsDrawn}/3
+                    {' | '}{gameState.includedDecks.map(deck => deck === 'edge' ? 'Woodland Edge' : deck[0].toUpperCase() + deck.slice(1)).join(' + ')}
                 </div>
             </div>
 

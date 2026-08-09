@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { GameState } from './gameState';
 import { createEnhancedCard } from './cards';
 import { SPECIES_DATA } from './cardDefinitions';
+import type { DeckType } from './cardDefinitions';
 import { calculateCardPoints, hasScoringRule } from './scoringEngine';
 import type { EnhancedCard } from './cards';
 import { createDeck } from './deck';
@@ -1234,5 +1235,30 @@ assert.equal(ownerState.players.find(player => player.id === 'owner')?.caveCount
 assert.deepEqual(viewerState.players.find(player => player.id === 'owner')?.cave, []);
 assert.equal(viewerState.players.find(player => player.id === 'owner')?.caveCount, 2);
 assert.equal(privateCaveGame.calculateScores().get('owner'), 2);
+
+const expectedDeckSizes: Record<number, Record<number, number>> = {
+    0: { 2: 131, 3: 141, 4: 151, 5: 161 },
+    1: { 2: 142, 3: 157, 4: 172, 5: 187 },
+    2: { 2: 143, 3: 173, 4: 188, 5: 203 }
+};
+const deckCombinations: DeckType[][] = [
+    ['basic'],
+    ['basic', 'alpine'],
+    ['basic', 'edge'],
+    ['basic', 'alpine', 'edge']
+];
+deckCombinations.forEach(decks => {
+    for (let playerCount = 2; playerCount <= 5; playerCount++) {
+        const expansionDeck = createDeck(playerCount, [...decks]);
+        assert.equal(expansionDeck.length, expectedDeckSizes[decks.length - 1][playerCount]);
+        assert.equal(expansionDeck.filter(card => card.isWinterCard).length, 3);
+        assert.equal(expansionDeck.every(card => decks.includes(card.deck)), true);
+        decks.forEach(deck => assert.equal(expansionDeck.some(card => card.deck === deck), true));
+    }
+});
+assert.throws(
+    () => startingPlayerGame.startGame('walker', ['alpine']),
+    /base deck is required/
+);
 
 console.log('✅ Game action validation checks passed');

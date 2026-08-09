@@ -4,6 +4,7 @@ import { executeEffect, executeBonus, drawCardsOneByOne, revealCardToClearing } 
 import { calculatePlayerScore } from './scoringEngine';
 import type { PendingAction, TriggeredDrawChoice } from '../../../shared/types';
 import type { CardTag } from './cardDefinitions';
+import type { DeckType } from './cardDefinitions';
 
 export interface PlacedCard {
     card: EnhancedCard;
@@ -57,6 +58,7 @@ export class GameState {
     private extraTurnsPending: number;
     turnNumber: number;
     startingPlayerId: string;
+    includedDecks: DeckType[];
     private deferredCardResolution?: DeferredCardResolution;
     private triggeredDrawCompletion?: 'resumeCard' | 'completeAction';
     private deferredChoiceResolutions: Map<string, DeferredCardResolution>;
@@ -76,6 +78,7 @@ export class GameState {
         this.extraTurnsPending = 0;
         this.turnNumber = 0;
         this.startingPlayerId = '';
+        this.includedDecks = ['basic'];
         this.deferredChoiceResolutions = new Map();
         this.deferredBonusResolutions = new Map();
         this.resolutionSequence = 0;
@@ -98,7 +101,7 @@ export class GameState {
         this.players.delete(id);
     }
 
-    startGame(startingPlayerId?: string) {
+    startGame(startingPlayerId?: string, includedDecks: DeckType[] = ['basic']) {
         if (this.players.size < 2 || this.players.size > 5) {
             throw new Error('Forest Shuffle requires 2-5 players');
         }
@@ -106,8 +109,15 @@ export class GameState {
         if (!this.players.has(selectedStartingPlayerId)) {
             throw new Error('Starting player must be in the game');
         }
+        const uniqueDecks = [...new Set(includedDecks)];
+        if (!uniqueDecks.includes('basic') || uniqueDecks.some(deck =>
+            deck !== 'basic' && deck !== 'alpine' && deck !== 'edge'
+        )) {
+            throw new Error('The base deck is required and every selected deck must be supported');
+        }
         this.startingPlayerId = selectedStartingPlayerId;
-        this.deck = createDeck(this.players.size);
+        this.includedDecks = uniqueDecks;
+        this.deck = createDeck(this.players.size, this.includedDecks);
         this.clearing = [];
         this.winterCardsDrawn = 0;
         this.gameEnded = false;

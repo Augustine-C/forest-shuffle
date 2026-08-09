@@ -27,12 +27,16 @@ export function createDeck(
     // Shuffle the deck
     let shuffledDeck = shuffle([...normalCards]);
 
-    // Remove cards based on player count
-    // 2p: remove 30, 3p: remove 20, 4p: remove 10, 5p: remove 0
-    let removeCount = 0;
-    if (playerCount === 2) removeCount = 30;
-    else if (playerCount === 3) removeCount = 20;
-    else if (playerCount === 4) removeCount = 10;
+    // Official setup totals after combining the base deck with zero, one, or
+    // two 36-card expansions. These totals include the initial unseen 10-card
+    // removal required whenever an expansion is used.
+    const expansionCount = includedDecks.filter(deck => deck !== BASIC_DECK).length;
+    const removalByExpansionCount: Record<number, Record<number, number>> = {
+        0: { 2: 30, 3: 20, 4: 10, 5: 0 },
+        1: { 2: 55, 3: 40, 4: 25, 5: 10 },
+        2: { 2: 90, 3: 60, 4: 45, 5: 30 }
+    };
+    const removeCount = removalByExpansionCount[expansionCount]?.[playerCount] ?? 0;
 
     if (removeCount > 0 && shuffledDeck.length > removeCount) {
         // "Return to box" - remove from beginning (already shuffled)

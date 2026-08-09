@@ -101,7 +101,7 @@ This document records gaps found by comparing the game implementation with the b
 
 ## P1 - Expansion support
 
-- [ ] Add lobby selection for the base game, Alpine expansion, and Woodland Edge expansion.
+- [x] Add lobby selection for the base game, Alpine expansion, and Woodland Edge expansion.
   - Pass the selected deck list into `createDeck()` instead of always using the base deck.
   - Apply the correct setup and card-count rules for the chosen combination.
 

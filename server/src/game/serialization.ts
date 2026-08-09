@@ -19,6 +19,7 @@ export function serializeGameState(game: GameState, viewerId: string) {
         gameEnded: game.gameEnded,
         turnNumber: game.turnNumber,
         startingPlayerId: game.startingPlayerId,
+        includedDecks: game.includedDecks,
         pendingAction: game.pendingAction,
         finalScores: game.gameEnded ? Object.fromEntries(game.calculateScores()) : undefined
     };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { socket } from '../services/socket';
-import type { Player } from '../../../shared/types';
+import type { DeckType, Player } from '../../../shared/types';
 
 interface LobbyProps {
     roomCode: string | null;
@@ -13,6 +13,14 @@ export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProp
     const [joinRoomCode, setJoinRoomCode] = useState('');
     const [playerName, setPlayerName] = useState('');
     const [startingPlayerId, setStartingPlayerId] = useState(playerId ?? '');
+    const [includedDecks, setIncludedDecks] = useState<DeckType[]>(['basic']);
+
+    const toggleExpansion = (deck: 'alpine' | 'edge') => {
+        setIncludedDecks(current => current.includes(deck)
+            ? current.filter(selected => selected !== deck)
+            : [...current, deck]
+        );
+    };
 
     const handleCreateGame = () => {
         if (!playerName) return alert('Enter name');
@@ -29,7 +37,8 @@ export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProp
             socket.emit('start_game', {
                 roomCode,
                 playerId,
-                startingPlayerId: startingPlayerId || playerId
+                startingPlayerId: startingPlayerId || playerId,
+                includedDecks
             });
         }
     };
@@ -65,6 +74,24 @@ export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProp
                                     <option key={player.id} value={player.id}>{player.name}</option>
                                 ))}
                             </select>
+                            <fieldset>
+                                <legend>Decks</legend>
+                                <label><input type="checkbox" checked disabled /> Base game</label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={includedDecks.includes('alpine')}
+                                        onChange={() => toggleExpansion('alpine')}
+                                    /> Alpine
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={includedDecks.includes('edge')}
+                                        onChange={() => toggleExpansion('edge')}
+                                    /> Woodland Edge
+                                </label>
+                            </fieldset>
                             <button className="primary-btn" onClick={handleStartGame}>Start Game</button>
                         </>
                     ) : (

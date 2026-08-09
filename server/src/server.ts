@@ -133,13 +133,13 @@ io.on('connection', (socket) => {
     const isAuthorizedPlayer = (game: GameState, playerId: string) =>
         game.players.get(playerId)?.socketId === socket.id;
 
-    socket.on('start_game', ({ roomCode, playerId, startingPlayerId }) => {
+    socket.on('start_game', ({ roomCode, playerId, startingPlayerId, includedDecks }) => {
         const game = games.get(roomCode);
         const meta = roomMetadata.get(roomCode);
         const player = game?.players.get(playerId);
         if (game && meta && player?.socketId === socket.id && player.isHost && meta.status === 'LOBBY') {
             try {
-                game.startGame(startingPlayerId); // Deals cards
+                game.startGame(startingPlayerId, includedDecks); // Deals cards
                 meta.status = 'PLAYING';
                 emitGameEvent(roomCode, game, 'game_start');
                 console.log(`Game ${roomCode} started. Deal complete.`);
