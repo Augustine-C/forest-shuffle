@@ -135,7 +135,7 @@ This document records gaps found by comparing the game implementation with the b
 - [x] Add deterministic unit tests for every species' scoring rule.
 - [x] Add effect and bonus tests covering both use and decline paths.
 - [x] Add nested-resolution tests for mushrooms, Mole, Water Vole, free plays, and winter interruption.
-- [ ] Add placement tests for all orientations, shrubs, shared slots, and full trees.
+- [x] Add placement tests for all orientations, shrubs, shared slots, and full trees.
 - [ ] Add clearing tests for exactly 10 cards, more than 10 cards, cave movement, and removal from the game.
 - [ ] Add setup tests for 2-5 players, mulligans, deck combinations, and winter-card placement.
 - [ ] Add scoring examples from the rulebook and appendix as regression fixtures.
