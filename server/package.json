@@ -4,11 +4,12 @@
   "description": "",
   "main": "dist/server/src/server.js",
   "scripts": {
-    "test": "npm run test:game && npm run test:integration && npm run test:validation && npm run test:scoring && npm run test:effects && npm run test:nested && npm run test:placement && npm run test:clearing && npm run test:setup && npm run verify:data",
+    "test": "npm run test:game && npm run test:integration && npm run test:validation && npm run test:scoring && npm run test:scoring-examples && npm run test:effects && npm run test:nested && npm run test:placement && npm run test:clearing && npm run test:setup && npm run verify:data",
     "test:game": "ts-node src/game/testGameState.ts",
     "test:integration": "ts-node src/game/testIntegration.ts",
     "test:validation": "ts-node src/game/testValidation.ts",
     "test:scoring": "ts-node src/game/testScoring.ts",
+    "test:scoring-examples": "ts-node src/game/testScoringExamples.ts",
     "test:effects": "ts-node src/game/testEffects.ts",
     "test:nested": "ts-node src/game/testNestedResolution.ts",
     "test:placement": "ts-node src/game/testPlacement.ts",
