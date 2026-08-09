@@ -104,11 +104,19 @@ export interface PendingHandExchange {
     prompt: string;
 }
 
+export interface PendingSaplingSelection {
+    kind: 'playSaplings';
+    playerId: string;
+    optional: boolean;
+    prompt: string;
+}
+
 export type PendingAction =
     | PendingClearingSelection
     | PendingFreeCardPlay
     | PendingPaidCardPlays
-    | PendingHandExchange;
+    | PendingHandExchange
+    | PendingSaplingSelection;
 
 export interface SerializedGameState {
     players: Player[];

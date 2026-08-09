@@ -12,7 +12,7 @@ This document records gaps found by comparing the game implementation with the b
     - [x] playing any number of eligible cards for free;
     - [x] playing multiple cards while paying their combined costs (Mole);
     - [x] exchanging hand cards for deck cards (Raccoon);
-    - playing cards as saplings (Water Vole);
+    - [x] playing cards as saplings (Water Vole);
     - taking all matching cards from the clearing;
     - [x] playing a Squeaker for free.
   - Keep the active turn open until every required selection and nested effect is resolved.

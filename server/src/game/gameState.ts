@@ -378,6 +378,10 @@ export class GameState {
                 this.resolveHandExchange(playerId, cardIds);
                 return;
             }
+            if (action.kind === 'playSaplings') {
+                this.resolveSaplingSelection(playerId, cardIds);
+                return;
+            }
             throw new Error('This pending action must be completed by playing a card');
         }
 
@@ -481,6 +485,30 @@ export class GameState {
         this.completePendingAction();
     }
 
+    private resolveSaplingSelection(playerId: string, cardIds: number[]) {
+        if (new Set(cardIds).size !== cardIds.length) {
+            throw new Error('Selection contains duplicate cards');
+        }
+        const player = this.players.get(playerId)!;
+        const indexes = cardIds.map(cardId => player.hand.findIndex(card => card.cardId === cardId));
+        if (indexes.some(index => index < 0)) {
+            throw new Error('Every sapling card must be in your hand');
+        }
+
+        const selectedCards = indexes.map(index => player.hand[index]);
+        indexes.sort((a, b) => b - a).forEach(index => player.hand.splice(index, 1));
+        player.forest.push(...selectedCards.map(card => ({ tree: card, isSapling: true })));
+
+        for (let index = 0; index < selectedCards.length && !this.gameEnded; index++) {
+            revealCardToClearing(this);
+        }
+        if (this.gameEnded) {
+            this.clearPendingActions();
+            return;
+        }
+        this.completePendingAction();
+    }
+
     private assertPendingFreePlayAllowed(playerId: string, cardIdNum: number, speciesIndex: number) {
         if (this.gameEnded) throw new Error('The game has ended');
         const action = this.pendingAction;
@@ -561,6 +589,15 @@ export class GameState {
                     playerId: player.id,
                     optional: true,
                     prompt: 'Place any number of hand cards in your cave, then draw the same number'
+                }];
+            }
+
+            if (actionCode === 'PLAY_AS_SAPLINGS') {
+                return [{
+                    kind: 'playSaplings' as const,
+                    playerId: player.id,
+                    optional: true,
+                    prompt: 'Play any number of cards from your hand as tree saplings'
                 }];
             }
 

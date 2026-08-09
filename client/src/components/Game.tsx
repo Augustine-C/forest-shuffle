@@ -29,10 +29,12 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const freePlayPendingAction = myPendingAction?.kind === 'playFreeCard' ? myPendingAction : undefined;
     const paidPlayPendingAction = myPendingAction?.kind === 'playPaidCards' ? myPendingAction : undefined;
     const handExchangePendingAction = myPendingAction?.kind === 'exchangeHandForDeck' ? myPendingAction : undefined;
+    const saplingPendingAction = myPendingAction?.kind === 'playSaplings' ? myPendingAction : undefined;
+    const handSelectionPendingAction = handExchangePendingAction ?? saplingPendingAction;
 
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
-        if (handExchangePendingAction) {
+        if (handSelectionPendingAction) {
             setCostCardIds(current => current.includes(card.cardId)
                 ? current.filter(cardId => cardId !== card.cardId)
                 : [...current, card.cardId]
@@ -92,7 +94,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
         socket.emit('resolve_pending_action', {
             roomCode,
             playerId,
-            cardIds: decline ? [] : handExchangePendingAction ? costCardIds : clearingCardIds,
+            cardIds: decline ? [] : handSelectionPendingAction ? costCardIds : clearingCardIds,
             decline
         });
         setClearingCardIds([]);
@@ -226,6 +228,18 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                         <span>{costCardIds.length} hand card(s) selected.</span>
                         <button className="action-btn primary" onClick={() => handlePendingAction(false)}>
                             Exchange selected cards
+                        </button>
+                        <button className="action-btn" onClick={() => handlePendingAction(true)}>
+                            Decline
+                        </button>
+                    </div>
+                )}
+                {isMyTurn && saplingPendingAction && (
+                    <div className="pending-action">
+                        <strong>{saplingPendingAction.prompt}</strong>
+                        <span>{costCardIds.length} hand card(s) selected.</span>
+                        <button className="action-btn primary" onClick={() => handlePendingAction(false)}>
+                            Play selected saplings
                         </button>
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
                             Decline

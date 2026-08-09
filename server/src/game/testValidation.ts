@@ -282,4 +282,54 @@ assert.deepEqual(
 assert.deepEqual(raccoonPlayer.hand.map(card => card.cardId), [34, 35]);
 assert.equal(raccoonGame.activePlayerIndex, 1);
 
+const waterVoleGame = new GameState(2);
+waterVoleGame.addPlayer('vole', 'socket-vole', 'Water Vole Tester', true);
+waterVoleGame.addPlayer('other', 'socket-other', 'Other Tester');
+const waterVolePlayer = waterVoleGame.players.get('vole')!;
+waterVolePlayer.forest = [{ tree: createEnhancedCard(23)! }];
+const waterVole = createEnhancedCard(213)!;
+const firstSapling = createEnhancedCard(32)!;
+const secondSapling = createEnhancedCard(33)!;
+waterVolePlayer.hand = [
+    waterVole,
+    createEnhancedCard(30)!,
+    createEnhancedCard(31)!,
+    firstSapling,
+    secondSapling
+];
+waterVoleGame.deck = [createEnhancedCard(34)!, createEnhancedCard(35)!];
+waterVoleGame.playCard('vole', waterVole.cardId, [30, 31], 1, 0, 'bottom');
+assert.equal(waterVoleGame.pendingAction?.kind, 'playSaplings');
+assert.throws(
+    () => waterVoleGame.resolvePendingAction('vole', [firstSapling.cardId, firstSapling.cardId]),
+    /duplicate cards/
+);
+assert.equal(waterVolePlayer.forest.length, 1, 'an invalid sapling selection must be atomic');
+waterVoleGame.resolvePendingAction('vole', [firstSapling.cardId, secondSapling.cardId]);
+assert.equal(waterVolePlayer.forest.length, 3);
+assert.equal(waterVolePlayer.forest.slice(1).every(tree => tree.isSapling), true);
+assert.equal(waterVoleGame.clearing.length, 4, 'each Water Vole sapling reveals one clearing card');
+assert.equal(waterVoleGame.activePlayerIndex, 1);
+
+const interruptedSaplingGame = new GameState(2);
+interruptedSaplingGame.addPlayer('vole', 'socket-vole', 'Interrupted Vole Tester', true);
+interruptedSaplingGame.addPlayer('other', 'socket-other', 'Other Tester');
+const interruptedVolePlayer = interruptedSaplingGame.players.get('vole')!;
+interruptedVolePlayer.forest = [{ tree: createEnhancedCard(23)! }];
+interruptedVolePlayer.hand = [
+    createEnhancedCard(213)!,
+    createEnhancedCard(30)!,
+    createEnhancedCard(31)!,
+    createEnhancedCard(32)!,
+    createEnhancedCard(33)!
+];
+interruptedSaplingGame.winterCardsDrawn = 2;
+interruptedSaplingGame.deck = [winter, createEnhancedCard(34)!];
+interruptedSaplingGame.playCard('vole', 213, [30, 31], 1, 0, 'bottom');
+interruptedSaplingGame.resolvePendingAction('vole', [32, 33]);
+assert.equal(interruptedSaplingGame.gameEnded, true);
+assert.equal(interruptedVolePlayer.forest.length, 3, 'all selected saplings are placed before reveals begin');
+assert.equal(interruptedSaplingGame.deck[0].cardId, 34, 'reveals stop immediately at the third winter card');
+assert.equal(interruptedSaplingGame.pendingAction, undefined);
+
 console.log('✅ Game action validation checks passed');
