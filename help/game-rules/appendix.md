@@ -4,6 +4,8 @@
 
 This appendix lists every card alphabetically, including the Alpine, Woodland Edge, and Exploration expansion cards. Each heading gives its placement, deck frequency, and cost. If an entry has no effect or bonus, the card has none.
 
+> **Implementation scope:** Base-game, Alpine, and Woodland Edge entries are playable. Exploration and promotional entries are reference-only: they are not present in the runtime card database and cannot be selected or dealt.
+
 ## Alpine Marmot (left/right, 4×, cost: 1)
 **Points:** The Alpine Marmot scores 3 points for each different plant type in your forest. If you have more than one Alpine Marmot in your forest, these points are multiplied accordingly.
 

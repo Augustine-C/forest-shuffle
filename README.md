@@ -1,6 +1,12 @@
 # Forest Shuffle
 
-A browser-based multiplayer implementation of Forest Shuffle built with React, TypeScript, Express, and Socket.IO. The current milestone targets a complete two-player game using the basic deck.
+A browser-based multiplayer implementation of Forest Shuffle built with React, TypeScript, Express, and Socket.IO.
+
+## Playable card sets
+
+The runtime card database supports the base game, Alpine expansion, and Woodland Edge expansion. Hosts can enable either or both expansions in the lobby.
+
+The digital appendix under `help/game-rules/` is broader than the runtime database: Exploration cards and promotional cards are retained there as rules reference material only. They are not offered in the lobby, dealt, rendered, or scored by the application.
 
 ## Development
 
@@ -33,6 +39,6 @@ Server tests cover card-data integrity, core game flow, effects/scoring integrat
 
 ## Current Scope
 
-Implemented functionality includes room creation/joining, host-controlled start, reconnectable player sessions, private hands, turn enforcement, deck and clearing draws, card payment and placement, face-down saplings, tree-card clearing reveals, matching-color bonuses, winter replacement draws and game end, and initial effects/scoring support.
+Implemented functionality includes room creation/joining, host-controlled setup, reconnectable player sessions, private hands and caves, turn enforcement, sequential deck/clearing draws, card payment and placement, face-down saplings, shrubs, shared slots, effects and bonuses, permanent triggers, winter replacement draws and game end, and explicit scoring for the supported card database.
 
-The rules engine is still incomplete. Choice-based card effects, ongoing triggers, shared-slot cards, and full coverage of all scoring text remain active development areas. Games are held in server memory and are lost when the server restarts.
+Games are held in server memory and are lost when the server restarts. See `TODOs.md` for the remaining rule and validation work.

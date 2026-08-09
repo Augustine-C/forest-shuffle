@@ -110,7 +110,7 @@ This document records gaps found by comparing the game implementation with the b
   - Playing a shrub must not trigger rules that apply only to playing a tree.
   - Update all tree-counting and placement helpers accordingly.
 
-- [ ] Add Exploration and promotional cards if they are intended to be playable.
+- [x] Add Exploration and promotional cards if they are intended to be playable.
   - Add their card records, species definitions, effects, bonuses, scoring, images, and tests.
   - Otherwise, clearly label the digital appendix entries as reference-only.
 

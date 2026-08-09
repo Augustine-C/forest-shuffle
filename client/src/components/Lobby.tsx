@@ -75,7 +75,7 @@ export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProp
                                 ))}
                             </select>
                             <fieldset>
-                                <legend>Decks</legend>
+                                <legend>Playable decks</legend>
                                 <label><input type="checkbox" checked disabled /> Base game</label>
                                 <label>
                                     <input
@@ -91,6 +91,7 @@ export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProp
                                         onChange={() => toggleExpansion('edge')}
                                     /> Woodland Edge
                                 </label>
+                                <small>Exploration and promotional cards are appendix references only.</small>
                             </fieldset>
                             <button className="primary-btn" onClick={handleStartGame}>Start Game</button>
                         </>
