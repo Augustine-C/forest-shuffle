@@ -47,7 +47,7 @@ This document records gaps found by comparing the game implementation with the b
   - Avoid treating phrases such as "per fully occupied tree" as fixed points.
   - Add an exhaustive test that fails when a species with scoring text has no scoring implementation.
 
-- [ ] Correct variable scoring tables.
+- [x] Correct variable scoring tables.
   - Fireflies: 0/10/15/20 points for 1/2/3/4 or more Fireflies.
   - Fire Salamanders: 5/15/25 points for 1/2/3 or more Fire Salamanders.
   - Horse Chestnuts: 1/4/9/16/25/36 points for 1-6 cards and 49 points for 7 or more, including Violet Carpenter Bee adjustments.

@@ -798,4 +798,68 @@ assert.deepEqual(
     `scored species without an explicit implementation: ${speciesWithoutScoringRules.join(', ')}`
 );
 
+function scoreAttachedSet(cardIds: number[], speciesIndex: number): number {
+    const setGame = new GameState(2);
+    setGame.addPlayer('set', 'socket-set', 'Set Tester', true);
+    setGame.addPlayer('other', 'socket-other', 'Other Tester');
+    setGame.players.get('set')!.forest = [{
+        tree: createEnhancedCard(1)!,
+        isSapling: true,
+        bottom: cardIds.map(cardId => ({ card: createEnhancedCard(cardId)!, speciesIndex }))
+    }];
+    return setGame.calculateScores().get('set')!;
+}
+
+[
+    { count: 1, expected: 0 },
+    { count: 2, expected: 10 },
+    { count: 3, expected: 15 },
+    { count: 4, expected: 20 },
+    { count: 5, expected: 20 }
+].forEach(({ count, expected }) => {
+    assert.equal(scoreAttachedSet([130, 135, 137, 140, 130].slice(0, count), 1), expected);
+});
+
+[
+    { count: 1, expected: 5 },
+    { count: 2, expected: 15 },
+    { count: 3, expected: 25 },
+    { count: 4, expected: 25 }
+].forEach(({ count, expected }) => {
+    assert.equal(scoreAttachedSet([118, 121, 146, 118].slice(0, count), 1), expected);
+});
+
+function scoreHorseChestnuts(count: number, addBee = false): number {
+    const setGame = new GameState(2);
+    setGame.addPlayer('set', 'socket-set', 'Set Tester', true);
+    setGame.addPlayer('other', 'socket-other', 'Other Tester');
+    const setPlayer = setGame.players.get('set')!;
+    setPlayer.forest = Array.from({ length: count }, (_, index) => ({
+        tree: createEnhancedCard(56 + index)!
+    }));
+    if (addBee) {
+        const beeSource = createEnhancedCard(70)!;
+        const bee: EnhancedCard = {
+            ...beeSource,
+            cardId: 9001,
+            species: [{
+                ...beeSource.species[0],
+                name: 'Violet Carpenter Bee',
+                speciesData: {
+                    ...beeSource.species[0].speciesData,
+                    name: 'Violet Carpenter Bee',
+                    points: ''
+                }
+            }]
+        };
+        setPlayer.forest[0].left = [{ card: bee, speciesIndex: 0 }];
+    }
+    return setGame.calculateScores().get('set')!;
+}
+
+[0, 1, 4, 9, 16, 25, 36, 49].forEach((expected, count) => {
+    assert.equal(scoreHorseChestnuts(count), expected);
+});
+assert.equal(scoreHorseChestnuts(6, true), 49, 'a Violet Carpenter Bee increases the set count');
+
 console.log('✅ Game action validation checks passed');

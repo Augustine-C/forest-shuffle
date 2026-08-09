@@ -21,9 +21,9 @@ import {
 } from './cardMatching';
 
 const VARIABLE_SCORING: Record<string, number[]> = {
-    'Fireflies': [0, 1, 3, 6, 10, 15],
-    'Fire Salamander': [0, 2, 5, 9, 14],
-    'Horse Chestnut': [0, 1, 3, 6, 10, 15, 21, 28, 36, 45, 55]
+    'Fireflies': [0, 0, 10, 15, 20],
+    'Fire Salamander': [0, 5, 15, 25],
+    'Horse Chestnut': [0, 1, 4, 9, 16, 25, 36, 49]
 };
 
 const BUTTERFLY_SET_POINTS: Record<number, number> = {
@@ -179,8 +179,8 @@ export function calculateCardPoints(
         case 'Bullfinch': return countCardsWithTag(player.forest, 'Insect') * 2;
         case 'Chaffinch': return isCardOnTreeType(player.forest, card.cardId, 'Beech') ? 5 : 0;
         case 'Common Toad': return getSharedSlotSizeForCard(player.forest, card.cardId) === 2 ? 5 : 0;
-        case 'Fire Salamander': return variableScore(player, 'Fire Salamander');
-        case 'Fireflies': return variableScore(player, 'Fireflies');
+        case 'Fire Salamander':
+        case 'Fireflies': return 0;
         case 'Goshawk': return countCardsWithTag(player.forest, 'Bird') * 3;
         case 'Great Spotted Woodpecker': return hasMostTrees(player, gameState) ? 10 : 0;
         case 'Hedgehog': return countCardsWithTag(player.forest, 'Butterfly') * 2;
@@ -207,7 +207,7 @@ export function calculateCardPoints(
         case 'Silver Fir': return countAttachedCards(player.forest, card.cardId) * 2;
         case 'Beech': return countSpeciesByName(player.forest, 'Beech') >= 4 ? 5 : 0;
         case 'Sycamore': return player.forest.length;
-        case 'Horse Chestnut': return variableScore(player, 'Horse Chestnut');
+        case 'Horse Chestnut': return 0;
         case 'Pinus cembra': return countCardsWithTag(player.forest, 'Mountain');
         case 'Gentiana': return countCardsWithTag(player.forest, 'Butterfly') * 3;
         case 'Vaccinium myrtillus': return countDifferentBirds(player.forest) * 2;
@@ -233,10 +233,21 @@ export function calculateCardPoints(
     }
 }
 
-function variableScore(player: Player, speciesName: string): number {
+function variableScore(player: Player, speciesName: string, adjustment = 0): number {
     const table = VARIABLE_SCORING[speciesName];
-    const count = countSpeciesByName(player.forest, speciesName);
+    const count = countSpeciesByName(player.forest, speciesName) + adjustment;
     return table[Math.min(count, table.length - 1)] ?? 0;
+}
+
+function countVioletCarpenterBeesAtTreeSpecies(forest: PlacedTree[], speciesName: string): number {
+    return forest.reduce((total, tree) => {
+        if (tree.isSapling || tree.tree.species[0]?.speciesData.name !== speciesName) return total;
+        return total + forestSlots.reduce((slotTotal, slot) =>
+            slotTotal + getSlotCards(tree, slot).filter(placedCard =>
+                getPlacedSpecies(placedCard)?.speciesData.name === 'Violet Carpenter Bee'
+            ).length,
+        0);
+    }, 0);
 }
 
 function countDifferentSpeciesWithTag(player: Player, tag: CardTag): number {
@@ -332,5 +343,13 @@ function isCardOnShrub(forest: PlacedTree[], cardId: number): boolean {
 
 function calculateGlobalBonuses(player: Player): number {
     const count = getButterfliesInForest(player.forest).size;
-    return count > 0 ? BUTTERFLY_SET_POINTS[count] ?? (count > 5 ? 35 : 0) : 0;
+    const butterflyPoints = count > 0 ? BUTTERFLY_SET_POINTS[count] ?? (count > 5 ? 35 : 0) : 0;
+    const horseChestnutAdjustment = countVioletCarpenterBeesAtTreeSpecies(
+        player.forest,
+        'Horse Chestnut'
+    );
+    return butterflyPoints +
+        variableScore(player, 'Fireflies') +
+        variableScore(player, 'Fire Salamander') +
+        variableScore(player, 'Horse Chestnut', horseChestnutAdjustment);
 }
