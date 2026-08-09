@@ -56,6 +56,7 @@ export class GameState {
     private pendingActions: PendingAction[];
     private extraTurnsPending: number;
     turnNumber: number;
+    startingPlayerId: string;
     private deferredCardResolution?: DeferredCardResolution;
     private triggeredDrawCompletion?: 'resumeCard' | 'completeAction';
     private deferredChoiceResolutions: Map<string, DeferredCardResolution>;
@@ -74,6 +75,7 @@ export class GameState {
         this.pendingActions = [];
         this.extraTurnsPending = 0;
         this.turnNumber = 0;
+        this.startingPlayerId = '';
         this.deferredChoiceResolutions = new Map();
         this.deferredBonusResolutions = new Map();
         this.resolutionSequence = 0;
@@ -96,10 +98,15 @@ export class GameState {
         this.players.delete(id);
     }
 
-    startGame() {
+    startGame(startingPlayerId?: string) {
         if (this.players.size < 2 || this.players.size > 5) {
             throw new Error('Forest Shuffle requires 2-5 players');
         }
+        const selectedStartingPlayerId = startingPlayerId ?? Array.from(this.players.keys())[0];
+        if (!this.players.has(selectedStartingPlayerId)) {
+            throw new Error('Starting player must be in the game');
+        }
+        this.startingPlayerId = selectedStartingPlayerId;
         this.deck = createDeck(this.players.size);
         this.clearing = [];
         this.winterCardsDrawn = 0;
@@ -1086,7 +1093,8 @@ export class GameState {
 
     private focusActivePlayerOnPendingMulligan() {
         if (this.pendingAction?.kind !== 'initialMulligan') {
-            this.activePlayerIndex = 0;
+            const startingIndex = Array.from(this.players.keys()).indexOf(this.startingPlayerId);
+            this.activePlayerIndex = startingIndex >= 0 ? startingIndex : 0;
             return;
         }
         const playerIndex = Array.from(this.players.keys()).indexOf(this.pendingAction.playerId);

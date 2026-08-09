@@ -1103,4 +1103,13 @@ assert.throws(
     /Mulligan already resolved/
 );
 
+const startingPlayerGame = new GameState(2);
+startingPlayerGame.addPlayer('host', 'socket-host', 'Host', true);
+startingPlayerGame.addPlayer('walker', 'socket-walker', 'Recent Forest Walker');
+assert.throws(() => startingPlayerGame.startGame('outsider'), /Starting player must be in the game/);
+startingPlayerGame.startGame('walker');
+finishInitialMulligans(startingPlayerGame);
+assert.equal(startingPlayerGame.startingPlayerId, 'walker');
+assert.equal(startingPlayerGame.activePlayerIndex, 1);
+
 console.log('✅ Game action validation checks passed');

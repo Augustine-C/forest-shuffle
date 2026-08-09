@@ -12,6 +12,7 @@ interface LobbyProps {
 export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProps) {
     const [joinRoomCode, setJoinRoomCode] = useState('');
     const [playerName, setPlayerName] = useState('');
+    const [startingPlayerId, setStartingPlayerId] = useState(playerId ?? '');
 
     const handleCreateGame = () => {
         if (!playerName) return alert('Enter name');
@@ -25,7 +26,11 @@ export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProp
 
     const handleStartGame = () => {
         if (roomCode) {
-            socket.emit('start_game', { roomCode, playerId });
+            socket.emit('start_game', {
+                roomCode,
+                playerId,
+                startingPlayerId: startingPlayerId || playerId
+            });
         }
     };
 
@@ -49,7 +54,19 @@ export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProp
 
                 <div className="actions">
                     {isHost ? (
-                        <button className="primary-btn" onClick={handleStartGame}>Start Game</button>
+                        <>
+                            <label htmlFor="starting-player">Who most recently walked in a forest?</label>
+                            <select
+                                id="starting-player"
+                                value={startingPlayerId || playerId}
+                                onChange={event => setStartingPlayerId(event.target.value)}
+                            >
+                                {players.map(player => (
+                                    <option key={player.id} value={player.id}>{player.name}</option>
+                                ))}
+                            </select>
+                            <button className="primary-btn" onClick={handleStartGame}>Start Game</button>
+                        </>
                     ) : (
                         <p>Waiting for host to start...</p>
                     )}

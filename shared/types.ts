@@ -186,6 +186,7 @@ export interface SerializedGameState {
     winterCardsDrawn: number;
     gameEnded: boolean;
     turnNumber: number;
+    startingPlayerId: string;
     pendingAction?: PendingAction;
     finalScores?: Record<string, number>;
 }

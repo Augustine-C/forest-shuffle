@@ -80,7 +80,7 @@ This document records gaps found by comparing the game implementation with the b
   - Return the original six cards to the box rather than the clearing or deck.
   - Permit at most one mulligan per player.
 
-- [ ] Represent the start-player rule.
+- [x] Represent the start-player rule.
   - Allow the lobby to select the player who most recently walked in a forest, or document and expose an agreed digital substitute.
 
 - [ ] Prevent drawing as a pass at the 10-card hand limit.

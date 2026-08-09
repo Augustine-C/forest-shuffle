@@ -138,6 +138,7 @@ io.on('connection', (socket) => {
         winterCardsDrawn: game.winterCardsDrawn,
         gameEnded: game.gameEnded,
         turnNumber: game.turnNumber,
+        startingPlayerId: game.startingPlayerId,
         pendingAction: game.pendingAction,
         finalScores: game.gameEnded ? Object.fromEntries(game.calculateScores()) : undefined
     });
@@ -152,19 +153,20 @@ io.on('connection', (socket) => {
     const isAuthorizedPlayer = (game: GameState, playerId: string) =>
         game.players.get(playerId)?.socketId === socket.id;
 
-    socket.on('start_game', ({ roomCode, playerId }) => {
+    socket.on('start_game', ({ roomCode, playerId, startingPlayerId }) => {
         const game = games.get(roomCode);
         const meta = roomMetadata.get(roomCode);
         const player = game?.players.get(playerId);
         if (game && meta && player?.socketId === socket.id && player.isHost && meta.status === 'LOBBY') {
-            meta.status = 'PLAYING';
             try {
-                game.startGame(); // Deals cards
+                game.startGame(startingPlayerId); // Deals cards
+                meta.status = 'PLAYING';
+                emitGameEvent(roomCode, game, 'game_start');
+                console.log(`Game ${roomCode} started. Deal complete.`);
             } catch (e) {
                 console.error("Error starting game:", e);
+                socket.emit('error', (e as Error).message);
             }
-            emitGameEvent(roomCode, game, 'game_start');
-            console.log(`Game ${roomCode} started. Deal complete.`);
         }
         else socket.emit('error', 'Only the host can start a lobby game');
     });
