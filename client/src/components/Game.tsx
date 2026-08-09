@@ -94,7 +94,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
 
     const handleClearingCardClick = (cardId: number) => {
         if (!isMyTurn || selectedCardId !== null) return;
-        const selectionLimit = clearingPendingAction?.count ?? 2;
+        const selectionLimit = clearingPendingAction?.count ?? Math.min(2, 10 - (myPlayer?.hand.length ?? 0));
         setClearingCardIds(current => current.includes(cardId)
             ? current.filter(id => id !== cardId)
             : current.length < selectionLimit ? [...current, cardId] : current
@@ -417,10 +417,14 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                 )}
                 {isMyTurn && !gameState.pendingAction && (
                     <>
-                        <button className="action-btn" onClick={handleDrawTwo}>
+                        <button
+                            className="action-btn"
+                            onClick={handleDrawTwo}
+                            disabled={myPlayer.hand.length >= 10}
+                        >
                             {clearingCardIds.length > 0
-                                ? `Take ${clearingCardIds.length} + Draw ${2 - clearingCardIds.length}`
-                                : 'Draw 2 Cards'}
+                                ? `Take ${clearingCardIds.length} + Draw ${Math.max(0, Math.min(2, 10 - myPlayer.hand.length) - clearingCardIds.length)}`
+                                : myPlayer.hand.length === 9 ? 'Draw 1 Card' : 'Draw 2 Cards'}
                         </button>
                         {selectedCard && selectedCard.orientation === 'Tree' && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>

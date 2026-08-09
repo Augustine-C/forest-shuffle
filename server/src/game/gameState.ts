@@ -167,8 +167,14 @@ export class GameState {
         const player = this.players.get(activePlayerId);
         if (!player) return;
 
-        if (clearingCardIds.length > 2 || new Set(clearingCardIds).size !== clearingCardIds.length) {
-            throw new Error('Choose at most two distinct clearing cards');
+        const drawCapacity = 10 - player.hand.length;
+        if (drawCapacity <= 0) {
+            throw new Error('A player with 10 cards must play a card');
+        }
+        const cardsToDraw = Math.min(2, drawCapacity);
+
+        if (clearingCardIds.length > cardsToDraw || new Set(clearingCardIds).size !== clearingCardIds.length) {
+            throw new Error(`Choose at most ${cardsToDraw} distinct clearing card(s)`);
         }
         if (player.hand.length + clearingCardIds.length > 10) {
             throw new Error('Selected clearing cards exceed the hand limit');
@@ -185,7 +191,7 @@ export class GameState {
             const [card] = this.clearing.splice(index, 1);
             player.hand.push(card);
         });
-        this.drawCards(2 - clearingCardIds.length);
+        this.drawCards(cardsToDraw - clearingCardIds.length);
 
         this.finishTurn();
     }

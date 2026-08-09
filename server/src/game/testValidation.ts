@@ -1112,4 +1112,23 @@ finishInitialMulligans(startingPlayerGame);
 assert.equal(startingPlayerGame.startingPlayerId, 'walker');
 assert.equal(startingPlayerGame.activePlayerIndex, 1);
 
+const handLimitGame = new GameState(2);
+handLimitGame.addPlayer('limit', 'socket-limit', 'Hand Limit Tester', true);
+handLimitGame.addPlayer('other', 'socket-other', 'Other Tester');
+const handLimitPlayer = handLimitGame.players.get('limit')!;
+handLimitPlayer.hand = Array.from({ length: 10 }, (_, index) => createEnhancedCard(index + 1)!);
+handLimitGame.deck = [createEnhancedCard(20)!, createEnhancedCard(21)!];
+assert.throws(() => handLimitGame.playerDrawsTwo('limit'), /must play a card/);
+assert.equal(handLimitPlayer.hand.length, 10);
+assert.equal(handLimitGame.deck.length, 2);
+handLimitPlayer.hand.pop();
+assert.throws(
+    () => handLimitGame.playerDrawsTwo('limit', [30, 31]),
+    /Choose at most 1 distinct clearing card/
+);
+handLimitGame.playerDrawsTwo('limit');
+assert.equal(handLimitPlayer.hand.length, 10);
+assert.equal(handLimitGame.deck.length, 1);
+assert.equal(handLimitGame.activePlayerIndex, 1);
+
 console.log('✅ Game action validation checks passed');

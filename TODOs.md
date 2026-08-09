@@ -83,7 +83,7 @@ This document records gaps found by comparing the game implementation with the b
 - [x] Represent the start-player rule.
   - Allow the lobby to select the player who most recently walked in a forest, or document and expose an agreed digital substitute.
 
-- [ ] Prevent drawing as a pass at the 10-card hand limit.
+- [x] Prevent drawing as a pass at the 10-card hand limit.
   - A player with 10 cards must play a card rather than select the draw action.
   - A player with 9 cards draws exactly one card.
 
