@@ -479,7 +479,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                 <h3>Opponents</h3>
                 {otherPlayers.map((p: Player) => (
                     <div key={p.id} className="opponent">
-                        👤 {p.name} - Hand: {p.handCount ?? p.hand.length} cards | Forest: {p.forest.length} trees
+                        👤 {p.name} - Hand: {p.handCount ?? p.hand.length} cards | Forest: {p.forest.length} trees | Cave: {p.caveCount ?? p.cave.length} cards
                     </div>
                 ))}
             </div>
@@ -554,6 +554,13 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                                 onClick={() => handleCardClick(c)}
                             />
                         ))}
+                    </div>
+                </div>
+
+                <div className="my-cave">
+                    <h3>My Cave ({myPlayer.caveCount ?? myPlayer.cave.length})</h3>
+                    <div className="hand-cards">
+                        {myPlayer.cave.map(card => <Card key={card.cardId} card={card} />)}
                     </div>
                 </div>
             </div>

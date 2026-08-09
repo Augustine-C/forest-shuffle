@@ -74,6 +74,7 @@ export interface Player {
     handCount?: number;
     forest: PlacedTree[];
     cave: EnhancedCard[];
+    caveCount?: number;
 }
 
 export interface PendingClearingSelection {

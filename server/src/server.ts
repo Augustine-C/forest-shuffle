@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
 import { GameState } from './game/gameState';
+import { serializeGameState } from './game/serialization';
 
 const app = express();
 app.use(cors());
@@ -118,34 +119,13 @@ io.on('connection', (socket) => {
         } else {
             // Sync host info even if game already started for UI consistency
             socket.emit('game_joined', { roomCode, currentPlayerId: playerId, isHost: player.isHost });
-            socket.emit('game_start', { gameState: getSerializedState(game, playerId) });
+            socket.emit('game_start', { gameState: serializeGameState(game, playerId) });
         }
-    });
-
-    const getSerializedState = (game: GameState, viewerId: string) => ({
-        players: Array.from(game.players.values()).map(player => ({
-            id: player.id,
-            name: player.name,
-            isHost: player.isHost,
-            hand: player.id === viewerId ? player.hand : [],
-            handCount: player.hand.length,
-            forest: player.forest,
-            cave: player.cave
-        })),
-        clearing: game.clearing,
-        activePlayerIndex: game.activePlayerIndex,
-        deckCount: game.deck.length,
-        winterCardsDrawn: game.winterCardsDrawn,
-        gameEnded: game.gameEnded,
-        turnNumber: game.turnNumber,
-        startingPlayerId: game.startingPlayerId,
-        pendingAction: game.pendingAction,
-        finalScores: game.gameEnded ? Object.fromEntries(game.calculateScores()) : undefined
     });
 
     const emitGameEvent = (roomCode: string, game: GameState, event: 'game_start' | 'game_state_update') => {
         game.players.forEach(player => {
-            const state = getSerializedState(game, player.id);
+            const state = serializeGameState(game, player.id);
             io.to(player.socketId).emit(event, event === 'game_start' ? { gameState: state } : state);
         });
     };

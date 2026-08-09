@@ -6,6 +6,7 @@ import { calculateCardPoints, hasScoringRule } from './scoringEngine';
 import type { EnhancedCard } from './cards';
 import { createDeck } from './deck';
 import { checkSharedSlot } from './cardMatching';
+import { serializeGameState } from './serialization';
 
 function acceptCardChoices(gameState: GameState, useEffect = true, useBonus = true) {
     const action = gameState.pendingAction;
@@ -1221,5 +1222,17 @@ assert.equal(
     3,
     'a sapling underlying card does not contribute its printed tree color'
 );
+
+const privateCaveGame = new GameState(2);
+privateCaveGame.addPlayer('owner', 'socket-owner', 'Cave Owner', true);
+privateCaveGame.addPlayer('viewer', 'socket-viewer', 'Other Viewer');
+privateCaveGame.players.get('owner')!.cave = [createEnhancedCard(30)!, createEnhancedCard(31)!];
+const ownerState = serializeGameState(privateCaveGame, 'owner');
+const viewerState = serializeGameState(privateCaveGame, 'viewer');
+assert.deepEqual(ownerState.players.find(player => player.id === 'owner')?.cave.map(card => card.cardId), [30, 31]);
+assert.equal(ownerState.players.find(player => player.id === 'owner')?.caveCount, 2);
+assert.deepEqual(viewerState.players.find(player => player.id === 'owner')?.cave, []);
+assert.equal(viewerState.players.find(player => player.id === 'owner')?.caveCount, 2);
+assert.equal(privateCaveGame.calculateScores().get('owner'), 2);
 
 console.log('✅ Game action validation checks passed');

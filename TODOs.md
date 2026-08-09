@@ -96,7 +96,7 @@ This document records gaps found by comparing the game implementation with the b
   - Exclude them from tree species and tree-color counts where required.
   - Reveal a card to the clearing whenever a sapling is played if required by the applicable play path.
 
-- [ ] Hide cave contents from opponents.
+- [x] Hide cave contents from opponents.
   - Serialize cave counts publicly while sending card identities only to the owning player, unless a rule explicitly reveals them.
 
 ## P1 - Expansion support
