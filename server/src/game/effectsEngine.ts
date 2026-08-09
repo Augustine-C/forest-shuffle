@@ -172,6 +172,7 @@ export function executeEffect(context: EffectContext): EffectResult {
     // Pattern: "Remove all cards in the clearing from the game"
     if (effectText.includes('Remove all cards in the clearing from the game')) {
         result.cardsMoved = [...context.gameState.clearing];
+        context.gameState.cardsRemovedFromGame.push(...result.cardsMoved);
         context.gameState.clearing = [];
         result.message = `Removed ${result.cardsMoved.length} cards from game`;
         return result;

@@ -114,13 +114,13 @@ This document records gaps found by comparing the game implementation with the b
   - Add their card records, species definitions, effects, bonuses, scoring, images, and tests.
   - Otherwise, clearly label the digital appendix entries as reference-only.
 
-- [ ] Implement expansion-specific edge cases.
-  - Mountain Hare scoring with European Hares without sharing their slot.
-  - O Christmas Tree delaying the third winter card once.
-  - Mistletoe flipping a tree into a sapling.
-  - Blackthorn/Common Hazel/Elderberry triggers.
-  - Water Vole and nested Mole resolution order.
-  - Female Wild Boar clearing removal and free Squeaker bonus.
+- [x] Implement expansion-specific edge cases.
+  - [x] Mountain Hare scoring with European Hares without sharing their slot.
+  - [x] O Christmas Tree delaying the third winter card once (reference-only promotional card).
+  - [x] Mistletoe flipping a tree into a sapling (reference-only promotional card).
+  - [x] Blackthorn/Common Hazel/Elderberry triggers.
+  - [x] Water Vole and nested Mole resolution order.
+  - [x] Female Wild Boar clearing removal and free Squeaker bonus.
 
 ## P1 - Validation and state integrity
 

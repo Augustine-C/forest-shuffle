@@ -216,8 +216,14 @@ squeakerPlayer.forest = [{ tree: createEnhancedCard(23)! }];
 const femaleWildBoar = createEnhancedCard(222)!;
 const squeaker = createEnhancedCard(99)!;
 squeakerPlayer.hand = [femaleWildBoar, createEnhancedCard(24)!, createEnhancedCard(25)!, squeaker];
+squeakerGame.clearing = [createEnhancedCard(30)!];
 squeakerGame.playCard('squeaker', femaleWildBoar.cardId, [24, 25], 0, 0, 'left');
 acceptCardChoices(squeakerGame);
+assert.equal(squeakerGame.clearing.length, 0);
+assert.deepEqual(
+    squeakerGame.cardsRemovedFromGame.map(card => card.cardId).sort((a, b) => a - b),
+    [24, 25, 30]
+);
 assert.equal(
     squeakerGame.pendingAction?.kind === 'playFreeCard' ? squeakerGame.pendingAction.eligibleSpecies : undefined,
     'Squeaker'
@@ -1303,6 +1309,33 @@ assert.equal(
     calculateCardPoints(wildcat, shrubCountingPlayer, shrubCountingGame),
     2,
     'Woodland Edge scoring counts both the shrub and the attached wildcat'
+);
+
+const mountainHareGame = new GameState(2);
+mountainHareGame.addPlayer('hare', 'socket-hare', 'Mountain Hare Tester', true);
+mountainHareGame.addPlayer('other', 'socket-other', 'Other Tester');
+const mountainHarePlayer = mountainHareGame.players.get('hare')!;
+const mountainHare = createEnhancedCard(178)!;
+mountainHarePlayer.forest = [
+    {
+        tree: createEnhancedCard(1)!,
+        isSapling: true,
+        left: [
+            { card: createEnhancedCard(70)!, speciesIndex: 0 },
+            { card: createEnhancedCard(71)!, speciesIndex: 0 }
+        ]
+    },
+    {
+        tree: createEnhancedCard(2)!,
+        isSapling: true,
+        left: [{ card: mountainHare, speciesIndex: 0 }]
+    }
+];
+assert.equal(mountainHareGame.calculateScores().get('hare'), 9);
+mountainHarePlayer.hand = [createEnhancedCard(181)!];
+assert.throws(
+    () => mountainHareGame.playCard('hare', 181, [], 0, 0, 'left'),
+    /cannot share this occupied slot/
 );
 
 console.log('✅ Game action validation checks passed');
