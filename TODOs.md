@@ -91,7 +91,7 @@ This document records gaps found by comparing the game implementation with the b
   - Let players choose deck or clearing separately for each draw instead of submitting all clearing choices up front.
   - Stop immediately if a draw reveals the third winter card.
 
-- [ ] Verify tree-sapling interactions consistently.
+- [x] Verify tree-sapling interactions consistently.
   - Count saplings for cards whose rules explicitly include them.
   - Exclude them from tree species and tree-color counts where required.
   - Reveal a card to the clearing whenever a sapling is played if required by the applicable play path.

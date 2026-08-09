@@ -80,7 +80,9 @@ export function countTrees(forest: PlacedTree[]): number {
 }
 
 export function countFullyOccupiedTrees(forest: PlacedTree[]): number {
-    return forest.filter(tree => forestSlots.every(slot => getSlotCards(tree, slot).length > 0)).length;
+    return forest.filter(tree => !tree.isSapling &&
+        forestSlots.every(slot => getSlotCards(tree, slot).length > 0)
+    ).length;
 }
 
 export function isCardOnTreeType(
@@ -113,7 +115,7 @@ export function getCardsWithMatchingTreeSymbol(
 ): EnhancedCard[] {
     const cards: EnhancedCard[] = [];
     forest.forEach(tree => {
-        if (hasTreeSymbol(tree.tree, symbol)) cards.push(tree.tree);
+        if (!tree.isSapling && hasTreeSymbol(tree.tree, symbol)) cards.push(tree.tree);
     });
     getAllPlacedCards(forest).forEach(placedCard => {
         if (hasTreeSymbol(placedCard.card, symbol)) cards.push(placedCard.card);
@@ -127,9 +129,11 @@ export function hasAnyCardWithTag(forest: PlacedTree[], tag: string): boolean {
 
 export function countDifferentPlants(forest: PlacedTree[]): number {
     const plants = new Set<string>();
-    forest.forEach(tree => tree.tree.species.forEach(species => {
-        if (species.speciesData.tags.includes('Plant')) plants.add(species.name);
-    }));
+    forest.forEach(tree => {
+        if (!tree.isSapling) tree.tree.species.forEach(species => {
+            if (species.speciesData.tags.includes('Plant')) plants.add(species.name);
+        });
+    });
     getAllPlacedCards(forest).forEach(placedCard => {
         const species = getPlacedSpecies(placedCard);
         if (species?.speciesData.tags.includes('Plant')) plants.add(species.name);
@@ -139,9 +143,11 @@ export function countDifferentPlants(forest: PlacedTree[]): number {
 
 export function countDifferentBirds(forest: PlacedTree[]): number {
     const birds = new Set<string>();
-    forest.forEach(tree => tree.tree.species.forEach(species => {
-        if (species.speciesData.tags.includes('Bird')) birds.add(species.name);
-    }));
+    forest.forEach(tree => {
+        if (!tree.isSapling) tree.tree.species.forEach(species => {
+            if (species.speciesData.tags.includes('Bird')) birds.add(species.name);
+        });
+    });
     getAllPlacedCards(forest).forEach(placedCard => {
         const species = getPlacedSpecies(placedCard);
         if (species?.speciesData.tags.includes('Bird')) birds.add(species.name);

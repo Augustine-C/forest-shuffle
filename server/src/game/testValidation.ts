@@ -82,9 +82,12 @@ saplingGame.addPlayer('sapling', 'socket-sapling', 'Sapling Tester', true);
 const saplingPlayer = saplingGame.players.get('sapling')!;
 const saplingCard = createEnhancedCard(89)!;
 saplingPlayer.hand = [saplingCard];
+saplingGame.deck = [createEnhancedCard(30)!];
 saplingGame.playCard('sapling', saplingCard.cardId, [], 0, undefined, undefined, true);
 assert.equal(saplingPlayer.forest[0].isSapling, true);
 assert.equal(saplingGame.calculateScores().get('sapling'), 0);
+assert.equal(saplingGame.deck.length, 1, 'an ordinary sapling does not reveal a clearing card');
+assert.equal(saplingGame.clearing.length, 0);
 
 const bonusGame = new GameState(2);
 bonusGame.addPlayer('bonus', 'socket-bonus', 'Bonus Tester', true);
@@ -1184,5 +1187,39 @@ winterDrawGame.resolvePendingAction('winter-draw', [], false, 'deck');
 assert.equal(winterDrawGame.gameEnded, true);
 assert.equal(winterDrawGame.pendingAction, undefined);
 assert.equal(winterDrawGame.players.get('winter-draw')!.hand.length, 0);
+
+const saplingScoringGame = new GameState(2);
+saplingScoringGame.addPlayer('sapling-score', 'socket-sapling-score', 'Sapling Score Tester', true);
+saplingScoringGame.addPlayer('other', 'socket-other', 'Other Tester');
+const saplingScoringPlayer = saplingScoringGame.players.get('sapling-score')!;
+const saplingBeech = createEnhancedCard(33)!;
+const saplingMarten = createEnhancedCard(80)!;
+saplingScoringPlayer.forest = [
+    { tree: createEnhancedCard(34)! },
+    { tree: createEnhancedCard(35)! },
+    { tree: createEnhancedCard(36)! },
+    {
+        tree: saplingBeech,
+        isSapling: true,
+        left: [{ card: saplingMarten, speciesIndex: 0 }],
+        right: [{ card: createEnhancedCard(159)!, speciesIndex: 1 }],
+        top: [{ card: createEnhancedCard(139)!, speciesIndex: 1 }],
+        bottom: [{ card: createEnhancedCard(157)!, speciesIndex: 1 }]
+    }
+];
+assert.equal(calculateCardPoints(saplingBeech, saplingScoringPlayer, saplingScoringGame), 0);
+assert.equal(calculateCardPoints(saplingMarten, saplingScoringPlayer, saplingScoringGame), 0);
+
+const saplingRoe = createEnhancedCard(76)!;
+saplingScoringPlayer.forest = [{
+    tree: createEnhancedCard(33)!,
+    isSapling: true,
+    left: [{ card: saplingRoe, speciesIndex: 1 }]
+}];
+assert.equal(
+    calculateCardPoints(saplingRoe, saplingScoringPlayer, saplingScoringGame, 1),
+    3,
+    'a sapling underlying card does not contribute its printed tree color'
+);
 
 console.log('✅ Game action validation checks passed');
