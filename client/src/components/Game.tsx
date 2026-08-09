@@ -42,6 +42,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const takeAllPendingAction = myPendingAction?.kind === 'takeAllMatching' ? myPendingAction : undefined;
     const triggeredDrawAction = myPendingAction?.kind === 'triggeredDraws' ? myPendingAction : undefined;
     const cardChoiceAction = myPendingAction?.kind === 'chooseCardEffectAndBonus' ? myPendingAction : undefined;
+    const mulliganAction = myPendingAction?.kind === 'initialMulligan' ? myPendingAction : undefined;
 
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
@@ -271,6 +272,18 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             </div>
 
             <div className="actions">
+                {isMyTurn && mulliganAction && (
+                    <div className="pending-action">
+                        <strong>{mulliganAction.prompt}</strong>
+                        <span>Your current six cards will be returned to the box.</span>
+                        <button className="action-btn primary" onClick={() => handlePendingAction(false)}>
+                            Draw replacement hand
+                        </button>
+                        <button className="action-btn" onClick={() => handlePendingAction(true)}>
+                            Keep this hand
+                        </button>
+                    </div>
+                )}
                 {isMyTurn && clearingPendingAction && (
                     <div className="pending-action">
                         <strong>{clearingPendingAction.prompt}</strong>

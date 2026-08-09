@@ -75,7 +75,7 @@ This document records gaps found by comparing the game implementation with the b
 
 ## P1 - Core rule completeness
 
-- [ ] Implement the initial-hand mulligan.
+- [x] Implement the initial-hand mulligan.
   - Offer it only when the six-card opening hand contains no tree.
   - Return the original six cards to the box rather than the clearing or deck.
   - Permit at most one mulligan per player.

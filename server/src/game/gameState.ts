@@ -51,6 +51,7 @@ export class GameState {
     activePlayerIndex: number;
     winterCardsDrawn: number;
     gameEnded: boolean;
+    cardsRemovedFromGame: EnhancedCard[];
     pendingAction?: PendingAction;
     private pendingActions: PendingAction[];
     private extraTurnsPending: number;
@@ -60,6 +61,7 @@ export class GameState {
     private deferredChoiceResolutions: Map<string, DeferredCardResolution>;
     private deferredBonusResolutions: Map<string, { resolution: DeferredCardResolution; useBonus: boolean }>;
     private resolutionSequence: number;
+    private mulliganResolved: Set<string>;
 
     constructor(playerCount: number = 2) {
         this.players = new Map();
@@ -68,12 +70,14 @@ export class GameState {
         this.activePlayerIndex = 0;
         this.winterCardsDrawn = 0;
         this.gameEnded = false;
+        this.cardsRemovedFromGame = [];
         this.pendingActions = [];
         this.extraTurnsPending = 0;
         this.turnNumber = 0;
         this.deferredChoiceResolutions = new Map();
         this.deferredBonusResolutions = new Map();
         this.resolutionSequence = 0;
+        this.mulliganResolved = new Set();
     }
 
     addPlayer(id: string, socketId: string, name: string, isHost: boolean = false) {
@@ -100,6 +104,7 @@ export class GameState {
         this.clearing = [];
         this.winterCardsDrawn = 0;
         this.gameEnded = false;
+        this.cardsRemovedFromGame = [];
         this.pendingAction = undefined;
         this.pendingActions = [];
         this.extraTurnsPending = 0;
@@ -109,6 +114,7 @@ export class GameState {
         this.deferredChoiceResolutions.clear();
         this.deferredBonusResolutions.clear();
         this.resolutionSequence = 0;
+        this.mulliganResolved.clear();
         this.activePlayerIndex = 0;
         this.players.forEach(player => {
             player.hand = [];
@@ -117,6 +123,7 @@ export class GameState {
             // Draw 6 cards for each player
             this.drawCards(6, player);
         });
+        this.prepareInitialMulligans();
     }
 
     drawCards(count: number, targetPlayer?: Player): EnhancedCard[] {
@@ -399,6 +406,12 @@ export class GameState {
         const action = this.pendingAction;
         if (!action) throw new Error('There is no pending action');
         if (action.playerId !== playerId) throw new Error('This pending action belongs to another player');
+
+        if (action.kind === 'initialMulligan') {
+            if (cardIds.length > 0) throw new Error('Do not select cards for a mulligan');
+            this.resolveInitialMulligan(playerId, decline);
+            return;
+        }
 
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
         if (activePlayerId !== playerId) throw new Error('Not your turn');
@@ -1035,6 +1048,49 @@ export class GameState {
             'Cloven-hoofed animal', 'Mountain', 'Woodland Edge', 'Shrub'
         ];
         return tags.find(tag => tag.toLowerCase() === value.trim().toLowerCase());
+    }
+
+    private prepareInitialMulligans() {
+        const actions: PendingAction[] = Array.from(this.players.values())
+            .filter(player => !player.hand.some(card => card.orientation === 'Tree'))
+            .map(player => ({
+                kind: 'initialMulligan' as const,
+                playerId: player.id,
+                optional: true as const,
+                prompt: 'Your opening hand has no tree. Draw a replacement hand?'
+            }));
+        this.pendingAction = actions.shift();
+        this.pendingActions = actions;
+        this.focusActivePlayerOnPendingMulligan();
+    }
+
+    private resolveInitialMulligan(playerId: string, keepHand: boolean) {
+        if (this.mulliganResolved.has(playerId)) throw new Error('Mulligan already resolved');
+        const player = this.players.get(playerId);
+        if (!player) throw new Error('Player not found');
+
+        this.mulliganResolved.add(playerId);
+        if (!keepHand) {
+            this.cardsRemovedFromGame.push(...player.hand);
+            player.hand = [];
+            this.drawCards(6, player);
+        }
+
+        this.pendingAction = this.pendingActions.shift();
+        if (this.gameEnded) {
+            this.clearPendingActions();
+            return;
+        }
+        this.focusActivePlayerOnPendingMulligan();
+    }
+
+    private focusActivePlayerOnPendingMulligan() {
+        if (this.pendingAction?.kind !== 'initialMulligan') {
+            this.activePlayerIndex = 0;
+            return;
+        }
+        const playerIndex = Array.from(this.players.keys()).indexOf(this.pendingAction.playerId);
+        if (playerIndex >= 0) this.activePlayerIndex = playerIndex;
     }
 
     private completePendingAction() {

@@ -20,10 +20,17 @@ function acceptCardChoices(gameState: GameState, useEffect = true, useBonus = tr
     );
 }
 
+function finishInitialMulligans(gameState: GameState) {
+    while (gameState.pendingAction?.kind === 'initialMulligan') {
+        gameState.resolvePendingAction(gameState.pendingAction.playerId, [], true);
+    }
+}
+
 const game = new GameState(2);
 game.addPlayer('p1', 'socket1', 'Alice', true);
 game.addPlayer('p2', 'socket2', 'Bob');
 game.startGame();
+finishInitialMulligans(game);
 
 const alice = game.players.get('p1')!;
 const birch = createEnhancedCard(41)!;
@@ -1051,5 +1058,49 @@ widePlayer.forest = [{
 }];
 assert.equal(calculateCardPoints(lynx, widePlayer, forestWideGame), 10);
 assert.equal(calculateCardPoints(wildBoar, widePlayer, forestWideGame), 10);
+
+const mulliganOfferGame = new GameState(2);
+mulliganOfferGame.addPlayer('first', 'socket-first', 'First Player', true);
+mulliganOfferGame.addPlayer('second', 'socket-second', 'Second Player');
+mulliganOfferGame.startGame();
+const eligibleMulliganPlayers = Array.from(mulliganOfferGame.players.values())
+    .filter(player => !player.hand.some(card => card.orientation === 'Tree'))
+    .map(player => player.id);
+const offeredMulliganPlayers: string[] = [];
+while (mulliganOfferGame.pendingAction?.kind === 'initialMulligan') {
+    offeredMulliganPlayers.push(mulliganOfferGame.pendingAction.playerId);
+    mulliganOfferGame.resolvePendingAction(mulliganOfferGame.pendingAction.playerId, [], true);
+}
+assert.deepEqual(offeredMulliganPlayers, eligibleMulliganPlayers);
+assert.equal(mulliganOfferGame.activePlayerIndex, 0);
+assert.equal(mulliganOfferGame.turnNumber, 0);
+
+const mulliganGame = new GameState(2);
+mulliganGame.addPlayer('mulligan', 'socket-mulligan', 'Mulligan Tester', true);
+mulliganGame.addPlayer('other', 'socket-other', 'Other Tester');
+const mulliganPlayer = mulliganGame.players.get('mulligan')!;
+mulliganPlayer.hand = [70, 71, 72, 73, 74, 75].map(cardId => createEnhancedCard(cardId)!);
+const originalMulliganIds = mulliganPlayer.hand.map(card => card.cardId);
+mulliganGame.deck = [1, 2, 3, 4, 5, 6].map(cardId => createEnhancedCard(cardId)!);
+mulliganGame.pendingAction = {
+    kind: 'initialMulligan',
+    playerId: 'mulligan',
+    optional: true,
+    prompt: 'Draw a replacement hand?'
+};
+mulliganGame.resolvePendingAction('mulligan');
+assert.deepEqual(mulliganGame.cardsRemovedFromGame.map(card => card.cardId), originalMulliganIds);
+assert.deepEqual(mulliganPlayer.hand.map(card => card.cardId), [1, 2, 3, 4, 5, 6]);
+assert.equal(mulliganGame.deck.length, 0);
+mulliganGame.pendingAction = {
+    kind: 'initialMulligan',
+    playerId: 'mulligan',
+    optional: true,
+    prompt: 'Draw another replacement hand?'
+};
+assert.throws(
+    () => mulliganGame.resolvePendingAction('mulligan'),
+    /Mulligan already resolved/
+);
 
 console.log('✅ Game action validation checks passed');

@@ -151,6 +151,13 @@ export interface PendingCardChoices {
     prompt: string;
 }
 
+export interface PendingInitialMulligan {
+    kind: 'initialMulligan';
+    playerId: string;
+    optional: true;
+    prompt: string;
+}
+
 export interface PendingBonusContinuation {
     kind: 'continueCardBonus';
     playerId: string;
@@ -160,6 +167,7 @@ export interface PendingBonusContinuation {
 }
 
 export type PendingAction =
+    | PendingInitialMulligan
     | PendingClearingSelection
     | PendingFreeCardPlay
     | PendingPaidCardPlays

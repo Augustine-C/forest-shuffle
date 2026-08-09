@@ -20,6 +20,12 @@ function acceptCardChoices(game: GameState) {
     );
 }
 
+function finishInitialMulligans(game: GameState) {
+    while (game.pendingAction?.kind === 'initialMulligan') {
+        game.resolvePendingAction(game.pendingAction.playerId, [], true);
+    }
+}
+
 async function runTest() {
     console.log('🧪 Starting Forest Shuffle Game Logic Integration Test\n');
 
@@ -28,6 +34,7 @@ async function runTest() {
     game.addPlayer('p1', 'socket1', 'Alice', true);
     game.addPlayer('p2', 'socket2', 'Bob');
     game.startGame();
+    finishInitialMulligans(game);
 
     const alice = game.players.get('p1')!;
     const bob = game.players.get('p2')!;
