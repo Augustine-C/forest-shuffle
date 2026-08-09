@@ -90,7 +90,14 @@ export interface PendingFreeCardPlay {
     prompt: string;
 }
 
-export type PendingAction = PendingClearingSelection | PendingFreeCardPlay;
+export interface PendingPaidCardPlays {
+    kind: 'playPaidCards';
+    playerId: string;
+    optional: boolean;
+    prompt: string;
+}
+
+export type PendingAction = PendingClearingSelection | PendingFreeCardPlay | PendingPaidCardPlays;
 
 export interface SerializedGameState {
     players: Player[];

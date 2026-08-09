@@ -229,6 +229,32 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('play_pending_paid_card', ({ roomCode, playerId, cardId, costCardIds, speciesIndex, targetTreeIndex, targetSlot, asSapling = false }) => {
+        const game = games.get(roomCode);
+        const meta = roomMetadata.get(roomCode);
+        if (!game || meta?.status !== 'PLAYING') return;
+        if (!isAuthorizedPlayer(game, playerId)) {
+            socket.emit('error', 'Player session does not match this connection');
+            return;
+        }
+
+        try {
+            game.playPendingPaidCard(
+                playerId,
+                cardId,
+                costCardIds,
+                speciesIndex,
+                targetTreeIndex,
+                targetSlot,
+                asSapling
+            );
+            if (game.gameEnded) meta.status = 'ENDED';
+            emitGameEvent(roomCode, game, 'game_state_update');
+        } catch (error) {
+            socket.emit('error', (error as Error).message);
+        }
+    });
+
     socket.on('play_card', ({ roomCode, playerId, cardId, costCardIds, speciesIndex, targetTreeIndex, targetSlot, asSapling = false }) => {
         const game = games.get(roomCode);
         const meta = roomMetadata.get(roomCode);

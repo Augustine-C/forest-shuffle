@@ -34,7 +34,7 @@ export class GameState {
     gameEnded: boolean;
     pendingAction?: PendingAction;
     private pendingActions: PendingAction[];
-    private retainTurnAfterPendingAction: boolean;
+    private extraTurnsPending: number;
 
     constructor(playerCount: number = 2) {
         this.players = new Map();
@@ -44,7 +44,7 @@ export class GameState {
         this.winterCardsDrawn = 0;
         this.gameEnded = false;
         this.pendingActions = [];
-        this.retainTurnAfterPendingAction = false;
+        this.extraTurnsPending = 0;
     }
 
     addPlayer(id: string, socketId: string, name: string, isHost: boolean = false) {
@@ -73,7 +73,7 @@ export class GameState {
         this.gameEnded = false;
         this.pendingAction = undefined;
         this.pendingActions = [];
-        this.retainTurnAfterPendingAction = false;
+        this.extraTurnsPending = 0;
         this.activePlayerIndex = 0;
         this.players.forEach(player => {
             player.hand = [];
@@ -138,7 +138,7 @@ export class GameState {
         });
         this.drawCards(2 - clearingCardIds.length);
 
-        this.nextTurn();
+        this.finishTurn();
     }
 
     /**
@@ -181,10 +181,13 @@ export class GameState {
         targetSlot: 'top' | 'bottom' | 'left' | 'right' | undefined,
         asSapling: boolean,
         freePlay: boolean = false,
-        suppressEffectsAndBonus: boolean = false
+        suppressEffectsAndBonus: boolean = false,
+        pendingPaidPlay: boolean = false
     ) {
         if (freePlay) this.assertPendingFreePlayAllowed(playerId, cardIdNum, speciesIndex);
+        else if (pendingPaidPlay) this.assertPendingPaidPlayAllowed(playerId);
         else this.assertActionAllowed(playerId);
+        const resolvingPendingAction = freePlay || pendingPaidPlay ? this.pendingAction : undefined;
         const player = this.players.get(playerId);
         if (!player) throw new Error('Player not found');
 
@@ -322,14 +325,22 @@ export class GameState {
                 ...this.createPendingActions(player, effectResult.bonusActions),
                 ...this.createPendingActions(player, bonusResult?.bonusActions ?? [])
             ];
+            const awardedExtraTurns = Number(effectResult.extraTurn) + Number(Boolean(bonusResult?.extraTurn));
+            this.extraTurnsPending += awardedExtraTurns;
             if (pendingActions.length > 0) {
-                this.pendingActions = pendingActions;
+                const resumeActions = resolvingPendingAction
+                    ? [resolvingPendingAction, ...this.pendingActions]
+                    : this.pendingActions;
+                this.pendingActions = [...pendingActions, ...resumeActions];
                 this.pendingAction = this.pendingActions.shift();
-                this.retainTurnAfterPendingAction = effectResult.extraTurn || Boolean(bonusResult?.extraTurn);
                 return;
             }
 
-            if (effectResult.extraTurn || bonusResult?.extraTurn) return;
+            if (resolvingPendingAction) return;
+            if (awardedExtraTurns > 0) {
+                this.finishTurn();
+                return;
+            }
         }
 
         if (freePlay) {
@@ -337,13 +348,14 @@ export class GameState {
             this.completePendingAction();
             return;
         }
+        if (pendingPaidPlay) return;
 
         // 5. Update Clearing Wipe Logic
         if (this.clearing.length >= 10) {
             this.clearing = [];
         }
 
-        this.nextTurn();
+        this.finishTurn();
     }
 
     resolvePendingAction(playerId: string, cardIds: number[] = [], decline: boolean = false) {
@@ -413,6 +425,29 @@ export class GameState {
         );
     }
 
+    playPendingPaidCard(
+        playerId: string,
+        cardIdNum: number,
+        costCardIds: number[],
+        speciesIndex: number = 0,
+        targetTreeIndex?: number,
+        targetSlot?: 'top' | 'bottom' | 'left' | 'right',
+        asSapling: boolean = false
+    ) {
+        this.playCardInternal(
+            playerId,
+            cardIdNum,
+            costCardIds,
+            speciesIndex,
+            targetTreeIndex,
+            targetSlot,
+            asSapling,
+            false,
+            false,
+            true
+        );
+    }
+
     private assertActionAllowed(playerId: string) {
         if (this.gameEnded) throw new Error('The game has ended');
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
@@ -445,6 +480,17 @@ export class GameState {
         }
     }
 
+    private assertPendingPaidPlayAllowed(playerId: string) {
+        if (this.gameEnded) throw new Error('The game has ended');
+        const action = this.pendingAction;
+        if (!action || action.kind !== 'playPaidCards') {
+            throw new Error('There is no pending paid-card action');
+        }
+        if (action.playerId !== playerId) throw new Error('This pending action belongs to another player');
+        const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
+        if (activePlayerId !== playerId) throw new Error('Not your turn');
+    }
+
     private createPendingActions(player: Player, actionCodes: string[]): PendingAction[] {
         return actionCodes.flatMap<PendingAction>(actionCode => {
             const match = actionCode.match(/^SELECT_(\d+)_FROM_CLEARING_TO_(HAND|CAVE)$/);
@@ -471,6 +517,15 @@ export class GameState {
                     suppressEffectsAndBonus: true,
                     optional: true,
                     prompt: 'Play a Squeaker for free'
+                }];
+            }
+
+            if (actionCode === 'PLAY_MULTIPLE_WITH_COST') {
+                return [{
+                    kind: 'playPaidCards' as const,
+                    playerId: player.id,
+                    optional: true,
+                    prompt: 'Play any number of cards by paying their combined costs'
                 }];
             }
 
@@ -517,16 +572,22 @@ export class GameState {
         this.pendingAction = this.pendingActions.shift();
         if (this.pendingAction) return;
 
-        const retainTurn = this.retainTurnAfterPendingAction;
-        this.retainTurnAfterPendingAction = false;
-        if (this.clearing.length >= 10) this.clearing = [];
-        if (!retainTurn) this.nextTurn();
+        this.finishTurn();
     }
 
     private clearPendingActions() {
         this.pendingAction = undefined;
         this.pendingActions = [];
-        this.retainTurnAfterPendingAction = false;
+        this.extraTurnsPending = 0;
+    }
+
+    private finishTurn() {
+        if (this.clearing.length >= 10) this.clearing = [];
+        if (this.extraTurnsPending > 0) {
+            this.extraTurnsPending--;
+            return;
+        }
+        this.nextTurn();
     }
 
     nextTurn() {

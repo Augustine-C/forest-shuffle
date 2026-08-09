@@ -218,4 +218,42 @@ repeatableFreePlayGame.resolvePendingAction('repeatable', [], true);
 assert.equal(repeatableFreePlayGame.pendingAction, undefined);
 assert.equal(repeatableFreePlayGame.activePlayerIndex, 1);
 
+const moleGame = new GameState(2);
+moleGame.addPlayer('mole', 'socket-mole', 'Mole Tester', true);
+moleGame.addPlayer('other', 'socket-other', 'Other Tester');
+const molePlayer = moleGame.players.get('mole')!;
+molePlayer.forest = [
+    { tree: createEnhancedCard(23)! },
+    { tree: createEnhancedCard(24)! }
+];
+const mole = createEnhancedCard(141)!;
+const firstJay = createEnhancedCard(126)!;
+const secondJay = createEnhancedCard(137)!;
+molePlayer.hand = [
+    mole,
+    firstJay,
+    secondJay,
+    createEnhancedCard(30)!,
+    createEnhancedCard(31)!,
+    createEnhancedCard(32)!,
+    createEnhancedCard(33)!
+];
+moleGame.playCard('mole', mole.cardId, [30, 31], 1, 0, 'bottom');
+assert.equal(moleGame.pendingAction?.kind, 'playPaidCards');
+assert.throws(
+    () => moleGame.playPendingPaidCard('mole', firstJay.cardId, [], 0, 0, 'top'),
+    /Payment must contain exactly 1 card/
+);
+assert.equal(molePlayer.hand.includes(firstJay), true, 'an invalid nested Mole play must be atomic');
+moleGame.playPendingPaidCard('mole', firstJay.cardId, [32], 0, 0, 'top');
+assert.equal(moleGame.pendingAction?.kind, 'playPaidCards');
+moleGame.playPendingPaidCard('mole', secondJay.cardId, [33], 0, 1, 'top');
+assert.equal(moleGame.pendingAction?.kind, 'playPaidCards');
+moleGame.resolvePendingAction('mole', [], true);
+assert.equal(moleGame.activePlayerIndex, 0, 'the first nested extra turn must be preserved');
+moleGame.playerDrawsTwo('mole');
+assert.equal(moleGame.activePlayerIndex, 0, 'the second nested extra turn must be preserved');
+moleGame.playerDrawsTwo('mole');
+assert.equal(moleGame.activePlayerIndex, 1, 'play advances after all nested extra turns are used');
+
 console.log('✅ Game action validation checks passed');

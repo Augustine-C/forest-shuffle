@@ -27,10 +27,11 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const myPendingAction = pendingAction?.playerId === playerId ? pendingAction : undefined;
     const clearingPendingAction = myPendingAction?.kind === 'selectClearingCards' ? myPendingAction : undefined;
     const freePlayPendingAction = myPendingAction?.kind === 'playFreeCard' ? myPendingAction : undefined;
+    const paidPlayPendingAction = myPendingAction?.kind === 'playPaidCards' ? myPendingAction : undefined;
 
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
-        if (myPendingAction && !freePlayPendingAction) return;
+        if (myPendingAction && !freePlayPendingAction && !paidPlayPendingAction) return;
 
         if (selectedCardId === card.cardId) {
             // If it's a split card, cycle species index or deselect
@@ -111,7 +112,10 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             return;
         }
 
-        socket.emit(freePlayPendingAction ? 'play_pending_card' : 'play_card', {
+        const playEvent = freePlayPendingAction
+            ? 'play_pending_card'
+            : paidPlayPendingAction ? 'play_pending_paid_card' : 'play_card';
+        socket.emit(playEvent, {
             roomCode,
             playerId,
             cardId: selectedCardId,
@@ -191,6 +195,20 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                                 {freePlayPendingAction.repeatable ? 'Done' : 'Decline'}
                             </button>
                         )}
+                    </div>
+                )}
+                {isMyTurn && paidPlayPendingAction && (
+                    <div className="pending-action">
+                        <strong>{paidPlayPendingAction.prompt}</strong>
+                        <span>Select and place cards normally. Choose Done after your final play.</span>
+                        {selectedCard?.orientation === 'Tree' && (
+                            <button className="action-btn primary" onClick={() => handlePlayCard()}>
+                                Plant {selectedCard.species[0].name} (Pay {selectedCard.species[0].speciesData.cost})
+                            </button>
+                        )}
+                        <button className="action-btn" onClick={() => handlePendingAction(true)}>
+                            Done
+                        </button>
                     </div>
                 )}
                 {isMyTurn && !gameState.pendingAction && (
