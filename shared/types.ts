@@ -50,16 +50,20 @@ export interface EnhancedCard {
     isSplitCard: boolean;
 }
 
+export interface PlacedCard {
+    card: EnhancedCard;
+    speciesIndex: number;
+    playedTurn?: number;
+}
+
 export interface PlacedTree {
     tree: EnhancedCard;
     isSapling?: boolean;
     treePlayedTurn?: number;
-    top?: EnhancedCard;
-    bottom?: EnhancedCard;
-    left?: EnhancedCard;
-    right?: EnhancedCard;
-    speciesIndices?: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>;
-    slotPlayedTurns?: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>;
+    top?: PlacedCard[];
+    bottom?: PlacedCard[];
+    left?: PlacedCard[];
+    right?: PlacedCard[];
 }
 
 export interface Player {
@@ -152,6 +156,7 @@ export interface SerializedGameState {
     deckCount: number;
     winterCardsDrawn: number;
     gameEnded: boolean;
+    turnNumber: number;
     pendingAction?: PendingAction;
     finalScores?: Record<string, number>;
 }

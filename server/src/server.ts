@@ -137,6 +137,7 @@ io.on('connection', (socket) => {
         deckCount: game.deck.length,
         winterCardsDrawn: game.winterCardsDrawn,
         gameEnded: game.gameEnded,
+        turnNumber: game.turnNumber,
         pendingAction: game.pendingAction,
         finalScores: game.gameEnded ? Object.fromEntries(game.calculateScores()) : undefined
     });

@@ -24,11 +24,11 @@ This document records gaps found by comparing the game implementation with the b
   - [x] Support multiple copies of a trigger and the ordering of simultaneous triggers.
   - [x] Stop all remaining resolution immediately if the third winter card appears.
 
-- [ ] Support cards sharing a slot.
-  - Change `PlacedTree` slots from a single card to a representation that can hold multiple cards where allowed.
-  - Implement European Hare, Common Toad, Cuckoo, and Stinging Nettle placement restrictions.
-  - Replace the `checkSharedSlot()` stub in `server/src/game/cardMatching.ts`.
-  - Update serialization, client rendering, placement validation, card counting, and scoring for shared slots.
+- [x] Support cards sharing a slot.
+  - [x] Change `PlacedTree` slots from a single card to a representation that can hold multiple cards where allowed.
+  - [x] Implement European Hare, Common Toad, Cuckoo, and Stinging Nettle placement restrictions.
+  - [x] Replace the `checkSharedSlot()` stub in `server/src/game/cardMatching.ts`.
+  - [x] Update serialization, client rendering, placement validation, card counting, and scoring for shared slots.
 
 - [ ] Make effects and bonuses optional.
   - Ask the player whether to use an eligible effect or color-matched bonus.

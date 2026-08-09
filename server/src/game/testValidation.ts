@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { GameState } from './gameState';
 import { createEnhancedCard } from './cards';
+import type { EnhancedCard } from './cards';
 import { createDeck } from './deck';
+import { checkSharedSlot } from './cardMatching';
 
 const game = new GameState(2);
 game.addPlayer('p1', 'socket1', 'Alice', true);
@@ -30,7 +32,7 @@ assert.throws(
 assert.equal(alice.hand.includes(blackberries), true, 'invalid placement must not remove the card');
 
 game.playCard('p1', blackberries.cardId, [], 1, 0, 'bottom');
-assert.equal(alice.forest[0].speciesIndices?.bottom, 1);
+assert.equal(alice.forest[0].bottom?.[0].speciesIndex, 1);
 
 const configuredDeck = createDeck(2);
 assert.equal(configuredDeck[Math.floor(128 / 3) * 2].isWinterCard, true);
@@ -160,7 +162,7 @@ assert.equal(freePlayer.hand.includes(ineligibleBird), true, 'an ineligible free
 
 const clearingCountBeforeFreePlay = freePlayGame.clearing.length;
 freePlayGame.playPendingFreeCard('free', brownBear.cardId, 0, 0, 'left');
-assert.equal(freePlayer.forest[0].left?.cardId, brownBear.cardId);
+assert.equal(freePlayer.forest[0].left?.[0].card.cardId, brownBear.cardId);
 assert.equal(freePlayer.cave.length, 0, 'a free card must not execute its effect');
 assert.equal(freePlayGame.clearing.length, clearingCountBeforeFreePlay);
 assert.equal(freePlayGame.pendingAction, undefined);
@@ -184,7 +186,7 @@ assert.throws(
     /Card is not in player hand/
 );
 squeakerGame.playPendingFreeCard('squeaker', squeaker.cardId, 1, 0, 'right');
-assert.equal(squeakerPlayer.forest[0].right?.cardId, squeaker.cardId);
+assert.equal(squeakerPlayer.forest[0].right?.[0].card.cardId, squeaker.cardId);
 assert.equal(squeakerGame.activePlayerIndex, 1);
 
 const repeatableFreePlayGame = new GameState(2);
@@ -208,11 +210,11 @@ assert.equal(
     true
 );
 repeatableFreePlayGame.playPendingFreeCard('repeatable', firstBat.cardId, 1, 1, 'right');
-assert.equal(repeatablePlayer.forest[1].right?.cardId, firstBat.cardId);
+assert.equal(repeatablePlayer.forest[1].right?.[0].card.cardId, firstBat.cardId);
 assert.equal(repeatableFreePlayGame.pendingAction?.kind, 'playFreeCard');
 assert.equal(repeatableFreePlayGame.activePlayerIndex, 0);
 repeatableFreePlayGame.playPendingFreeCard('repeatable', secondBat.cardId, 0, 1, 'left');
-assert.equal(repeatablePlayer.forest[1].left?.cardId, secondBat.cardId);
+assert.equal(repeatablePlayer.forest[1].left?.[0].card.cardId, secondBat.cardId);
 assert.equal(repeatableFreePlayGame.pendingAction?.kind, 'playFreeCard');
 repeatableFreePlayGame.resolvePendingAction('repeatable', [], true);
 assert.equal(repeatableFreePlayGame.pendingAction, undefined);
@@ -385,8 +387,7 @@ permanentTriggerCases.forEach((testCase, caseIndex) => {
         ? [{ tree: sourceCard }, { tree: createEnhancedCard(2)! }]
         : [{
             tree: createEnhancedCard(2)!,
-            bottom: sourceCard,
-            speciesIndices: { bottom: testCase.sourceSpeciesIndex }
+            bottom: [{ card: sourceCard, speciesIndex: testCase.sourceSpeciesIndex }]
         }, { tree: createEnhancedCard(3)! }];
     const targetCard = createEnhancedCard(testCase.targetCardId)!;
     const targetCost = targetCard.species[testCase.targetSpeciesIndex].speciesData.cost;
@@ -416,8 +417,8 @@ orderedTriggerGame.addPlayer('ordered', 'socket-ordered', 'Ordered Trigger Teste
 orderedTriggerGame.addPlayer('other', 'socket-other', 'Other Tester');
 const orderedPlayer = orderedTriggerGame.players.get('ordered')!;
 orderedPlayer.forest = [
-    { tree: createEnhancedCard(1)!, bottom: createEnhancedCard(139)!, speciesIndices: { bottom: 1 } },
-    { tree: createEnhancedCard(2)!, bottom: createEnhancedCard(158)!, speciesIndices: { bottom: 1 } }
+    { tree: createEnhancedCard(1)!, bottom: [{ card: createEnhancedCard(139)!, speciesIndex: 1 }] },
+    { tree: createEnhancedCard(2)!, bottom: [{ card: createEnhancedCard(158)!, speciesIndex: 1 }] }
 ];
 orderedPlayer.hand = [createEnhancedCard(23)!];
 orderedTriggerGame.deck = [
@@ -448,9 +449,7 @@ delayedTriggerGame.addPlayer('other', 'socket-other', 'Other Tester');
 const delayedPlayer = delayedTriggerGame.players.get('delayed')!;
 delayedPlayer.forest = [{
     tree: createEnhancedCard(1)!,
-    bottom: createEnhancedCard(139)!,
-    speciesIndices: { bottom: 1 },
-    slotPlayedTurns: { bottom: 0 }
+    bottom: [{ card: createEnhancedCard(139)!, speciesIndex: 1, playedTurn: 0 }]
 }];
 delayedPlayer.hand = [createEnhancedCard(23)!];
 delayedTriggerGame.deck = [createEnhancedCard(34)!, createEnhancedCard(35)!];
@@ -462,8 +461,8 @@ winterTriggerGame.addPlayer('winter-trigger', 'socket-winter-trigger', 'Winter T
 winterTriggerGame.addPlayer('other', 'socket-other', 'Other Tester');
 const winterTriggerPlayer = winterTriggerGame.players.get('winter-trigger')!;
 winterTriggerPlayer.forest = [
-    { tree: createEnhancedCard(1)!, bottom: createEnhancedCard(144)!, speciesIndices: { bottom: 1 } },
-    { tree: createEnhancedCard(2)!, bottom: createEnhancedCard(157)!, speciesIndices: { bottom: 1 } }
+    { tree: createEnhancedCard(1)!, bottom: [{ card: createEnhancedCard(144)!, speciesIndex: 1 }] },
+    { tree: createEnhancedCard(2)!, bottom: [{ card: createEnhancedCard(157)!, speciesIndex: 1 }] }
 ];
 winterTriggerPlayer.hand = [createEnhancedCard(70)!];
 winterTriggerGame.winterCardsDrawn = 2;
@@ -487,8 +486,7 @@ voleChanterelleGame.addPlayer('other', 'socket-other', 'Other Tester');
 const voleChanterellePlayer = voleChanterelleGame.players.get('vole-trigger')!;
 voleChanterellePlayer.forest = [{
     tree: createEnhancedCard(1)!,
-    bottom: createEnhancedCard(139)!,
-    speciesIndices: { bottom: 1 }
+    bottom: [{ card: createEnhancedCard(139)!, speciesIndex: 1 }]
 }, { tree: createEnhancedCard(2)! }];
 voleChanterellePlayer.hand = [
     createEnhancedCard(213)!,
@@ -526,7 +524,7 @@ suppressedEffectTriggerGame.addPlayer('suppressed', 'socket-suppressed', 'Suppre
 suppressedEffectTriggerGame.addPlayer('other', 'socket-other', 'Other Tester');
 const suppressedPlayer = suppressedEffectTriggerGame.players.get('suppressed')!;
 suppressedPlayer.forest = [
-    { tree: createEnhancedCard(1)!, bottom: createEnhancedCard(144)!, speciesIndices: { bottom: 1 } },
+    { tree: createEnhancedCard(1)!, bottom: [{ card: createEnhancedCard(144)!, speciesIndex: 1 }] },
     { tree: createEnhancedCard(2)! }
 ];
 suppressedPlayer.hand = [createEnhancedCard(118)!, createEnhancedCard(56)!, createEnhancedCard(79)!];
@@ -547,5 +545,118 @@ suppressedEffectTriggerGame.resolvePendingAction(
 assert.deepEqual(suppressedPlayer.hand.map(card => card.cardId), [34]);
 assert.equal(suppressedPlayer.cave.length, 0, 'the free Brown Bear must not use its own effect');
 assert.equal(suppressedEffectTriggerGame.activePlayerIndex, 1);
+
+const hareGame = new GameState(2);
+hareGame.addPlayer('hare', 'socket-hare', 'Hare Tester', true);
+hareGame.addPlayer('other', 'socket-other', 'Other Tester');
+const harePlayer = hareGame.players.get('hare')!;
+harePlayer.forest = [{ tree: createEnhancedCard(23)!, isSapling: true }];
+harePlayer.hand = [createEnhancedCard(70)!, createEnhancedCard(71)!, createEnhancedCard(72)!];
+hareGame.playCard('hare', 70, [], 0, 0, 'left');
+hareGame.activePlayerIndex = 0;
+hareGame.playCard('hare', 71, [], 0, 0, 'left');
+hareGame.activePlayerIndex = 0;
+hareGame.playCard('hare', 72, [], 0, 0, 'left');
+assert.equal(harePlayer.forest[0].left?.length, 3);
+assert.equal(checkSharedSlot(harePlayer.forest[0], 'left'), true);
+assert.equal(hareGame.calculateScores().get('hare'), 9, 'three European Hares score 3 points each');
+
+const sameTurnHareGame = new GameState(2);
+sameTurnHareGame.addPlayer('hare', 'socket-hare', 'Same Turn Hare Tester', true);
+sameTurnHareGame.addPlayer('other', 'socket-other', 'Other Tester');
+const sameTurnHarePlayer = sameTurnHareGame.players.get('hare')!;
+sameTurnHarePlayer.forest = [{
+    tree: createEnhancedCard(23)!,
+    isSapling: true,
+    left: [{ card: createEnhancedCard(70)!, speciesIndex: 0, playedTurn: 0 }]
+}];
+sameTurnHarePlayer.hand = [createEnhancedCard(71)!];
+assert.throws(
+    () => sameTurnHareGame.playCard('hare', 71, [], 0, 0, 'left'),
+    /cannot share this occupied slot/
+);
+
+const toadGame = new GameState(2);
+toadGame.addPlayer('toad', 'socket-toad', 'Toad Tester', true);
+toadGame.addPlayer('other', 'socket-other', 'Other Tester');
+const toadPlayer = toadGame.players.get('toad')!;
+toadPlayer.forest = [{ tree: createEnhancedCard(23)!, isSapling: true }];
+toadPlayer.hand = [createEnhancedCard(125)!, createEnhancedCard(134)!, createEnhancedCard(136)!];
+toadGame.playCard('toad', 125, [], 1, 0, 'bottom');
+toadGame.activePlayerIndex = 0;
+toadGame.playCard('toad', 134, [], 1, 0, 'bottom');
+assert.equal(toadPlayer.forest[0].bottom?.length, 2);
+assert.equal(toadGame.calculateScores().get('toad'), 10, 'a shared Common Toad pair scores 10 total');
+toadGame.activePlayerIndex = 0;
+assert.throws(
+    () => toadGame.playCard('toad', 136, [], 1, 0, 'bottom'),
+    /cannot share this occupied slot/
+);
+
+const createTestCuckoo = (cardId: number): EnhancedCard => {
+    const baseCard = createEnhancedCard(118)!;
+    return {
+        ...baseCard,
+        cardId,
+        cardData: { ...baseCard.cardData, species: ['Cuckoo'] },
+        species: [{
+            ...baseCard.species[0],
+            name: 'Cuckoo',
+            speciesData: {
+                ...baseCard.species[0].speciesData,
+                name: 'Cuckoo',
+                tags: ['Bird'],
+                cost: 1,
+                effect: '',
+                bonus: '',
+                points: 'Gain 7 points'
+            }
+        }]
+    };
+};
+const cuckooGame = new GameState(2);
+cuckooGame.addPlayer('cuckoo', 'socket-cuckoo', 'Cuckoo Tester', true);
+cuckooGame.addPlayer('other', 'socket-other', 'Other Tester');
+const cuckooPlayer = cuckooGame.players.get('cuckoo')!;
+const cuckoo = createTestCuckoo(9001);
+cuckooPlayer.forest = [{
+    tree: createEnhancedCard(23)!,
+    isSapling: true,
+    top: [{ card: createEnhancedCard(126)!, speciesIndex: 0 }]
+}];
+cuckooPlayer.hand = [cuckoo, createEnhancedCard(40)!];
+cuckooGame.playCard('cuckoo', cuckoo.cardId, [40], 0, 0, 'top');
+assert.equal(cuckooPlayer.forest[0].top?.length, 2);
+
+const emptyCuckooGame = new GameState(2);
+emptyCuckooGame.addPlayer('cuckoo', 'socket-cuckoo', 'Empty Cuckoo Tester', true);
+emptyCuckooGame.addPlayer('other', 'socket-other', 'Other Tester');
+const emptyCuckooPlayer = emptyCuckooGame.players.get('cuckoo')!;
+const emptyCuckoo = createTestCuckoo(9002);
+emptyCuckooPlayer.forest = [{ tree: createEnhancedCard(23)!, isSapling: true }];
+emptyCuckooPlayer.hand = [emptyCuckoo, createEnhancedCard(40)!];
+assert.throws(
+    () => emptyCuckooGame.playCard('cuckoo', emptyCuckoo.cardId, [40], 0, 0, 'top'),
+    /must share a top slot with exactly one bird/
+);
+
+const nettleGame = new GameState(2);
+nettleGame.addPlayer('nettle', 'socket-nettle', 'Nettle Tester', true);
+nettleGame.addPlayer('other', 'socket-other', 'Other Tester');
+const nettlePlayer = nettleGame.players.get('nettle')!;
+nettlePlayer.forest = [{
+    tree: createEnhancedCard(23)!,
+    isSapling: true,
+    bottom: [{ card: createEnhancedCard(211)!, speciesIndex: 1 }],
+    top: [{ card: createEnhancedCard(118)!, speciesIndex: 0 }]
+}];
+nettlePlayer.hand = [createEnhancedCard(139)!, createEnhancedCard(126)!, createEnhancedCard(40)!];
+nettleGame.playCard('nettle', 139, [], 0, 0, 'top');
+assert.equal(nettlePlayer.forest[0].top?.length, 2);
+nettleGame.activePlayerIndex = 0;
+assert.throws(
+    () => nettleGame.playCard('nettle', 126, [40], 0, 0, 'top'),
+    /cannot share this occupied slot/
+);
 
 console.log('✅ Game action validation checks passed');

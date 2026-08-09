@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { socket } from '../services/socket';
 import Card from './Card';
-import type { SerializedGameState, Player, EnhancedCard } from '../../../shared/types';
+import type {
+    SerializedGameState,
+    Player,
+    EnhancedCard,
+    PlacedTree,
+    PlacedCard
+} from '../../../shared/types';
+
+type ForestSlot = 'top' | 'bottom' | 'left' | 'right';
 
 interface GameProps {
     gameState: SerializedGameState;
@@ -154,6 +162,72 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
         setSelectedSpeciesIndex(0);
         setCostCardIds([]);
         setClearingCardIds([]);
+    };
+
+    const canPlaceInSlot = (tree: PlacedTree, slot: ForestSlot) => {
+        if (!selectedCard) return false;
+        const orientationMatches = selectedCard.orientation === 'vCard'
+            ? slot === 'top' || slot === 'bottom'
+            : selectedCard.orientation === 'hCard' && (slot === 'left' || slot === 'right');
+        if (!orientationMatches) return false;
+        const speciesIndex = selectedCard.orientation === 'vCard'
+            ? slot === 'top' ? 0 : 1
+            : slot === 'left' ? 0 : 1;
+        const species = selectedCard.species[speciesIndex];
+        const existingCards = tree[slot] ?? [];
+        if (species.speciesData.name === 'Cuckoo') {
+            const existingSpecies = existingCards.map(placedCard =>
+                placedCard.card.species[placedCard.speciesIndex]
+            );
+            return slot === 'top' && existingCards.length === 1 &&
+                existingSpecies[0]?.speciesData.tags.includes('Bird') === true;
+        }
+        if (existingCards.length === 0) return true;
+        const existingSpecies = existingCards.map(placedCard =>
+            placedCard.card.species[placedCard.speciesIndex]
+        );
+        const playedViaEffect = Boolean(freePlayPendingAction || paidPlayPendingAction);
+
+        if (species.speciesData.name === 'European Hare') {
+            return existingSpecies.every(existing => existing?.speciesData.name === 'European Hare') &&
+                (playedViaEffect || existingCards.some(existing =>
+                    existing.playedTurn === undefined || existing.playedTurn < gameState.turnNumber
+                ));
+        }
+        if (species.speciesData.name === 'Common Toad') {
+            return existingCards.length === 1 &&
+                existingSpecies[0]?.speciesData.name === 'Common Toad' &&
+                (existingCards[0].playedTurn === undefined || existingCards[0].playedTurn < gameState.turnNumber);
+        }
+        const hasStingingNettle = (['top', 'bottom', 'left', 'right'] as ForestSlot[]).some(treeSlot =>
+            (tree[treeSlot] ?? []).some(placedCard =>
+                placedCard.card.species[placedCard.speciesIndex]?.speciesData.name === 'Stinging Nettle'
+            )
+        );
+        return species.speciesData.tags.includes('Butterfly') && hasStingingNettle &&
+            existingSpecies.every(existing => existing?.speciesData.tags.includes('Butterfly'));
+    };
+
+    const renderPlacedCards = (cards: PlacedCard[] | undefined, slot: ForestSlot) => {
+        if (!cards || cards.length === 0) return null;
+        return (
+            <div className="shared-slot-stack">
+                {cards.map((placedCard, index) => (
+                    <div
+                        key={placedCard.card.cardId}
+                        className={`slot-${slot}-wrapper shared-slot-card`}
+                        style={{
+                            transform: slot === 'top' || slot === 'bottom'
+                                ? `translateX(${index * 8}px)`
+                                : `translateY(${index * 8}px)`
+                        }}
+                    >
+                        <Card card={placedCard.card} slot={slot} />
+                    </div>
+                ))}
+                {cards.length > 1 && <span className="shared-slot-count">×{cards.length}</span>}
+            </div>
+        );
     };
 
     if (!myPlayer) return <div>Error: Player not found in game state</div>;
@@ -352,27 +426,31 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                     <div className="forest-grid">
                         {myPlayer.forest.length === 0 && <p>No trees yet. Plant one!</p>}
                         {myPlayer.forest.map((slot, treeIndex) => {
-                            const showTop = selectedCard?.orientation === 'vCard' && !slot.top;
-                            const showBottom = selectedCard?.orientation === 'vCard' && !slot.bottom;
-                            const showLeft = selectedCard?.orientation === 'hCard' && !slot.left;
-                            const showRight = selectedCard?.orientation === 'hCard' && !slot.right;
+                            const showTop = canPlaceInSlot(slot, 'top');
+                            const showBottom = canPlaceInSlot(slot, 'bottom');
+                            const showLeft = canPlaceInSlot(slot, 'left');
+                            const showRight = canPlaceInSlot(slot, 'right');
 
                             return (
                                 <div key={treeIndex} className="tree-slot">
-                                    <div className="slot top" onClick={() => showTop && handlePlayCard(treeIndex, 'top')}>
-                                        {slot.top ? <div className="slot-top-wrapper"><Card card={slot.top} slot="top" /></div> : (showTop ? <span className="placement-icon">+</span> : '')}
+                                    <div className={`slot top ${showTop ? 'available' : ''}`} onClick={() => showTop && handlePlayCard(treeIndex, 'top')}>
+                                        {renderPlacedCards(slot.top, 'top')}
+                                        {showTop && <span className="placement-icon shared-placement-icon">+</span>}
                                     </div>
-                                    <div className="slot left" onClick={() => showLeft && handlePlayCard(treeIndex, 'left')}>
-                                        {slot.left ? <div className="slot-left-wrapper"><Card card={slot.left} slot="left" /></div> : (showLeft ? <span className="placement-icon">+</span> : '')}
+                                    <div className={`slot left ${showLeft ? 'available' : ''}`} onClick={() => showLeft && handlePlayCard(treeIndex, 'left')}>
+                                        {renderPlacedCards(slot.left, 'left')}
+                                        {showLeft && <span className="placement-icon shared-placement-icon">+</span>}
                                     </div>
                                     <div className="tree-card">
                                         {slot.isSapling ? <div className="card sapling-card">Sapling</div> : <Card card={slot.tree} />}
                                     </div>
-                                    <div className="slot right" onClick={() => showRight && handlePlayCard(treeIndex, 'right')}>
-                                        {slot.right ? <div className="slot-right-wrapper"><Card card={slot.right} slot="right" /></div> : (showRight ? <span className="placement-icon">+</span> : '')}
+                                    <div className={`slot right ${showRight ? 'available' : ''}`} onClick={() => showRight && handlePlayCard(treeIndex, 'right')}>
+                                        {renderPlacedCards(slot.right, 'right')}
+                                        {showRight && <span className="placement-icon shared-placement-icon">+</span>}
                                     </div>
-                                    <div className="slot bottom" onClick={() => showBottom && handlePlayCard(treeIndex, 'bottom')}>
-                                        {slot.bottom ? <div className="slot-bottom-wrapper"><Card card={slot.bottom} slot="bottom" /></div> : (showBottom ? <span className="placement-icon">+</span> : '')}
+                                    <div className={`slot bottom ${showBottom ? 'available' : ''}`} onClick={() => showBottom && handlePlayCard(treeIndex, 'bottom')}>
+                                        {renderPlacedCards(slot.bottom, 'bottom')}
+                                        {showBottom && <span className="placement-icon shared-placement-icon">+</span>}
                                     </div>
                                 </div>
                             );

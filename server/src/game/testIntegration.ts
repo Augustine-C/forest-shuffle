@@ -57,8 +57,8 @@ async function runTest() {
     game.playCard('p1', blackberriesId, [], speciesIndex, 0, 'bottom');
 
     const tree = alice.forest[0];
-    assert.equal(tree.bottom?.cardId, blackberriesId);
-    assert.equal(tree.speciesIndices?.bottom, speciesIndex);
+    assert.equal(tree.bottom?.[0].card.cardId, blackberriesId);
+    assert.equal(tree.bottom?.[0].speciesIndex, speciesIndex);
     console.log('✅ Blackberries placed successfully on the Birch!');
 
     // 4. Test: Scoring

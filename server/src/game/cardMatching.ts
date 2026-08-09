@@ -1,261 +1,160 @@
-/**
- * Card matching and counting utilities
- * Helper functions for card effects and scoring
- */
+/** Card matching and counting utilities for placed forest cards. */
 
 import { EnhancedCard } from './cards';
-import { PlacedTree } from './gameState';
-import { CardTag, TreeSymbol } from './cardDefinitions';
+import { PlacedCard, PlacedTree } from './gameState';
+import { TreeSymbol } from './cardDefinitions';
 
-type ForestSlot = 'top' | 'bottom' | 'left' | 'right';
+export type ForestSlot = 'top' | 'bottom' | 'left' | 'right';
+export const forestSlots: ForestSlot[] = ['top', 'bottom', 'left', 'right'];
 
-function getPlacedSpecies(tree: PlacedTree, slot: ForestSlot) {
-    const card = tree[slot];
-    if (!card) return undefined;
-    const defaultIndex = slot === 'bottom' || slot === 'right' ? 1 : 0;
-    return card.species[tree.speciesIndices?.[slot] ?? defaultIndex];
+export function getSlotCards(tree: PlacedTree, slot: ForestSlot): PlacedCard[] {
+    return tree[slot] ?? [];
 }
 
-/**
- * Count cards with specific tag in player's forest (case-insensitive)
- */
+export function getPlacedSpecies(placedCard: PlacedCard) {
+    return placedCard.card.species[placedCard.speciesIndex];
+}
+
+export function getAllPlacedCards(forest: PlacedTree[]): PlacedCard[] {
+    return forest.flatMap(tree => forestSlots.flatMap(slot => getSlotCards(tree, slot)));
+}
+
 export function countCardsWithTag(forest: PlacedTree[], tag: string): number {
-    let count = 0;
     const normalizedTag = tag.toLowerCase();
-
-    forest.forEach(tree => {
-        // Check tree card
-        if (!tree.isSapling && tree.tree.species.some(s => s.speciesData.tags.some(t => t.toLowerCase() === normalizedTag))) {
-            count++;
-        }
-
-        // Check cards on tree
-        (['top', 'bottom', 'left', 'right'] as ForestSlot[]).forEach(slot => {
-            const species = getPlacedSpecies(tree, slot);
-            if (species?.speciesData.tags.some(t => t.toLowerCase() === normalizedTag)) {
-                count++;
-            }
-        });
-    });
-
-    return count;
+    const treeCount = forest.filter(tree => !tree.isSapling && tree.tree.species.some(species =>
+        species.speciesData.tags.some(cardTag => cardTag.toLowerCase() === normalizedTag)
+    )).length;
+    const attachedCount = getAllPlacedCards(forest).filter(placedCard =>
+        getPlacedSpecies(placedCard)?.speciesData.tags.some(cardTag =>
+            cardTag.toLowerCase() === normalizedTag
+        )
+    ).length;
+    return treeCount + attachedCount;
 }
 
-/**
- * Count specific species by name
- */
 export function countSpeciesByName(forest: PlacedTree[], speciesName: string): number {
-    let count = 0;
-
-    forest.forEach(tree => {
-        // Check tree card
-        if (!tree.isSapling && tree.tree.species.some(s => s.name === speciesName)) {
-            count++;
-        }
-
-        // Check cards on tree
-        (['top', 'bottom', 'left', 'right'] as ForestSlot[]).forEach(slot => {
-            if (getPlacedSpecies(tree, slot)?.name === speciesName) {
-                count++;
-            }
-        });
-    });
-
-    return count;
+    const treeCount = forest.filter(tree => !tree.isSapling && tree.tree.species.some(species =>
+        species.name === speciesName || species.speciesData.name === speciesName
+    )).length;
+    const attachedCount = getAllPlacedCards(forest).filter(placedCard => {
+        const species = getPlacedSpecies(placedCard);
+        return species?.name === speciesName || species?.speciesData.name === speciesName;
+    }).length;
+    return treeCount + attachedCount;
 }
 
-/**
- * Get all unique butterfly species in forest
- */
 export function getButterfliesInForest(forest: PlacedTree[]): Set<string> {
     const butterflies = new Set<string>();
-
     forest.forEach(tree => {
-        // Check tree card
-        if (!tree.isSapling) tree.tree.species.forEach(s => {
-            if (s.speciesData.tags.some(t => t === 'Butterfly')) {
-                butterflies.add(s.name);
-            }
-        });
-
-        // Check cards on tree
-        (['top', 'bottom', 'left', 'right'] as ForestSlot[]).forEach(slot => {
-            const species = getPlacedSpecies(tree, slot);
-            if (species?.speciesData.tags.includes('Butterfly')) butterflies.add(species.name);
+        if (!tree.isSapling) tree.tree.species.forEach(species => {
+            if (species.speciesData.tags.includes('Butterfly')) butterflies.add(species.name);
         });
     });
-
+    getAllPlacedCards(forest).forEach(placedCard => {
+        const species = getPlacedSpecies(placedCard);
+        if (species?.speciesData.tags.includes('Butterfly')) butterflies.add(species.name);
+    });
     return butterflies;
 }
 
-/**
- * Get all unique tree species in forest
- */
 export function getTreeSpecies(forest: PlacedTree[]): Set<string> {
     const treeSpecies = new Set<string>();
-
     forest.forEach(tree => {
-        if (!tree.isSapling) tree.tree.species.forEach(s => {
-            if (s.speciesData.tags.some(t => t === 'Tree')) {
-                treeSpecies.add(s.name);
-            }
+        if (!tree.isSapling) tree.tree.species.forEach(species => {
+            if (species.speciesData.tags.includes('Tree')) treeSpecies.add(species.name);
         });
     });
-
     return treeSpecies;
 }
 
-/**
- * Check if card has specific tree symbol
- */
 export function hasTreeSymbol(card: EnhancedCard, symbol: TreeSymbol): boolean {
-    return card.species.some(s => s.treeSymbol === symbol);
+    return card.species.some(species => species.treeSymbol === symbol);
 }
 
-/**
- * Count trees in forest
- */
 export function countTrees(forest: PlacedTree[]): number {
     return forest.length;
 }
 
-/**
- * Count fully occupied trees (all 4 slots filled)
- */
 export function countFullyOccupiedTrees(forest: PlacedTree[]): number {
-    return forest.filter(tree =>
-        tree.top && tree.bottom && tree.left && tree.right
-    ).length;
+    return forest.filter(tree => forestSlots.every(slot => getSlotCards(tree, slot).length > 0)).length;
 }
 
-/**
- * Check if a card is on a specific tree type
- */
 export function isCardOnTreeType(
     forest: PlacedTree[],
     cardId: number,
     treeSpeciesName: string
 ): boolean {
-    for (const tree of forest) {
-        const placedOnThisTree =
-            tree.top?.cardId === cardId ||
-            tree.bottom?.cardId === cardId ||
-            tree.left?.cardId === cardId ||
-            tree.right?.cardId === cardId;
-
-        if (placedOnThisTree) {
-            return tree.tree.species.some(s => s.name === treeSpeciesName);
-        }
-    }
-    return false;
+    return forest.some(tree =>
+        forestSlots.some(slot => getSlotCards(tree, slot).some(placedCard =>
+            placedCard.card.cardId === cardId
+        )) && tree.tree.species.some(species => species.name === treeSpeciesName)
+    );
 }
 
-/**
- * Count cards below trees (bottom slot)
- */
 export function countCardsBelowTrees(forest: PlacedTree[]): number {
-    return forest.filter(tree => tree.bottom !== undefined).length;
+    return forest.reduce((count, tree) => count + getSlotCards(tree, 'bottom').length, 0);
 }
 
-/**
- * Count cards atop trees (top slot)
- */
 export function countCardsAtopTrees(forest: PlacedTree[]): number {
-    return forest.filter(tree => tree.top !== undefined).length;
+    return forest.reduce((count, tree) => count + getSlotCards(tree, 'top').length, 0);
 }
 
-/**
- * Count all cards in forest (trees + attached cards)
- */
 export function countAllCardsInForest(forest: PlacedTree[]): number {
-    let count = 0;
-    forest.forEach(tree => {
-        count++; // The tree itself
-        if (tree.top) count++;
-        if (tree.bottom) count++;
-        if (tree.left) count++;
-        if (tree.right) count++;
-    });
-    return count;
+    return forest.length + getAllPlacedCards(forest).length;
 }
 
-/**
- * Get cards with matching tree symbol
- */
 export function getCardsWithMatchingTreeSymbol(
     forest: PlacedTree[],
     symbol: TreeSymbol
 ): EnhancedCard[] {
     const cards: EnhancedCard[] = [];
-
     forest.forEach(tree => {
-        if (hasTreeSymbol(tree.tree, symbol)) {
-            cards.push(tree.tree);
-        }
-        [tree.top, tree.bottom, tree.left, tree.right].forEach(card => {
-            if (card && hasTreeSymbol(card, symbol)) {
-                cards.push(card);
-            }
-        });
+        if (hasTreeSymbol(tree.tree, symbol)) cards.push(tree.tree);
     });
-
+    getAllPlacedCards(forest).forEach(placedCard => {
+        if (hasTreeSymbol(placedCard.card, symbol)) cards.push(placedCard.card);
+    });
     return cards;
 }
 
-/**
- * Check if player has at least one card with specific tag
- */
 export function hasAnyCardWithTag(forest: PlacedTree[], tag: string): boolean {
     return countCardsWithTag(forest, tag) > 0;
 }
 
-/**
- * Get count of different plant species
- */
 export function countDifferentPlants(forest: PlacedTree[]): number {
     const plants = new Set<string>();
-
-    forest.forEach(tree => {
-        tree.tree.species.forEach(s => {
-            if (s.speciesData.tags.some(t => t === 'Plant')) {
-                plants.add(s.name);
-            }
-        });
-
-        (['top', 'bottom', 'left', 'right'] as ForestSlot[]).forEach(slot => {
-            const species = getPlacedSpecies(tree, slot);
-            if (species?.speciesData.tags.includes('Plant')) plants.add(species.name);
-        });
+    forest.forEach(tree => tree.tree.species.forEach(species => {
+        if (species.speciesData.tags.includes('Plant')) plants.add(species.name);
+    }));
+    getAllPlacedCards(forest).forEach(placedCard => {
+        const species = getPlacedSpecies(placedCard);
+        if (species?.speciesData.tags.includes('Plant')) plants.add(species.name);
     });
-
     return plants.size;
 }
 
-/**
- * Get count of different bird species
- */
 export function countDifferentBirds(forest: PlacedTree[]): number {
     const birds = new Set<string>();
-
-    forest.forEach(tree => {
-        tree.tree.species.forEach(s => {
-            if (s.speciesData.tags.some(t => t === 'Bird')) {
-                birds.add(s.name);
-            }
-        });
-
-        (['top', 'bottom', 'left', 'right'] as ForestSlot[]).forEach(slot => {
-            const species = getPlacedSpecies(tree, slot);
-            if (species?.speciesData.tags.includes('Bird')) birds.add(species.name);
-        });
+    forest.forEach(tree => tree.tree.species.forEach(species => {
+        if (species.speciesData.tags.includes('Bird')) birds.add(species.name);
+    }));
+    getAllPlacedCards(forest).forEach(placedCard => {
+        const species = getPlacedSpecies(placedCard);
+        if (species?.speciesData.tags.includes('Bird')) birds.add(species.name);
     });
-
     return birds.size;
 }
 
-/**
- * Check if two cards share a slot
- */
-export function checkSharedSlot(tree: PlacedTree, slot: 'top' | 'bottom' | 'left' | 'right'): boolean {
-    return false;
+export function checkSharedSlot(tree: PlacedTree, slot: ForestSlot): boolean {
+    return getSlotCards(tree, slot).length > 1;
+}
+
+export function getSharedSlotSizeForCard(forest: PlacedTree[], cardId: number): number {
+    for (const tree of forest) {
+        for (const slot of forestSlots) {
+            const cards = getSlotCards(tree, slot);
+            if (cards.some(placedCard => placedCard.card.cardId === cardId)) return cards.length;
+        }
+    }
+    return 0;
 }

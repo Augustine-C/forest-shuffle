@@ -12,7 +12,10 @@ import {
     countSpeciesByName,
     isCardOnTreeType,
     countCardsAtopTrees,
-    countCardsBelowTrees
+    countCardsBelowTrees,
+    forestSlots,
+    getSlotCards,
+    getSharedSlotSizeForCard
 } from './cardMatching';
 
 /**
@@ -48,10 +51,16 @@ export function calculatePlayerScore(player: Player, gameState: GameState): numb
         if (!treeSlot.isSapling) totalPoints += calculateCardPoints(treeSlot.tree, player, gameState);
 
         // Points for attached cards
-        if (treeSlot.top) totalPoints += calculateCardPoints(treeSlot.top, player, gameState, treeSlot.speciesIndices?.top);
-        if (treeSlot.bottom) totalPoints += calculateCardPoints(treeSlot.bottom, player, gameState, treeSlot.speciesIndices?.bottom);
-        if (treeSlot.left) totalPoints += calculateCardPoints(treeSlot.left, player, gameState, treeSlot.speciesIndices?.left);
-        if (treeSlot.right) totalPoints += calculateCardPoints(treeSlot.right, player, gameState, treeSlot.speciesIndices?.right);
+        forestSlots.forEach(slot => {
+            getSlotCards(treeSlot, slot).forEach(placedCard => {
+                totalPoints += calculateCardPoints(
+                    placedCard.card,
+                    player,
+                    gameState,
+                    placedCard.speciesIndex
+                );
+            });
+        });
     });
 
     // 2. Add points for cards in cave (1 point each)
@@ -67,6 +76,14 @@ export function calculatePlayerScore(player: Player, gameState: GameState): numb
  * Calculate points for a specific card
  */
 export function calculateCardPoints(card: EnhancedCard, player: Player, gameState: GameState, speciesIndex = 0): number {
+    const speciesName = card.species[speciesIndex]?.speciesData.name;
+    if (speciesName === 'European Hare') {
+        return countSpeciesByName(player.forest, 'European Hare') +
+            countSpeciesByName(player.forest, 'Mountain Hare');
+    }
+    if (speciesName === 'Common Toad') {
+        return getSharedSlotSizeForCard(player.forest, card.cardId) === 2 ? 5 : 0;
+    }
     const pointsText = card.species[speciesIndex]?.speciesData.points;
     return pointsText ? parseAndCalculatePoints(pointsText, card, player, gameState) : 0;
 }

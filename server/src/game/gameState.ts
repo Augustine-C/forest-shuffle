@@ -5,16 +5,20 @@ import { calculatePlayerScore } from './scoringEngine';
 import type { PendingAction, TriggeredDrawChoice } from '../../../shared/types';
 import type { CardTag } from './cardDefinitions';
 
+export interface PlacedCard {
+    card: EnhancedCard;
+    speciesIndex: number;
+    playedTurn?: number;
+}
+
 export interface PlacedTree {
     tree: EnhancedCard;
     isSapling?: boolean;
     treePlayedTurn?: number;
-    top?: EnhancedCard;
-    bottom?: EnhancedCard;
-    left?: EnhancedCard;
-    right?: EnhancedCard;
-    speciesIndices?: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>;
-    slotPlayedTurns?: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>;
+    top?: PlacedCard[];
+    bottom?: PlacedCard[];
+    left?: PlacedCard[];
+    right?: PlacedCard[];
 }
 
 interface DeferredCardResolution {
@@ -50,7 +54,7 @@ export class GameState {
     pendingAction?: PendingAction;
     private pendingActions: PendingAction[];
     private extraTurnsPending: number;
-    private turnNumber: number;
+    turnNumber: number;
     private deferredCardResolution?: DeferredCardResolution;
     private triggeredDrawCompletion?: 'resumeCard' | 'completeAction';
 
@@ -257,7 +261,26 @@ export class GameState {
             }
             targetTree = player.forest[targetTreeIndex];
             if (!targetTree) throw new Error('Target tree does not exist');
-            if (targetTree[targetSlot]) throw new Error('Target slot is already occupied');
+            const existingCards = targetTree[targetSlot] ?? [];
+            const playedSpeciesName = cardToPlay.species[speciesIndex].speciesData.name;
+            if (playedSpeciesName === 'Cuckoo' && !this.canShareSlot(
+                targetTree,
+                targetSlot,
+                cardToPlay,
+                speciesIndex,
+                freePlay || pendingPaidPlay
+            )) {
+                throw new Error('Cuckoo must share a top slot with exactly one bird');
+            }
+            if (playedSpeciesName !== 'Cuckoo' && existingCards.length > 0 && !this.canShareSlot(
+                targetTree,
+                targetSlot,
+                cardToPlay,
+                speciesIndex,
+                freePlay || pendingPaidPlay
+            )) {
+                throw new Error('The selected card cannot share this occupied slot');
+            }
         }
 
         // Remove cost cards from hand and add to clearing
@@ -286,15 +309,11 @@ export class GameState {
         } else if (cardToPlay.isSplitCard) {
             // Playing a split card (hCard or vCard) on a tree
             placedTree = targetTree;
-            placedTree![targetSlot!] = cardToPlay;
-            placedTree!.speciesIndices = {
-                ...placedTree!.speciesIndices,
-                [targetSlot!]: speciesIndex
-            };
-            placedTree!.slotPlayedTurns = {
-                ...placedTree!.slotPlayedTurns,
-                [targetSlot!]: this.turnNumber
-            };
+            const slotCards = placedTree![targetSlot!] ?? [];
+            placedTree![targetSlot!] = [
+                ...slotCards,
+                { card: cardToPlay, speciesIndex, playedTurn: this.turnNumber }
+            ];
         } else {
             // Playing as sapling (face down)
             placedTree = { tree: cardToPlay, treePlayedTurn: this.turnNumber };
@@ -477,6 +496,48 @@ export class GameState {
         if (this.pendingAction) throw new Error('Resolve the pending action first');
     }
 
+    private canShareSlot(
+        tree: PlacedTree,
+        slot: 'top' | 'bottom' | 'left' | 'right',
+        card: EnhancedCard,
+        speciesIndex: number,
+        playedViaEffect: boolean
+    ): boolean {
+        const existingCards = tree[slot] ?? [];
+        const species = card.species[speciesIndex];
+        const existingSpecies = existingCards.map(placedCard =>
+            placedCard.card.species[placedCard.speciesIndex]
+        );
+
+        if (species.speciesData.name === 'European Hare') {
+            return existingSpecies.every(existing => existing?.speciesData.name === 'European Hare') &&
+                (playedViaEffect || existingCards.some(existing =>
+                    existing.playedTurn === undefined || existing.playedTurn < this.turnNumber
+                ));
+        }
+        if (species.speciesData.name === 'Common Toad') {
+            return existingCards.length === 1 &&
+                existingSpecies[0]?.speciesData.name === 'Common Toad' &&
+                (existingCards[0].playedTurn === undefined || existingCards[0].playedTurn < this.turnNumber);
+        }
+        if (species.speciesData.name === 'Cuckoo') {
+            return slot === 'top' && existingCards.length === 1 &&
+                existingSpecies[0]?.speciesData.tags.includes('Bird') === true;
+        }
+        if (species.speciesData.tags.includes('Butterfly') && this.treeHasStingingNettle(tree)) {
+            return existingSpecies.every(existing => existing?.speciesData.tags.includes('Butterfly'));
+        }
+        return false;
+    }
+
+    private treeHasStingingNettle(tree: PlacedTree): boolean {
+        return (['top', 'bottom', 'left', 'right'] as const).some(slot =>
+            (tree[slot] ?? []).some(placedCard =>
+                placedCard.card.species[placedCard.speciesIndex]?.speciesData.name === 'Stinging Nettle'
+            )
+        );
+    }
+
     private resolveCardEffects(resolution: DeferredCardResolution) {
         if (resolution.suppressEffectsAndBonus) {
             if (resolution.freePlay && resolution.resolvingPendingAction?.kind === 'playFreeCard') {
@@ -623,10 +684,9 @@ export class GameState {
         player.forest.forEach(tree => {
             if (!tree.isSapling) addTrigger(tree.tree, 0, tree.treePlayedTurn);
             (['top', 'bottom', 'left', 'right'] as const).forEach(slot => {
-                const card = tree[slot];
-                if (!card) return;
-                const defaultIndex = slot === 'bottom' || slot === 'right' ? 1 : 0;
-                addTrigger(card, tree.speciesIndices?.[slot] ?? defaultIndex, tree.slotPlayedTurns?.[slot]);
+                (tree[slot] ?? []).forEach(placedCard => {
+                    addTrigger(placedCard.card, placedCard.speciesIndex, placedCard.playedTurn);
+                });
             });
         });
         return triggers;
@@ -636,13 +696,11 @@ export class GameState {
         const sources: Array<{ card: EnhancedCard; speciesIndex: number }> = [];
         player.forest.forEach(tree => {
             (['top', 'bottom', 'left', 'right'] as const).forEach(slot => {
-                const card = tree[slot];
-                if (!card) return;
-                const defaultIndex = slot === 'bottom' || slot === 'right' ? 1 : 0;
-                const speciesIndex = tree.speciesIndices?.[slot] ?? defaultIndex;
-                if (card.species[speciesIndex]?.speciesData.name !== 'Chanterelle') return;
-                if (tree.slotPlayedTurns?.[slot] === this.turnNumber) return;
-                sources.push({ card, speciesIndex });
+                (tree[slot] ?? []).forEach(placedCard => {
+                    if (placedCard.card.species[placedCard.speciesIndex]?.speciesData.name !== 'Chanterelle') return;
+                    if (placedCard.playedTurn === this.turnNumber) return;
+                    sources.push({ card: placedCard.card, speciesIndex: placedCard.speciesIndex });
+                });
             });
         });
 
