@@ -862,4 +862,40 @@ function scoreHorseChestnuts(count: number, addBee = false): number {
 });
 assert.equal(scoreHorseChestnuts(6, true), 49, 'a Violet Carpenter Bee increases the set count');
 
+const butterflyCardIds = [120, 121, 133, 119, 118, 185, 210];
+[0, 0, 3, 6, 12, 20, 35, 55].forEach((expected, count) => {
+    assert.equal(
+        scoreAttachedSet(butterflyCardIds.slice(0, count), 0),
+        expected,
+        `${count} different butterfly species use the correct table entry`
+    );
+});
+assert.equal(
+    scoreAttachedSet([120, 120, 121, 121, 133], 0),
+    9,
+    'duplicate butterflies form a three-species set and a second two-species set'
+);
+const eightButterflyGame = new GameState(2);
+eightButterflyGame.addPlayer('butterflies', 'socket-butterflies', 'Butterfly Tester', true);
+eightButterflyGame.addPlayer('other', 'socket-other', 'Other Tester');
+const brimstoneSource = createEnhancedCard(120)!;
+const brimstone: EnhancedCard = {
+    ...brimstoneSource,
+    cardId: 9002,
+    species: [{
+        ...brimstoneSource.species[0],
+        name: 'Brimstone',
+        speciesData: { ...brimstoneSource.species[0].speciesData, name: 'Brimstone' }
+    }]
+};
+eightButterflyGame.players.get('butterflies')!.forest = [{
+    tree: createEnhancedCard(1)!,
+    isSapling: true,
+    top: [
+        ...butterflyCardIds.map(cardId => ({ card: createEnhancedCard(cardId)!, speciesIndex: 0 })),
+        { card: brimstone, speciesIndex: 0 }
+    ]
+}];
+assert.equal(eightButterflyGame.calculateScores().get('butterflies'), 80);
+
 console.log('✅ Game action validation checks passed');

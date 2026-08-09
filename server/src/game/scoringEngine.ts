@@ -32,7 +32,9 @@ const BUTTERFLY_SET_POINTS: Record<number, number> = {
     3: 6,
     4: 12,
     5: 20,
-    6: 35
+    6: 35,
+    7: 55,
+    8: 80
 };
 
 const butterflySpecies = new Set([
@@ -42,7 +44,8 @@ const butterflySpecies = new Set([
     'Purple Emperor',
     'Silver-Washed Fritillary',
     'Parnassius phoebus',
-    'Map Butterfly'
+    'Map Butterfly',
+    'Brimstone'
 ]);
 
 const batSpecies = new Set([
@@ -342,8 +345,7 @@ function isCardOnShrub(forest: PlacedTree[], cardId: number): boolean {
 }
 
 function calculateGlobalBonuses(player: Player): number {
-    const count = getButterfliesInForest(player.forest).size;
-    const butterflyPoints = count > 0 ? BUTTERFLY_SET_POINTS[count] ?? (count > 5 ? 35 : 0) : 0;
+    const butterflyPoints = calculateButterflySets(player);
     const horseChestnutAdjustment = countVioletCarpenterBeesAtTreeSpecies(
         player.forest,
         'Horse Chestnut'
@@ -352,4 +354,19 @@ function calculateGlobalBonuses(player: Player): number {
         variableScore(player, 'Fireflies') +
         variableScore(player, 'Fire Salamander') +
         variableScore(player, 'Horse Chestnut', horseChestnutAdjustment);
+}
+
+function calculateButterflySets(player: Player): number {
+    const speciesCounts = new Map<string, number>();
+    getButterfliesInForest(player.forest).forEach(speciesName => {
+        speciesCounts.set(speciesName, (speciesCounts.get(speciesName) ?? 0) + 1);
+    });
+
+    const numberOfSets = Math.max(0, ...speciesCounts.values());
+    let points = 0;
+    for (let setIndex = 0; setIndex < numberOfSets; setIndex++) {
+        const differentSpecies = Array.from(speciesCounts.values()).filter(count => count > setIndex).length;
+        points += BUTTERFLY_SET_POINTS[Math.min(differentSpecies, 8)] ?? 0;
+    }
+    return points;
 }

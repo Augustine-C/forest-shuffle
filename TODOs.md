@@ -53,7 +53,7 @@ This document records gaps found by comparing the game implementation with the b
   - Horse Chestnuts: 1/4/9/16/25/36 points for 1-6 cards and 49 points for 7 or more, including Violet Carpenter Bee adjustments.
   - Butterflies: 0/3/6/12/20/35/55/80 points for 1-8 different species in each set.
 
-- [ ] Score repeated butterfly sets correctly.
+- [x] Score repeated butterfly sets correctly.
   - Preserve duplicate butterfly cards so they can form additional sets.
   - Assign each butterfly card to at most one set.
   - Support the additional expansion butterfly species.

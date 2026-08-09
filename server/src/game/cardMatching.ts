@@ -43,16 +43,20 @@ export function countSpeciesByName(forest: PlacedTree[], speciesName: string): n
     return treeCount + attachedCount;
 }
 
-export function getButterfliesInForest(forest: PlacedTree[]): Set<string> {
-    const butterflies = new Set<string>();
+export function getButterfliesInForest(forest: PlacedTree[]): string[] {
+    const butterflies: string[] = [];
     forest.forEach(tree => {
         if (!tree.isSapling) tree.tree.species.forEach(species => {
-            if (species.speciesData.tags.includes('Butterfly')) butterflies.add(species.name);
+            if (species.speciesData.tags.includes('Butterfly')) {
+                butterflies.push(species.speciesData.name);
+            }
         });
     });
     getAllPlacedCards(forest).forEach(placedCard => {
         const species = getPlacedSpecies(placedCard);
-        if (species?.speciesData.tags.includes('Butterfly')) butterflies.add(species.name);
+        if (species?.speciesData.tags.includes('Butterfly')) {
+            butterflies.push(species.speciesData.name);
+        }
     });
     return butterflies;
 }
