@@ -125,7 +125,7 @@ This document records gaps found by comparing the game implementation with the b
 ## P1 - Validation and state integrity
 
 - [x] Make `GameState` enforce active-player and game-ended checks, not only the socket layer.
-- [ ] Validate every pending choice server-side against card types, ownership, available slots, hand limits, and current clearing contents.
+- [x] Validate every pending choice server-side against card types, ownership, available slots, hand limits, and current clearing contents.
 - [ ] Ensure rejected and interrupted actions are atomic and do not partially mutate hands, forests, caves, or the clearing.
 - [ ] Define behavior for an exhausted deck before the third winter card, even if it should be unreachable in normal play.
 - [ ] Preserve pending effects and extra turns across disconnect/rejoin.

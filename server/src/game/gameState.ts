@@ -421,6 +421,9 @@ export class GameState {
 
         if (action.kind === 'initialMulligan') {
             if (cardIds.length > 0) throw new Error('Do not select cards for a mulligan');
+            if (choiceId !== undefined || useEffect || useBonus) {
+                throw new Error('A mulligan does not accept another choice type');
+            }
             this.resolveInitialMulligan(playerId, decline);
             return;
         }
@@ -429,10 +432,14 @@ export class GameState {
         if (activePlayerId !== playerId) throw new Error('Not your turn');
         if (action.kind === 'chooseDrawSource') {
             if (decline) throw new Error('A draw-source choice cannot be declined');
+            if (useEffect || useBonus) throw new Error('A draw-source choice does not accept ability choices');
             this.resolveDrawSource(action, cardIds, choiceId);
             return;
         }
         if (action.kind === 'chooseCardEffectAndBonus') {
+            if (cardIds.length > 0 || decline || choiceId !== undefined) {
+                throw new Error('Card ability choices do not accept cards, decline, or another choice ID');
+            }
             this.resolveCardChoices(action, useEffect, useBonus);
             return;
         }
@@ -936,7 +943,9 @@ export class GameState {
         )) {
             throw new Error(`The selected card side must have a ${action.eligibleTag} symbol`);
         }
-        if (action.eligibleSpecies && species.name.toLowerCase() !== action.eligibleSpecies.toLowerCase()) {
+        if (action.eligibleSpecies &&
+            species.speciesData.name.toLowerCase() !== action.eligibleSpecies.toLowerCase()
+        ) {
             throw new Error(`The selected card side must be ${action.eligibleSpecies}`);
         }
     }

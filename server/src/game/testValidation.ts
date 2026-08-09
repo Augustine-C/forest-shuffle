@@ -130,6 +130,10 @@ assert.throws(
     () => pendingGame.resolvePendingAction('pending', [caveCardOne.cardId]),
     /Select exactly 2 card/
 );
+assert.throws(
+    () => pendingGame.resolvePendingAction('pending', [caveCardOne.cardId, 9999]),
+    /no longer in the clearing/
+);
 assert.equal(pendingPlayer.cave.length, 0, 'an invalid pending selection must be atomic');
 
 pendingGame.resolvePendingAction('pending', [caveCardOne.cardId, caveCardTwo.cardId]);
@@ -740,6 +744,10 @@ abilityChoiceCases.forEach(({ useEffect, useBonus, expectedDraws }, index) => {
     choiceGame.playCard('choice', 145, [24, 25], 0, 0, 'top');
     const choiceAction = choiceGame.pendingAction;
     assert.equal(choiceAction?.kind, 'chooseCardEffectAndBonus');
+    assert.throws(
+        () => choiceGame.resolvePendingAction('choice', [9999], false, undefined, useEffect, useBonus),
+        /do not accept cards/
+    );
     choiceGame.resolvePendingAction('choice', [], false, undefined, useEffect, useBonus);
     assert.equal(choicePlayer.hand.length, expectedDraws, `ability choice case ${index} drew incorrectly`);
     assert.equal(choiceGame.activePlayerIndex, 1);
@@ -1362,5 +1370,43 @@ assert.throws(
     () => engineGuardGame.resolvePendingAction('inactive', [], false, 'deck'),
     /Not your turn/
 );
+
+const pendingCapacityGame = new GameState(2);
+pendingCapacityGame.addPlayer('capacity', 'socket-capacity', 'Capacity Tester', true);
+pendingCapacityGame.addPlayer('other', 'socket-other', 'Other Tester');
+const capacityPlayer = pendingCapacityGame.players.get('capacity')!;
+capacityPlayer.hand = Array.from({ length: 10 }, (_, index) => createEnhancedCard(index + 1)!);
+pendingCapacityGame.clearing = [createEnhancedCard(93)!];
+pendingCapacityGame.pendingAction = {
+    kind: 'takeAllMatching',
+    playerId: 'capacity',
+    eligibleTag: 'Bat',
+    count: 1,
+    optional: true,
+    prompt: 'Take all bats'
+};
+assert.throws(
+    () => pendingCapacityGame.resolvePendingAction('capacity'),
+    /exceed the hand limit/
+);
+assert.equal(capacityPlayer.hand.length, 10);
+assert.equal(pendingCapacityGame.clearing.length, 1);
+
+const expansionSqueakerGame = new GameState(2);
+expansionSqueakerGame.addPlayer('squeaker', 'socket-squeaker', 'Expansion Squeaker Tester', true);
+expansionSqueakerGame.addPlayer('other', 'socket-other', 'Other Tester');
+const expansionSqueakerPlayer = expansionSqueakerGame.players.get('squeaker')!;
+expansionSqueakerPlayer.forest = [{ tree: createEnhancedCard(1)!, isSapling: true }];
+expansionSqueakerPlayer.hand = [createEnhancedCard(225)!];
+expansionSqueakerGame.pendingAction = {
+    kind: 'playFreeCard',
+    playerId: 'squeaker',
+    eligibleSpecies: 'Squeaker',
+    suppressEffectsAndBonus: true,
+    optional: true,
+    prompt: 'Play a Squeaker for free'
+};
+expansionSqueakerGame.playPendingFreeCard('squeaker', 225, 1, 0, 'right');
+assert.equal(expansionSqueakerPlayer.forest[0].right?.[0].card.cardId, 225);
 
 console.log('✅ Game action validation checks passed');
