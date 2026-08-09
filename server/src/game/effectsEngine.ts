@@ -291,7 +291,11 @@ export function drawCardsOneByOne(
         }
 
         const card = gameState.deck.shift();
-        if (!card) break; // Deck empty
+        if (!card) {
+            gameState.gameEnded = true;
+            console.log('🌲 Game ends - the deck is exhausted.');
+            break;
+        }
 
         // Check for winter card
         if (card.isWinterCard) {
@@ -316,7 +320,11 @@ export function drawCardsOneByOne(
 export function revealCardToClearing(gameState: GameState): EnhancedCard | undefined {
     while (!gameState.gameEnded) {
         const card = gameState.deck.shift();
-        if (!card) return undefined;
+        if (!card) {
+            gameState.gameEnded = true;
+            console.log('🌲 Game ends - the deck is exhausted.');
+            return undefined;
+        }
         if (card.isWinterCard) {
             gameState.winterCardsDrawn++;
             if (gameState.winterCardsDrawn >= 3) gameState.gameEnded = true;

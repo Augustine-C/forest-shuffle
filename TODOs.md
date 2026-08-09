@@ -127,7 +127,7 @@ This document records gaps found by comparing the game implementation with the b
 - [x] Make `GameState` enforce active-player and game-ended checks, not only the socket layer.
 - [x] Validate every pending choice server-side against card types, ownership, available slots, hand limits, and current clearing contents.
 - [x] Ensure rejected and interrupted actions are atomic and do not partially mutate hands, forests, caves, or the clearing.
-- [ ] Define behavior for an exhausted deck before the third winter card, even if it should be unreachable in normal play.
+- [x] Define behavior for an exhausted deck before the third winter card, even if it should be unreachable in normal play.
 - [ ] Preserve pending effects and extra turns across disconnect/rejoin.
 
 ## P1 - Tests required for rule confidence

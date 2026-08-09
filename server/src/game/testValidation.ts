@@ -1456,4 +1456,24 @@ assert.equal(JSON.stringify({
 }), zonesBeforeStaleDraw);
 assert.equal(atomicGame.pendingAction?.kind, 'chooseDrawSource');
 
+const exhaustedDrawGame = new GameState(2);
+exhaustedDrawGame.addPlayer('empty', 'socket-empty', 'Empty Deck Tester', true);
+exhaustedDrawGame.addPlayer('other', 'socket-other', 'Other Tester');
+exhaustedDrawGame.deck = [];
+exhaustedDrawGame.playerDrawsTwo('empty');
+exhaustedDrawGame.resolvePendingAction('empty', [], false, 'deck');
+assert.equal(exhaustedDrawGame.gameEnded, true);
+assert.equal(exhaustedDrawGame.pendingAction, undefined);
+assert.equal(exhaustedDrawGame.activePlayerIndex, 0);
+
+const exhaustedRevealGame = new GameState(2);
+exhaustedRevealGame.addPlayer('empty', 'socket-empty', 'Empty Reveal Tester', true);
+exhaustedRevealGame.addPlayer('other', 'socket-other', 'Other Tester');
+exhaustedRevealGame.players.get('empty')!.hand = [createEnhancedCard(23)!];
+exhaustedRevealGame.deck = [];
+exhaustedRevealGame.playCard('empty', 23, []);
+assert.equal(exhaustedRevealGame.gameEnded, true);
+assert.equal(exhaustedRevealGame.players.get('empty')!.forest[0].tree.cardId, 23);
+assert.equal(exhaustedRevealGame.pendingAction, undefined);
+
 console.log('✅ Game action validation checks passed');
