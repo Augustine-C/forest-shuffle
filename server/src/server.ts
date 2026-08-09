@@ -107,7 +107,7 @@ io.on('connection', (socket) => {
         }
 
         // Update player with new socket ID
-        player.socketId = socket.id;
+        game.reconnectPlayer(playerId, socket.id);
         socket.join(roomCode);
 
         console.log(`Player ${player.name} (${playerId}) rejoined room ${roomCode}`);

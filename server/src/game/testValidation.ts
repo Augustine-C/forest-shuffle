@@ -1476,4 +1476,34 @@ assert.equal(exhaustedRevealGame.gameEnded, true);
 assert.equal(exhaustedRevealGame.players.get('empty')!.forest[0].tree.cardId, 23);
 assert.equal(exhaustedRevealGame.pendingAction, undefined);
 
+const reconnectGame = new GameState(2);
+reconnectGame.addPlayer('rejoin', 'socket-old', 'Reconnect Tester', true);
+reconnectGame.addPlayer('other', 'socket-other', 'Other Tester');
+reconnectGame.deck = [createEnhancedCard(30)!, createEnhancedCard(31)!];
+reconnectGame.clearing = [createEnhancedCard(32)!];
+reconnectGame.playerDrawsTwo('rejoin');
+const pendingBeforeReconnect = JSON.stringify(reconnectGame.pendingAction);
+reconnectGame.reconnectPlayer('rejoin', 'socket-new');
+assert.equal(reconnectGame.players.get('rejoin')?.socketId, 'socket-new');
+assert.equal(JSON.stringify(reconnectGame.pendingAction), pendingBeforeReconnect);
+assert.equal(serializeGameState(reconnectGame, 'rejoin').pendingAction?.playerId, 'rejoin');
+reconnectGame.resolvePendingAction('rejoin', [32], false, 'clearing');
+reconnectGame.resolvePendingAction('rejoin', [], false, 'deck');
+assert.deepEqual(reconnectGame.players.get('rejoin')?.hand.map(card => card.cardId), [32, 30]);
+
+const reconnectExtraTurnGame = new GameState(2);
+reconnectExtraTurnGame.addPlayer('rejoin', 'socket-old', 'Reconnect Extra Turn Tester', true);
+reconnectExtraTurnGame.addPlayer('other', 'socket-other', 'Other Tester');
+const reconnectExtraPlayer = reconnectExtraTurnGame.players.get('rejoin')!;
+reconnectExtraPlayer.forest = [{ tree: createEnhancedCard(1)!, isSapling: true }];
+reconnectExtraPlayer.hand = [createEnhancedCard(126)!, createEnhancedCard(30)!];
+reconnectExtraTurnGame.deck = [createEnhancedCard(31)!, createEnhancedCard(32)!];
+reconnectExtraTurnGame.playCard('rejoin', 126, [30], 0, 0, 'top');
+acceptCardChoices(reconnectExtraTurnGame, true, false);
+assert.equal(reconnectExtraTurnGame.activePlayerIndex, 0);
+reconnectExtraTurnGame.reconnectPlayer('rejoin', 'socket-new');
+assert.equal(reconnectExtraTurnGame.activePlayerIndex, 0);
+completeDrawFromDeck(reconnectExtraTurnGame, 'rejoin');
+assert.equal(reconnectExtraTurnGame.activePlayerIndex, 1);
+
 console.log('✅ Game action validation checks passed');

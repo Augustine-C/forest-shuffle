@@ -102,6 +102,12 @@ export class GameState {
         this.players.delete(id);
     }
 
+    reconnectPlayer(id: string, socketId: string) {
+        const player = this.players.get(id);
+        if (!player) throw new Error('Player not found');
+        player.socketId = socketId;
+    }
+
     startGame(startingPlayerId?: string, includedDecks: DeckType[] = ['basic']) {
         if (this.players.size < 2 || this.players.size > 5) {
             throw new Error('Forest Shuffle requires 2-5 players');
