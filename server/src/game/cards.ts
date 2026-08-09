@@ -107,6 +107,14 @@ export interface EnhancedCard {
     isSplitCard: boolean;
 }
 
+export function isShrubCard(card: EnhancedCard): boolean {
+    return card.species.some(species => species.speciesData.tags.includes('Shrub'));
+}
+
+export function isTreeCard(card: EnhancedCard): boolean {
+    return card.orientation === 'Tree' && !isShrubCard(card);
+}
+
 /**
  * Convert reference card data to enhanced card format
  */

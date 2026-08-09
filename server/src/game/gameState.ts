@@ -1,4 +1,4 @@
-import { EnhancedCard, getCardBonus, getCardCost, getCardEffect } from './cards';
+import { EnhancedCard, getCardBonus, getCardCost, getCardEffect, isShrubCard, isTreeCard } from './cards';
 import { createDeck } from './deck';
 import { executeEffect, executeBonus, drawCardsOneByOne, revealCardToClearing } from './effectsEngine';
 import { calculatePlayerScore } from './scoringEngine';
@@ -15,6 +15,7 @@ export interface PlacedCard {
 export interface PlacedTree {
     tree: EnhancedCard;
     isSapling?: boolean;
+    isShrub?: boolean;
     treePlayedTurn?: number;
     top?: PlacedCard[];
     bottom?: PlacedCard[];
@@ -327,8 +328,11 @@ export class GameState {
             placedTree = { tree: cardToPlay, isSapling: true, treePlayedTurn: this.turnNumber };
             player.forest.push(placedTree);
         } else if (cardToPlay.orientation === 'Tree') {
-            // Playing as a tree
-            placedTree = { tree: cardToPlay, treePlayedTurn: this.turnNumber };
+            placedTree = {
+                tree: cardToPlay,
+                isShrub: isShrubCard(cardToPlay),
+                treePlayedTurn: this.turnNumber
+            };
             player.forest.push(placedTree);
         } else if (cardToPlay.isSplitCard) {
             // Playing a split card (hCard or vCard) on a tree
@@ -345,7 +349,7 @@ export class GameState {
         }
 
         // 4. Execute Effect
-        if (cardToPlay.orientation === 'Tree' && !asSapling) {
+        if (isTreeCard(cardToPlay) && !asSapling) {
             revealCardToClearing(this);
             if (this.gameEnded) {
                 this.clearPendingActions();
@@ -774,9 +778,7 @@ export class GameState {
     ): TriggeredDrawChoice[] {
         const playedSpecies = playedCard.species[speciesIndex];
         const playedTags = playedSpecies.speciesData.tags;
-        const targetIsShrub = targetTree.tree.species.some(species =>
-            species.speciesData.tags.includes('Shrub')
-        );
+        const targetIsShrub = targetTree.isShrub === true;
         const delayedTriggers = new Set(['Chanterelle', 'Fly Agaric', 'Parasol Mushroom', 'Penny Bun']);
         const triggers: TriggeredDrawChoice[] = [];
         const addTrigger = (card: EnhancedCard, placedSpeciesIndex: number, playedTurn?: number) => {
@@ -787,7 +789,7 @@ export class GameState {
             if (delayedTriggers.has(name) && playedTurn === this.turnNumber) return;
 
             const matches =
-                (name === 'Chanterelle' && playedCard.orientation === 'Tree' && !targetIsShrub) ||
+                (name === 'Chanterelle' && isTreeCard(playedCard) && !targetIsShrub) ||
                 (name === 'Fly Agaric' && playedTags.includes('Paw')) ||
                 (name === 'Parasol Mushroom' && targetSlot === 'bottom' && !targetIsShrub) ||
                 (name === 'Penny Bun' && targetSlot === 'top' && !targetIsShrub) ||
@@ -1065,7 +1067,7 @@ export class GameState {
 
     private prepareInitialMulligans() {
         const actions: PendingAction[] = Array.from(this.players.values())
-            .filter(player => !player.hand.some(card => card.orientation === 'Tree'))
+            .filter(player => !player.hand.some(isTreeCard))
             .map(player => ({
                 kind: 'initialMulligan' as const,
                 playerId: player.id,

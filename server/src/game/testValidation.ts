@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { GameState } from './gameState';
-import { createEnhancedCard } from './cards';
+import { createEnhancedCard, isTreeCard } from './cards';
 import { SPECIES_DATA } from './cardDefinitions';
 import type { DeckType } from './cardDefinitions';
 import { calculateCardPoints, hasScoringRule } from './scoringEngine';
@@ -433,7 +433,7 @@ permanentTriggerCases.forEach((testCase, caseIndex) => {
     const sourceCard = createEnhancedCard(testCase.sourceCardId)!;
     const sourceIsShrub = sourceCard.orientation === 'Tree';
     triggerPlayer.forest = sourceIsShrub
-        ? [{ tree: sourceCard }, { tree: createEnhancedCard(2)! }]
+        ? [{ tree: sourceCard, isShrub: true }, { tree: createEnhancedCard(2)! }]
         : [{
             tree: createEnhancedCard(2)!,
             bottom: [{ card: sourceCard, speciesIndex: testCase.sourceSpeciesIndex }]
@@ -960,6 +960,7 @@ assert.equal(calculateCardPoints(dormouse, positionalPlayer, positionalGame), 0)
 const polecat = createEnhancedCard(227)!;
 positionalPlayer.forest = [{
     tree: createEnhancedCard(206)!,
+    isShrub: true,
     left: [{ card: polecat, speciesIndex: 0 }]
 }];
 assert.equal(calculateCardPoints(polecat, positionalPlayer, positionalGame), 10);
@@ -980,10 +981,12 @@ assert.equal(calculateCardPoints(silverFir, positionalPlayer, positionalGame), 6
 const nightingale = createEnhancedCard(217)!;
 positionalPlayer.forest = [{
     tree: createEnhancedCard(206)!,
+    isShrub: true,
     top: [{ card: nightingale, speciesIndex: 0 }]
 }];
 assert.equal(calculateCardPoints(nightingale, positionalPlayer, positionalGame), 5);
 positionalPlayer.forest[0].tree = createEnhancedCard(41)!;
+positionalPlayer.forest[0].isShrub = false;
 assert.equal(calculateCardPoints(nightingale, positionalPlayer, positionalGame), 0);
 
 const forestWideGame = new GameState(2);
@@ -1076,7 +1079,7 @@ mulliganOfferGame.addPlayer('first', 'socket-first', 'First Player', true);
 mulliganOfferGame.addPlayer('second', 'socket-second', 'Second Player');
 mulliganOfferGame.startGame();
 const eligibleMulliganPlayers = Array.from(mulliganOfferGame.players.values())
-    .filter(player => !player.hand.some(card => card.orientation === 'Tree'))
+    .filter(player => !player.hand.some(isTreeCard))
     .map(player => player.id);
 const offeredMulliganPlayers: string[] = [];
 while (mulliganOfferGame.pendingAction?.kind === 'initialMulligan') {
@@ -1259,6 +1262,47 @@ deckCombinations.forEach(decks => {
 assert.throws(
     () => startingPlayerGame.startGame('walker', ['alpine']),
     /base deck is required/
+);
+
+const shrubGame = new GameState(2);
+shrubGame.addPlayer('shrub', 'socket-shrub', 'Shrub Tester', true);
+shrubGame.addPlayer('other', 'socket-other', 'Other Tester');
+const shrubPlayer = shrubGame.players.get('shrub')!;
+const blackthorn = createEnhancedCard(206)!;
+assert.equal(isTreeCard(blackthorn), false);
+shrubPlayer.forest = [{
+    tree: createEnhancedCard(1)!,
+    bottom: [{ card: createEnhancedCard(139)!, speciesIndex: 1, playedTurn: -1 }]
+}];
+shrubPlayer.hand = [blackthorn, createEnhancedCard(30)!, createEnhancedCard(31)!];
+shrubGame.deck = [createEnhancedCard(40)!];
+shrubGame.playCard('shrub', 206, [30, 31]);
+assert.equal(shrubPlayer.forest[1].isShrub, true);
+assert.equal(shrubGame.deck.length, 1, 'playing a shrub does not reveal a card');
+assert.deepEqual(shrubGame.clearing.map(card => card.cardId), [30, 31]);
+assert.notEqual(shrubGame.pendingAction?.kind, 'triggeredDraws');
+
+const sycamore = createEnhancedCard(43)!;
+const shrubCountingGame = new GameState(2);
+shrubCountingGame.addPlayer('counter', 'socket-counter', 'Shrub Count Tester', true);
+shrubCountingGame.addPlayer('other', 'socket-other', 'Other Tester');
+const shrubCountingPlayer = shrubCountingGame.players.get('counter')!;
+shrubCountingPlayer.forest = [
+    { tree: sycamore },
+    { tree: createEnhancedCard(206)!, isShrub: true },
+    { tree: createEnhancedCard(33)!, isSapling: true }
+];
+assert.equal(calculateCardPoints(sycamore, shrubCountingPlayer, shrubCountingGame), 2);
+const shrubRedDeer = createEnhancedCard(81)!;
+shrubCountingPlayer.forest[0].left = [{ card: shrubRedDeer, speciesIndex: 0 }];
+assert.equal(calculateCardPoints(shrubRedDeer, shrubCountingPlayer, shrubCountingGame), 2);
+
+const wildcat = createEnhancedCard(229)!;
+shrubCountingPlayer.forest[1].left = [{ card: wildcat, speciesIndex: 0 }];
+assert.equal(
+    calculateCardPoints(wildcat, shrubCountingPlayer, shrubCountingGame),
+    2,
+    'Woodland Edge scoring counts both the shrub and the attached wildcat'
 );
 
 console.log('✅ Game action validation checks passed');

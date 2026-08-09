@@ -105,7 +105,7 @@ This document records gaps found by comparing the game implementation with the b
   - Pass the selected deck list into `createDeck()` instead of always using the base deck.
   - Apply the correct setup and card-count rules for the chosen combination.
 
-- [ ] Distinguish shrubs from trees in the game model.
+- [x] Distinguish shrubs from trees in the game model.
   - Shrubs provide four slots but are not trees and have no tree symbol.
   - Playing a shrub must not trigger rules that apply only to playing a tree.
   - Update all tree-counting and placement helpers accordingly.

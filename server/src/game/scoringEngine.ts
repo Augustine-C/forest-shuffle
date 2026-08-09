@@ -9,6 +9,7 @@ import {
     countDifferentBirds,
     countDifferentPlants,
     countFullyOccupiedTrees,
+    countTrees,
     countSpeciesByName,
     forestSlots,
     getAllPlacedCards,
@@ -201,7 +202,7 @@ export function calculateCardPoints(
         case 'Fallow Deer': return countCardsWithTag(player.forest, 'Cloven-hoofed animal') * 3;
         case 'Gnat': return countCardsWithTag(player.forest, 'Bat');
         case 'Lynx': return countSpeciesByName(player.forest, 'Roe Deer') > 0 ? 10 : 0;
-        case 'Red Deer': return player.forest.length + countCardsWithTag(player.forest, 'Plant');
+        case 'Red Deer': return countTrees(player.forest) + countCardsWithTag(player.forest, 'Plant');
         case 'Red Fox': return countHares(player) * 2;
         case 'Roe Deer': return countMatchingTreeSymbols(player, species.treeSymbol) * 3;
         case 'Wild Boar': return countSpeciesByName(player.forest, 'Squeaker') > 0 ? 10 : 0;
@@ -210,7 +211,7 @@ export function calculateCardPoints(
         case 'Oak': return getTreeSpecies(player.forest).size >= 8 ? 10 : 0;
         case 'Silver Fir': return countAttachedCards(player.forest, card.cardId) * 2;
         case 'Beech': return effectiveTreeSpeciesCount(player, 'Beech') >= 4 ? 5 : 0;
-        case 'Sycamore': return player.forest.length;
+        case 'Sycamore': return countTrees(player.forest);
         case 'Horse Chestnut': return 0;
         case 'Pinus cembra': return countCardsWithTag(player.forest, 'Mountain');
         case 'Gentiana': return countCardsWithTag(player.forest, 'Butterfly') * 3;
@@ -293,7 +294,7 @@ function hasMostSpecies(player: Player, gameState: GameState, speciesName: strin
 }
 
 function effectiveTreeCount(player: Player): number {
-    return player.forest.length + countVioletCarpenterBees(player.forest);
+    return countTrees(player.forest) + countVioletCarpenterBees(player.forest);
 }
 
 function effectiveTreeSpeciesCount(player: Player, speciesName: string): number {
@@ -302,9 +303,11 @@ function effectiveTreeSpeciesCount(player: Player, speciesName: string): number 
 }
 
 function countVioletCarpenterBees(forest: PlacedTree[]): number {
-    return getAllPlacedCards(forest).filter(placedCard =>
-        getPlacedSpecies(placedCard)?.speciesData.name === 'Violet Carpenter Bee'
-    ).length;
+    return forest.reduce((total, tree) => total + (tree.isShrub ? 0 : forestSlots.reduce(
+        (slotTotal, slot) => slotTotal + getSlotCards(tree, slot).filter(placedCard =>
+            getPlacedSpecies(placedCard)?.speciesData.name === 'Violet Carpenter Bee'
+        ).length,
+    0)), 0);
 }
 
 function countAttachedCards(forest: PlacedTree[], cardId: number): number {
@@ -316,7 +319,7 @@ function countMatchingTreeSymbols(player: Player, ...symbols: string[]): number 
     const wanted = new Set(symbols);
     let count = 0;
     player.forest.forEach(tree => {
-        if (!tree.isSapling && tree.tree.species[0] && wanted.has(tree.tree.species[0].treeSymbol)) count++;
+        if (!tree.isSapling && !tree.isShrub && tree.tree.species[0] && wanted.has(tree.tree.species[0].treeSymbol)) count++;
     });
     getAllPlacedCards(player.forest).forEach(placedCard => {
         const species = placedCard.card.species[placedCard.speciesIndex];
@@ -338,7 +341,7 @@ function findAttachedCard(forest: PlacedTree[], cardId: number) {
 
 function hasBatOpposite(forest: PlacedTree[], cardId: number): boolean {
     const placement = findAttachedCard(forest, cardId);
-    if (!placement) return false;
+    if (!placement || placement.tree.isShrub) return false;
     const opposite = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' } as const;
     return getSlotCards(placement.tree, opposite[placement.slot]).some(placedCard =>
         getPlacedSpecies(placedCard)?.speciesData.tags.includes('Bat')
@@ -355,9 +358,7 @@ function isOnlyAttachedCard(forest: PlacedTree[], cardId: number): boolean {
 
 function isCardOnShrub(forest: PlacedTree[], cardId: number): boolean {
     const placement = findAttachedCard(forest, cardId);
-    if (!placement) return false;
-    const treeName = placement.tree.tree.species[0]?.speciesData.name;
-    return treeName === 'Blackthorn' || treeName === 'Common Hazel' || treeName === 'Elderberry';
+    return placement?.tree.isShrub === true;
 }
 
 function calculateGlobalBonuses(player: Player): number {

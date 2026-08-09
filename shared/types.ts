@@ -59,6 +59,7 @@ export interface PlacedCard {
 export interface PlacedTree {
     tree: EnhancedCard;
     isSapling?: boolean;
+    isShrub?: boolean;
     treePlayedTurn?: number;
     top?: PlacedCard[];
     bottom?: PlacedCard[];

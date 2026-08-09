@@ -21,9 +21,12 @@ export function getAllPlacedCards(forest: PlacedTree[]): PlacedCard[] {
 
 export function countCardsWithTag(forest: PlacedTree[], tag: string): number {
     const normalizedTag = tag.toLowerCase();
-    const treeCount = forest.filter(tree => !tree.isSapling && tree.tree.species.some(species =>
-        species.speciesData.tags.some(cardTag => cardTag.toLowerCase() === normalizedTag)
-    )).length;
+    const treeCount = forest.filter(tree => !tree.isSapling &&
+        (normalizedTag !== 'tree' || !tree.isShrub) &&
+        tree.tree.species.some(species =>
+            species.speciesData.tags.some(cardTag => cardTag.toLowerCase() === normalizedTag)
+        )
+    ).length;
     const attachedCount = getAllPlacedCards(forest).filter(placedCard =>
         getPlacedSpecies(placedCard)?.speciesData.tags.some(cardTag =>
             cardTag.toLowerCase() === normalizedTag
@@ -46,7 +49,7 @@ export function countSpeciesByName(forest: PlacedTree[], speciesName: string): n
 export function getButterfliesInForest(forest: PlacedTree[]): string[] {
     const butterflies: string[] = [];
     forest.forEach(tree => {
-        if (!tree.isSapling) tree.tree.species.forEach(species => {
+        if (!tree.isSapling && !tree.isShrub) tree.tree.species.forEach(species => {
             if (species.speciesData.tags.includes('Butterfly')) {
                 butterflies.push(species.speciesData.name);
             }
@@ -64,7 +67,7 @@ export function getButterfliesInForest(forest: PlacedTree[]): string[] {
 export function getTreeSpecies(forest: PlacedTree[]): Set<string> {
     const treeSpecies = new Set<string>();
     forest.forEach(tree => {
-        if (!tree.isSapling) tree.tree.species.forEach(species => {
+        if (!tree.isSapling && !tree.isShrub) tree.tree.species.forEach(species => {
             if (species.speciesData.tags.includes('Tree')) treeSpecies.add(species.name);
         });
     });
@@ -76,11 +79,11 @@ export function hasTreeSymbol(card: EnhancedCard, symbol: TreeSymbol): boolean {
 }
 
 export function countTrees(forest: PlacedTree[]): number {
-    return forest.length;
+    return forest.filter(tree => !tree.isShrub).length;
 }
 
 export function countFullyOccupiedTrees(forest: PlacedTree[]): number {
-    return forest.filter(tree => !tree.isSapling &&
+    return forest.filter(tree => !tree.isSapling && !tree.isShrub &&
         forestSlots.every(slot => getSlotCards(tree, slot).length > 0)
     ).length;
 }
@@ -98,11 +101,15 @@ export function isCardOnTreeType(
 }
 
 export function countCardsBelowTrees(forest: PlacedTree[]): number {
-    return forest.reduce((count, tree) => count + getSlotCards(tree, 'bottom').length, 0);
+    return forest.reduce((count, tree) =>
+        count + (tree.isShrub ? 0 : getSlotCards(tree, 'bottom').length),
+    0);
 }
 
 export function countCardsAtopTrees(forest: PlacedTree[]): number {
-    return forest.reduce((count, tree) => count + getSlotCards(tree, 'top').length, 0);
+    return forest.reduce((count, tree) =>
+        count + (tree.isShrub ? 0 : getSlotCards(tree, 'top').length),
+    0);
 }
 
 export function countAllCardsInForest(forest: PlacedTree[]): number {
@@ -115,7 +122,7 @@ export function getCardsWithMatchingTreeSymbol(
 ): EnhancedCard[] {
     const cards: EnhancedCard[] = [];
     forest.forEach(tree => {
-        if (!tree.isSapling && hasTreeSymbol(tree.tree, symbol)) cards.push(tree.tree);
+        if (!tree.isSapling && !tree.isShrub && hasTreeSymbol(tree.tree, symbol)) cards.push(tree.tree);
     });
     getAllPlacedCards(forest).forEach(placedCard => {
         if (hasTreeSymbol(placedCard.card, symbol)) cards.push(placedCard.card);
@@ -130,7 +137,7 @@ export function hasAnyCardWithTag(forest: PlacedTree[], tag: string): boolean {
 export function countDifferentPlants(forest: PlacedTree[]): number {
     const plants = new Set<string>();
     forest.forEach(tree => {
-        if (!tree.isSapling) tree.tree.species.forEach(species => {
+        if (!tree.isSapling && !tree.isShrub) tree.tree.species.forEach(species => {
             if (species.speciesData.tags.includes('Plant')) plants.add(species.name);
         });
     });
@@ -144,7 +151,7 @@ export function countDifferentPlants(forest: PlacedTree[]): number {
 export function countDifferentBirds(forest: PlacedTree[]): number {
     const birds = new Set<string>();
     forest.forEach(tree => {
-        if (!tree.isSapling) tree.tree.species.forEach(species => {
+        if (!tree.isSapling && !tree.isShrub) tree.tree.species.forEach(species => {
             if (species.speciesData.tags.includes('Bird')) birds.add(species.name);
         });
     });
