@@ -171,7 +171,7 @@ io.on('connection', (socket) => {
         else socket.emit('error', 'Only the host can start a lobby game');
     });
 
-    socket.on('draw_card', ({ roomCode, playerId, clearingCardIds = [] }) => {
+    socket.on('draw_card', ({ roomCode, playerId }) => {
         const game = games.get(roomCode);
         const meta = roomMetadata.get(roomCode);
         if (!game || meta?.status !== 'PLAYING') return;
@@ -188,7 +188,7 @@ io.on('connection', (socket) => {
         }
 
         try {
-            game.playerDrawsTwo(playerId, clearingCardIds);
+            game.playerDrawsTwo(playerId);
             if (game.gameEnded) meta.status = 'ENDED';
             emitGameEvent(roomCode, game, 'game_state_update');
         } catch (error) {

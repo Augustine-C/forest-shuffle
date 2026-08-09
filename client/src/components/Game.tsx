@@ -43,6 +43,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const triggeredDrawAction = myPendingAction?.kind === 'triggeredDraws' ? myPendingAction : undefined;
     const cardChoiceAction = myPendingAction?.kind === 'chooseCardEffectAndBonus' ? myPendingAction : undefined;
     const mulliganAction = myPendingAction?.kind === 'initialMulligan' ? myPendingAction : undefined;
+    const drawSourceAction = myPendingAction?.kind === 'chooseDrawSource' ? myPendingAction : undefined;
 
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
@@ -88,13 +89,13 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     };
 
     const handleDrawTwo = () => {
-        socket.emit('draw_card', { roomCode, playerId, clearingCardIds });
+        socket.emit('draw_card', { roomCode, playerId });
         setClearingCardIds([]);
     };
 
     const handleClearingCardClick = (cardId: number) => {
         if (!isMyTurn || selectedCardId !== null) return;
-        const selectionLimit = clearingPendingAction?.count ?? Math.min(2, 10 - (myPlayer?.hand.length ?? 0));
+        const selectionLimit = drawSourceAction ? 1 : clearingPendingAction?.count ?? 2;
         setClearingCardIds(current => current.includes(cardId)
             ? current.filter(id => id !== cardId)
             : current.length < selectionLimit ? [...current, cardId] : current
@@ -121,6 +122,17 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             choiceId,
             decline: choiceId === undefined
         });
+    };
+
+    const handleDrawSource = (choiceId: 'deck' | 'clearing') => {
+        if (!drawSourceAction || !playerId) return;
+        socket.emit('resolve_pending_action', {
+            roomCode,
+            playerId,
+            choiceId,
+            cardIds: choiceId === 'clearing' ? clearingCardIds : []
+        });
+        setClearingCardIds([]);
     };
 
     const handleCardChoices = (useEffect: boolean, useBonus: boolean) => {
@@ -281,6 +293,21 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                         </button>
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
                             Keep this hand
+                        </button>
+                    </div>
+                )}
+                {isMyTurn && drawSourceAction && (
+                    <div className="pending-action">
+                        <strong>{drawSourceAction.prompt}</strong>
+                        <button className="action-btn primary" onClick={() => handleDrawSource('deck')}>
+                            Draw from deck
+                        </button>
+                        <button
+                            className="action-btn"
+                            disabled={clearingCardIds.length !== 1}
+                            onClick={() => handleDrawSource('clearing')}
+                        >
+                            Take selected clearing card
                         </button>
                     </div>
                 )}

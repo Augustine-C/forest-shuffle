@@ -161,7 +161,7 @@ export class GameState {
     }
 
     // Actions
-    playerDrawsTwo(playerId: string, clearingCardIds: number[] = []) {
+    playerDrawsTwo(playerId: string) {
         this.assertActionAllowed(playerId);
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
         const player = this.players.get(activePlayerId);
@@ -172,28 +172,13 @@ export class GameState {
             throw new Error('A player with 10 cards must play a card');
         }
         const cardsToDraw = Math.min(2, drawCapacity);
-
-        if (clearingCardIds.length > cardsToDraw || new Set(clearingCardIds).size !== clearingCardIds.length) {
-            throw new Error(`Choose at most ${cardsToDraw} distinct clearing card(s)`);
-        }
-        if (player.hand.length + clearingCardIds.length > 10) {
-            throw new Error('Selected clearing cards exceed the hand limit');
-        }
-
-        const clearingIndexes = clearingCardIds.map(cardId =>
-            this.clearing.findIndex(card => card.cardId === cardId)
-        );
-        if (clearingIndexes.some(index => index < 0)) {
-            throw new Error('A selected card is no longer in the clearing');
-        }
-
-        clearingIndexes.sort((a, b) => b - a).forEach(index => {
-            const [card] = this.clearing.splice(index, 1);
-            player.hand.push(card);
-        });
-        this.drawCards(cardsToDraw - clearingCardIds.length);
-
-        this.finishTurn();
+        this.pendingAction = {
+            kind: 'chooseDrawSource',
+            playerId,
+            remaining: cardsToDraw,
+            optional: false,
+            prompt: `Choose the source for card 1 of ${cardsToDraw}`
+        };
     }
 
     /**
@@ -428,6 +413,11 @@ export class GameState {
 
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
         if (activePlayerId !== playerId) throw new Error('Not your turn');
+        if (action.kind === 'chooseDrawSource') {
+            if (decline) throw new Error('A draw-source choice cannot be declined');
+            this.resolveDrawSource(action, cardIds, choiceId);
+            return;
+        }
         if (action.kind === 'chooseCardEffectAndBonus') {
             this.resolveCardChoices(action, useEffect, useBonus);
             return;
@@ -1075,6 +1065,45 @@ export class GameState {
         this.pendingAction = actions.shift();
         this.pendingActions = actions;
         this.focusActivePlayerOnPendingMulligan();
+    }
+
+    private resolveDrawSource(
+        action: Extract<PendingAction, { kind: 'chooseDrawSource' }>,
+        cardIds: number[],
+        choiceId?: string
+    ) {
+        const player = this.players.get(action.playerId)!;
+        if (player.hand.length >= 10) throw new Error('The hand limit has been reached');
+
+        if (choiceId === 'deck') {
+            if (cardIds.length > 0) throw new Error('Do not select a clearing card when drawing from the deck');
+            this.drawCards(1, player);
+        } else if (choiceId === 'clearing') {
+            if (cardIds.length !== 1) throw new Error('Select exactly one clearing card');
+            const clearingIndex = this.clearing.findIndex(card => card.cardId === cardIds[0]);
+            if (clearingIndex < 0) throw new Error('The selected card is no longer in the clearing');
+            const [card] = this.clearing.splice(clearingIndex, 1);
+            player.hand.push(card);
+        } else {
+            throw new Error('Choose either the deck or the clearing');
+        }
+
+        if (this.gameEnded) {
+            this.clearPendingActions();
+            return;
+        }
+
+        const remaining = action.remaining - 1;
+        if (remaining > 0 && player.hand.length < 10) {
+            this.pendingAction = {
+                ...action,
+                remaining,
+                prompt: 'Choose the source for your second card'
+            };
+            return;
+        }
+        this.pendingAction = undefined;
+        this.finishTurn();
     }
 
     private resolveInitialMulligan(playerId: string, keepHand: boolean) {

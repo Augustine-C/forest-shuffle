@@ -26,6 +26,13 @@ function finishInitialMulligans(gameState: GameState) {
     }
 }
 
+function completeDrawFromDeck(gameState: GameState, playerId: string) {
+    gameState.playerDrawsTwo(playerId);
+    while (gameState.pendingAction?.kind === 'chooseDrawSource') {
+        gameState.resolvePendingAction(playerId, [], false, 'deck');
+    }
+}
+
 const game = new GameState(2);
 game.addPlayer('p1', 'socket1', 'Alice', true);
 game.addPlayer('p2', 'socket2', 'Bob');
@@ -286,9 +293,9 @@ acceptCardChoices(moleGame);
 assert.equal(moleGame.pendingAction?.kind, 'playPaidCards');
 moleGame.resolvePendingAction('mole', [], true);
 assert.equal(moleGame.activePlayerIndex, 0, 'the first nested extra turn must be preserved');
-moleGame.playerDrawsTwo('mole');
+completeDrawFromDeck(moleGame, 'mole');
 assert.equal(moleGame.activePlayerIndex, 0, 'the second nested extra turn must be preserved');
-moleGame.playerDrawsTwo('mole');
+completeDrawFromDeck(moleGame, 'mole');
 assert.equal(moleGame.activePlayerIndex, 1, 'play advances after all nested extra turns are used');
 
 const raccoonGame = new GameState(2);
@@ -794,7 +801,7 @@ combinedBonusGame.playCard('combined', 79, [1, 2, 3], 0, 0, 'left');
 acceptCardChoices(combinedBonusGame, false, true);
 assert.deepEqual(combinedBonusPlayer.hand.map(card => card.cardId), [34]);
 assert.equal(combinedBonusGame.activePlayerIndex, 0, 'draw-and-extra-turn bonus preserves the awarded turn');
-combinedBonusGame.playerDrawsTwo('combined');
+completeDrawFromDeck(combinedBonusGame, 'combined');
 assert.equal(combinedBonusGame.activePlayerIndex, 1);
 
 const speciesWithoutScoringRules = Object.values(SPECIES_DATA)
@@ -1122,13 +1129,60 @@ assert.throws(() => handLimitGame.playerDrawsTwo('limit'), /must play a card/);
 assert.equal(handLimitPlayer.hand.length, 10);
 assert.equal(handLimitGame.deck.length, 2);
 handLimitPlayer.hand.pop();
-assert.throws(
-    () => handLimitGame.playerDrawsTwo('limit', [30, 31]),
-    /Choose at most 1 distinct clearing card/
-);
+handLimitGame.clearing = [createEnhancedCard(30)!, createEnhancedCard(31)!];
 handLimitGame.playerDrawsTwo('limit');
+assert.throws(
+    () => handLimitGame.resolvePendingAction('limit', [30, 31], false, 'clearing'),
+    /Select exactly one clearing card/
+);
+assert.equal(handLimitPlayer.hand.length, 9);
+assert.equal(handLimitGame.clearing.length, 2);
+handLimitGame.resolvePendingAction('limit', [], false, 'deck');
 assert.equal(handLimitPlayer.hand.length, 10);
 assert.equal(handLimitGame.deck.length, 1);
 assert.equal(handLimitGame.activePlayerIndex, 1);
+
+const sequentialDrawGame = new GameState(2);
+sequentialDrawGame.addPlayer('draw', 'socket-draw', 'Sequential Draw Tester', true);
+sequentialDrawGame.addPlayer('other', 'socket-other', 'Other Tester');
+const sequentialDrawPlayer = sequentialDrawGame.players.get('draw')!;
+sequentialDrawGame.clearing = [createEnhancedCard(30)!, createEnhancedCard(31)!];
+sequentialDrawGame.deck = [createEnhancedCard(40)!];
+sequentialDrawGame.playerDrawsTwo('draw');
+assert.equal(sequentialDrawGame.pendingAction?.kind, 'chooseDrawSource');
+assert.throws(
+    () => sequentialDrawGame.resolvePendingAction('draw', [], true),
+    /cannot be declined/
+);
+assert.equal(
+    sequentialDrawGame.pendingAction?.kind === 'chooseDrawSource'
+        ? sequentialDrawGame.pendingAction.remaining
+        : 0,
+    2
+);
+sequentialDrawGame.resolvePendingAction('draw', [30], false, 'clearing');
+assert.deepEqual(sequentialDrawPlayer.hand.map(card => card.cardId), [30]);
+assert.deepEqual(sequentialDrawGame.clearing.map(card => card.cardId), [31]);
+assert.equal(
+    sequentialDrawGame.pendingAction?.kind === 'chooseDrawSource'
+        ? sequentialDrawGame.pendingAction.remaining
+        : 0,
+    1
+);
+sequentialDrawGame.resolvePendingAction('draw', [], false, 'deck');
+assert.deepEqual(sequentialDrawPlayer.hand.map(card => card.cardId), [30, 40]);
+assert.equal(sequentialDrawGame.pendingAction, undefined);
+assert.equal(sequentialDrawGame.activePlayerIndex, 1);
+
+const winterDrawGame = new GameState(2);
+winterDrawGame.addPlayer('winter-draw', 'socket-winter', 'Winter Draw Tester', true);
+winterDrawGame.addPlayer('other', 'socket-other', 'Other Tester');
+const winterCardForDraw = createEnhancedCard(67)!;
+winterDrawGame.deck = [winterCardForDraw, winterCardForDraw, winterCardForDraw];
+winterDrawGame.playerDrawsTwo('winter-draw');
+winterDrawGame.resolvePendingAction('winter-draw', [], false, 'deck');
+assert.equal(winterDrawGame.gameEnded, true);
+assert.equal(winterDrawGame.pendingAction, undefined);
+assert.equal(winterDrawGame.players.get('winter-draw')!.hand.length, 0);
 
 console.log('✅ Game action validation checks passed');
