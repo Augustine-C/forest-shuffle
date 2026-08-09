@@ -1338,4 +1338,29 @@ assert.throws(
     /cannot share this occupied slot/
 );
 
+const engineGuardGame = new GameState(2);
+engineGuardGame.addPlayer('active', 'socket-active', 'Active Player', true);
+engineGuardGame.addPlayer('inactive', 'socket-inactive', 'Inactive Player');
+engineGuardGame.players.get('inactive')!.hand = [createEnhancedCard(23)!];
+assert.throws(() => engineGuardGame.playerDrawsTwo('inactive'), /Not your turn/);
+assert.throws(() => engineGuardGame.playCard('inactive', 23, []), /Not your turn/);
+assert.equal(engineGuardGame.players.get('inactive')!.hand.length, 1);
+engineGuardGame.players.get('active')!.hand = [createEnhancedCard(23)!];
+engineGuardGame.gameEnded = true;
+assert.throws(() => engineGuardGame.playerDrawsTwo('active'), /game has ended/i);
+assert.throws(() => engineGuardGame.playCard('active', 23, []), /game has ended/i);
+assert.equal(engineGuardGame.players.get('active')!.hand.length, 1);
+engineGuardGame.gameEnded = false;
+engineGuardGame.pendingAction = {
+    kind: 'chooseDrawSource',
+    playerId: 'inactive',
+    remaining: 1,
+    optional: false,
+    prompt: 'Choose a source'
+};
+assert.throws(
+    () => engineGuardGame.resolvePendingAction('inactive', [], false, 'deck'),
+    /Not your turn/
+);
+
 console.log('✅ Game action validation checks passed');
