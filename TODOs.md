@@ -140,7 +140,7 @@ This document records gaps found by comparing the game implementation with the b
 - [x] Add setup tests for 2-5 players, mulligans, deck combinations, and winter-card placement.
 - [x] Add scoring examples from the rulebook and appendix as regression fixtures.
 - [x] Add multiplayer tests for invalid turns, hidden information, reconnects, and final-score synchronization.
-- [ ] Keep the required verification suite green:
+- [x] Keep the required verification suite green:
   - `cd server && npm test && npm run build`
   - `cd client && npm run build && npm run lint`
 
