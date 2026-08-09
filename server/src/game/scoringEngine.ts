@@ -69,7 +69,8 @@ const fixedPoints: Record<string, number> = {
     'Corvus corax': 5,
     'Leontopodium nivale': 3,
     'Capra ibex': 10,
-    'Eurasian Magpie': 3
+    'Eurasian Magpie': 3,
+    'Cuckoo': 7
 };
 
 const scoringSpecies = new Set([

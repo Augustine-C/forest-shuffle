@@ -58,7 +58,7 @@ This document records gaps found by comparing the game implementation with the b
   - Assign each butterfly card to at most one set.
   - Support the additional expansion butterfly species.
 
-- [ ] Implement positional, adjacency, and shared-slot scoring.
+- [x] Implement positional, adjacency, and shared-slot scoring.
   - Fully occupied trees and cards attached to specific tree species.
   - European Fat Dormouse opposite a bat.
   - European Polecat alone on a tree or shrub.

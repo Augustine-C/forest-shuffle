@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { GameState } from './gameState';
 import { createEnhancedCard } from './cards';
 import { SPECIES_DATA } from './cardDefinitions';
-import { hasScoringRule } from './scoringEngine';
+import { calculateCardPoints, hasScoringRule } from './scoringEngine';
 import type { EnhancedCard } from './cards';
 import { createDeck } from './deck';
 import { checkSharedSlot } from './cardMatching';
@@ -665,6 +665,7 @@ cuckooPlayer.forest = [{
 cuckooPlayer.hand = [cuckoo, createEnhancedCard(40)!];
 cuckooGame.playCard('cuckoo', cuckoo.cardId, [40], 0, 0, 'top');
 assert.equal(cuckooPlayer.forest[0].top?.length, 2);
+assert.equal(calculateCardPoints(cuckoo, cuckooPlayer, cuckooGame), 7);
 
 const emptyCuckooGame = new GameState(2);
 emptyCuckooGame.addPlayer('cuckoo', 'socket-cuckoo', 'Empty Cuckoo Tester', true);
@@ -897,5 +898,70 @@ eightButterflyGame.players.get('butterflies')!.forest = [{
     ]
 }];
 assert.equal(eightButterflyGame.calculateScores().get('butterflies'), 80);
+
+const positionalGame = new GameState(2);
+positionalGame.addPlayer('position', 'socket-position', 'Position Tester', true);
+positionalGame.addPlayer('other', 'socket-other', 'Other Tester');
+const positionalPlayer = positionalGame.players.get('position')!;
+const beechMarten = createEnhancedCard(80)!;
+positionalPlayer.forest = [{
+    tree: createEnhancedCard(41)!,
+    left: [{ card: beechMarten, speciesIndex: 0 }],
+    right: [{ card: createEnhancedCard(159)!, speciesIndex: 1 }],
+    top: [{ card: createEnhancedCard(139)!, speciesIndex: 1 }],
+    bottom: [{ card: createEnhancedCard(157)!, speciesIndex: 1 }]
+}];
+assert.equal(calculateCardPoints(beechMarten, positionalPlayer, positionalGame), 5);
+positionalPlayer.forest[0].top = [];
+assert.equal(calculateCardPoints(beechMarten, positionalPlayer, positionalGame), 0);
+
+const chaffinch = createEnhancedCard(116)!;
+positionalPlayer.forest = [{
+    tree: createEnhancedCard(41)!,
+    top: [{ card: chaffinch, speciesIndex: 0 }]
+}];
+assert.equal(calculateCardPoints(chaffinch, positionalPlayer, positionalGame), 5);
+positionalPlayer.forest[0].tree = createEnhancedCard(1)!;
+assert.equal(calculateCardPoints(chaffinch, positionalPlayer, positionalGame), 0);
+
+const dormouse = createEnhancedCard(92)!;
+positionalPlayer.forest = [{
+    tree: createEnhancedCard(41)!,
+    left: [{ card: dormouse, speciesIndex: 0 }],
+    right: [{ card: createEnhancedCard(93)!, speciesIndex: 0 }]
+}];
+assert.equal(calculateCardPoints(dormouse, positionalPlayer, positionalGame), 15);
+positionalPlayer.forest[0].right = [];
+positionalPlayer.forest[0].top = [{ card: createEnhancedCard(93)!, speciesIndex: 0 }];
+assert.equal(calculateCardPoints(dormouse, positionalPlayer, positionalGame), 0);
+
+const polecat = createEnhancedCard(227)!;
+positionalPlayer.forest = [{
+    tree: createEnhancedCard(206)!,
+    left: [{ card: polecat, speciesIndex: 0 }]
+}];
+assert.equal(calculateCardPoints(polecat, positionalPlayer, positionalGame), 10);
+positionalPlayer.forest[0].bottom = [{ card: createEnhancedCard(159)!, speciesIndex: 1 }];
+assert.equal(calculateCardPoints(polecat, positionalPlayer, positionalGame), 0);
+
+const silverFir = createEnhancedCard(17)!;
+positionalPlayer.forest = [{
+    tree: silverFir,
+    bottom: [
+        { card: createEnhancedCard(125)!, speciesIndex: 1 },
+        { card: createEnhancedCard(134)!, speciesIndex: 1 }
+    ],
+    top: [{ card: createEnhancedCard(139)!, speciesIndex: 1 }]
+}];
+assert.equal(calculateCardPoints(silverFir, positionalPlayer, positionalGame), 6);
+
+const nightingale = createEnhancedCard(217)!;
+positionalPlayer.forest = [{
+    tree: createEnhancedCard(206)!,
+    top: [{ card: nightingale, speciesIndex: 0 }]
+}];
+assert.equal(calculateCardPoints(nightingale, positionalPlayer, positionalGame), 5);
+positionalPlayer.forest[0].tree = createEnhancedCard(41)!;
+assert.equal(calculateCardPoints(nightingale, positionalPlayer, positionalGame), 0);
 
 console.log('✅ Game action validation checks passed');
