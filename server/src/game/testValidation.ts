@@ -5,6 +5,19 @@ import type { EnhancedCard } from './cards';
 import { createDeck } from './deck';
 import { checkSharedSlot } from './cardMatching';
 
+function acceptCardChoices(gameState: GameState, useEffect = true, useBonus = true) {
+    const action = gameState.pendingAction;
+    if (action?.kind !== 'chooseCardEffectAndBonus') return;
+    gameState.resolvePendingAction(
+        action.playerId,
+        [],
+        false,
+        undefined,
+        useEffect && Boolean(action.effectText),
+        useBonus && Boolean(action.bonusText)
+    );
+}
+
 const game = new GameState(2);
 game.addPlayer('p1', 'socket1', 'Alice', true);
 game.addPlayer('p2', 'socket2', 'Bob');
@@ -23,6 +36,7 @@ assert.equal(alice.hand.includes(birch), true, 'rejected actions must not mutate
 
 const payment = alice.hand.find(card => card.cardId !== birch.cardId && card.cardId !== blackberries.cardId)!;
 game.playCard('p1', birch.cardId, [payment.cardId], 0);
+acceptCardChoices(game);
 game.activePlayerIndex = 0;
 
 assert.throws(
@@ -66,6 +80,7 @@ const jayPayment = createEnhancedCard(126)!;
 bonusPlayer.hand = [roeDeer, birchPayment, jayPayment];
 bonusGame.deck = [normal];
 bonusGame.playCard('bonus', roeDeer.cardId, [birchPayment.cardId, jayPayment.cardId], 1, 0, 'right');
+acceptCardChoices(bonusGame);
 assert.equal(bonusPlayer.hand.length, 1, 'matching payment colors should activate the draw bonus');
 
 const pendingGame = new GameState(2);
@@ -81,6 +96,7 @@ pendingPlayer.hand = [beardedVulture, pendingPayment];
 pendingGame.clearing = [caveCardOne, caveCardTwo];
 
 pendingGame.playCard('pending', beardedVulture.cardId, [pendingPayment.cardId], 0, 0, 'top');
+acceptCardChoices(pendingGame);
 assert.equal(pendingGame.pendingAction?.kind, 'selectClearingCards');
 assert.equal(pendingGame.pendingAction?.destination, 'cave');
 assert.equal(pendingGame.pendingAction?.count, 2);
@@ -114,6 +130,7 @@ const marketCard = createEnhancedCard(25)!;
 handPlayer.hand = [magpie, magpiePayment];
 handSelectionGame.clearing = [marketCard];
 handSelectionGame.playCard('hand', magpie.cardId, [magpiePayment.cardId], 0, 0, 'top');
+acceptCardChoices(handSelectionGame);
 assert.equal(handSelectionGame.pendingAction?.kind, 'selectClearingCards');
 assert.equal(
     handSelectionGame.pendingAction?.kind === 'selectClearingCards'
@@ -132,6 +149,7 @@ declinePlayer.forest = [{ tree: createEnhancedCard(23)! }];
 declinePlayer.hand = [createEnhancedCard(190)!, createEnhancedCard(24)!];
 declineGame.clearing = [createEnhancedCard(25)!, createEnhancedCard(26)!];
 declineGame.playCard('decline', 190, [24], 0, 0, 'top');
+acceptCardChoices(declineGame);
 declineGame.resolvePendingAction('decline', [], true);
 assert.equal(declinePlayer.cave.length, 0);
 assert.equal(declineGame.activePlayerIndex, 1);
@@ -149,6 +167,7 @@ const untouchedClearingCard = createEnhancedCard(25)!;
 freePlayer.hand = [fireSalamander, matchingPayment, brownBear, ineligibleBird];
 freePlayGame.clearing = [untouchedClearingCard];
 freePlayGame.playCard('free', fireSalamander.cardId, [matchingPayment.cardId], 1, 0, 'bottom');
+acceptCardChoices(freePlayGame);
 assert.equal(freePlayGame.pendingAction?.kind, 'playFreeCard');
 assert.equal(
     freePlayGame.pendingAction?.kind === 'playFreeCard' ? freePlayGame.pendingAction.eligibleTag : undefined,
@@ -177,6 +196,7 @@ const femaleWildBoar = createEnhancedCard(222)!;
 const squeaker = createEnhancedCard(99)!;
 squeakerPlayer.hand = [femaleWildBoar, createEnhancedCard(24)!, createEnhancedCard(25)!, squeaker];
 squeakerGame.playCard('squeaker', femaleWildBoar.cardId, [24, 25], 0, 0, 'left');
+acceptCardChoices(squeakerGame);
 assert.equal(
     squeakerGame.pendingAction?.kind === 'playFreeCard' ? squeakerGame.pendingAction.eligibleSpecies : undefined,
     'Squeaker'
@@ -202,6 +222,7 @@ const firstBat = createEnhancedCard(71)!;
 const secondBat = createEnhancedCard(93)!;
 repeatablePlayer.hand = [gnat, firstBat, secondBat];
 repeatableFreePlayGame.playCard('repeatable', gnat.cardId, [], 1, 0, 'right');
+acceptCardChoices(repeatableFreePlayGame);
 assert.equal(repeatableFreePlayGame.pendingAction?.kind, 'playFreeCard');
 assert.equal(
     repeatableFreePlayGame.pendingAction?.kind === 'playFreeCard'
@@ -241,6 +262,7 @@ molePlayer.hand = [
     createEnhancedCard(33)!
 ];
 moleGame.playCard('mole', mole.cardId, [30, 31], 1, 0, 'bottom');
+acceptCardChoices(moleGame);
 assert.equal(moleGame.pendingAction?.kind, 'playPaidCards');
 assert.throws(
     () => moleGame.playPendingPaidCard('mole', firstJay.cardId, [], 0, 0, 'top'),
@@ -248,8 +270,10 @@ assert.throws(
 );
 assert.equal(molePlayer.hand.includes(firstJay), true, 'an invalid nested Mole play must be atomic');
 moleGame.playPendingPaidCard('mole', firstJay.cardId, [32], 0, 0, 'top');
+acceptCardChoices(moleGame);
 assert.equal(moleGame.pendingAction?.kind, 'playPaidCards');
 moleGame.playPendingPaidCard('mole', secondJay.cardId, [33], 0, 1, 'top');
+acceptCardChoices(moleGame);
 assert.equal(moleGame.pendingAction?.kind, 'playPaidCards');
 moleGame.resolvePendingAction('mole', [], true);
 assert.equal(moleGame.activePlayerIndex, 0, 'the first nested extra turn must be preserved');
@@ -269,6 +293,7 @@ const exchangeTwo = createEnhancedCard(31)!;
 raccoonPlayer.hand = [raccoon, createEnhancedCard(32)!, exchangeOne, exchangeTwo];
 raccoonGame.deck = [createEnhancedCard(34)!, createEnhancedCard(35)!];
 raccoonGame.playCard('raccoon', raccoon.cardId, [32], 0, 0, 'left');
+acceptCardChoices(raccoonGame);
 assert.equal(raccoonGame.pendingAction?.kind, 'exchangeHandForDeck');
 assert.throws(
     () => raccoonGame.resolvePendingAction('raccoon', [exchangeOne.cardId, exchangeOne.cardId]),
@@ -301,6 +326,7 @@ waterVolePlayer.hand = [
 ];
 waterVoleGame.deck = [createEnhancedCard(34)!, createEnhancedCard(35)!];
 waterVoleGame.playCard('vole', waterVole.cardId, [30, 31], 1, 0, 'bottom');
+acceptCardChoices(waterVoleGame);
 assert.equal(waterVoleGame.pendingAction?.kind, 'playSaplings');
 assert.throws(
     () => waterVoleGame.resolvePendingAction('vole', [firstSapling.cardId, firstSapling.cardId]),
@@ -328,6 +354,7 @@ interruptedVolePlayer.hand = [
 interruptedSaplingGame.winterCardsDrawn = 2;
 interruptedSaplingGame.deck = [winter, createEnhancedCard(34)!];
 interruptedSaplingGame.playCard('vole', 213, [30, 31], 1, 0, 'bottom');
+acceptCardChoices(interruptedSaplingGame);
 interruptedSaplingGame.resolvePendingAction('vole', [32, 33]);
 assert.equal(interruptedSaplingGame.gameEnded, true);
 assert.equal(interruptedVolePlayer.forest.length, 3, 'all selected saplings are placed before reveals begin');
@@ -346,6 +373,7 @@ const clearingNonBat = createEnhancedCard(24)!;
 takeAllPlayer.hand = [craneFly, createEnhancedCard(41)!];
 takeAllGame.clearing = [clearingBatOne, clearingNonBat, clearingBatTwo];
 takeAllGame.playCard('take-all', craneFly.cardId, [41], 1, 0, 'right');
+acceptCardChoices(takeAllGame);
 assert.equal(takeAllGame.pendingAction?.kind, 'playFreeCard');
 takeAllGame.resolvePendingAction('take-all', [], true);
 assert.equal(takeAllGame.pendingAction?.kind, 'takeAllMatching');
@@ -440,6 +468,7 @@ assert.deepEqual(
     ['139:1']
 );
 orderedTriggerGame.resolvePendingAction('ordered', [], false, '139:1');
+acceptCardChoices(orderedTriggerGame);
 assert.deepEqual(orderedPlayer.hand.map(card => card.cardId), [35, 36, 37]);
 assert.equal(orderedTriggerGame.activePlayerIndex, 1);
 
@@ -454,7 +483,12 @@ delayedPlayer.forest = [{
 delayedPlayer.hand = [createEnhancedCard(23)!];
 delayedTriggerGame.deck = [createEnhancedCard(34)!, createEnhancedCard(35)!];
 delayedTriggerGame.playCard('delayed', 23, [], 0);
-assert.equal(delayedTriggerGame.pendingAction, undefined, 'Chanterelle starts triggering on the next turn');
+assert.equal(
+    delayedTriggerGame.pendingAction?.kind,
+    'chooseCardEffectAndBonus',
+    'Chanterelle starts triggering on the next turn'
+);
+acceptCardChoices(delayedTriggerGame);
 
 const winterTriggerGame = new GameState(2);
 winterTriggerGame.addPlayer('winter-trigger', 'socket-winter-trigger', 'Winter Trigger Tester', true);
@@ -502,6 +536,7 @@ voleChanterelleGame.deck = [
     createEnhancedCard(37)!
 ];
 voleChanterelleGame.playCard('vole-trigger', 213, [30, 31], 1, 1, 'bottom');
+acceptCardChoices(voleChanterelleGame);
 voleChanterelleGame.resolvePendingAction('vole-trigger', [32, 33]);
 assert.equal(voleChanterelleGame.clearing.length, 4, 'Water Vole reveals happen before Chanterelle draws');
 const voleTriggers = voleChanterelleGame.pendingAction;
@@ -530,6 +565,7 @@ suppressedPlayer.forest = [
 suppressedPlayer.hand = [createEnhancedCard(118)!, createEnhancedCard(56)!, createEnhancedCard(79)!];
 suppressedEffectTriggerGame.deck = [createEnhancedCard(34)!];
 suppressedEffectTriggerGame.playCard('suppressed', 118, [56], 1, 1, 'bottom');
+acceptCardChoices(suppressedEffectTriggerGame);
 assert.equal(suppressedEffectTriggerGame.pendingAction?.kind, 'playFreeCard');
 suppressedEffectTriggerGame.playPendingFreeCard('suppressed', 79, 0, 0, 'left');
 assert.equal(suppressedEffectTriggerGame.pendingAction?.kind, 'triggeredDraws');
@@ -658,5 +694,63 @@ assert.throws(
     () => nettleGame.playCard('nettle', 126, [40], 0, 0, 'top'),
     /cannot share this occupied slot/
 );
+
+const abilityChoiceCases = [
+    { useEffect: false, useBonus: false, expectedDraws: 0 },
+    { useEffect: true, useBonus: false, expectedDraws: 1 },
+    { useEffect: false, useBonus: true, expectedDraws: 2 },
+    { useEffect: true, useBonus: true, expectedDraws: 3 }
+];
+abilityChoiceCases.forEach(({ useEffect, useBonus, expectedDraws }, index) => {
+    const choiceGame = new GameState(2);
+    choiceGame.addPlayer('choice', 'socket-choice', 'Choice Tester', true);
+    choiceGame.addPlayer('other', 'socket-other', 'Other Tester');
+    const choicePlayer = choiceGame.players.get('choice')!;
+    choicePlayer.forest = [{ tree: createEnhancedCard(1)!, isSapling: true }];
+    choicePlayer.hand = [createEnhancedCard(145)!, createEnhancedCard(24)!, createEnhancedCard(25)!];
+    choiceGame.deck = [createEnhancedCard(34)!, createEnhancedCard(35)!, createEnhancedCard(36)!];
+    choiceGame.playCard('choice', 145, [24, 25], 0, 0, 'top');
+    const choiceAction = choiceGame.pendingAction;
+    assert.equal(choiceAction?.kind, 'chooseCardEffectAndBonus');
+    choiceGame.resolvePendingAction('choice', [], false, undefined, useEffect, useBonus);
+    assert.equal(choicePlayer.hand.length, expectedDraws, `ability choice case ${index} drew incorrectly`);
+    assert.equal(choiceGame.activePlayerIndex, 1);
+});
+
+const orderedEffectBonusGame = new GameState(2);
+orderedEffectBonusGame.addPlayer('ordered-abilities', 'socket-ordered-abilities', 'Ordered Abilities', true);
+orderedEffectBonusGame.addPlayer('other', 'socket-other', 'Other Tester');
+const orderedAbilitiesPlayer = orderedEffectBonusGame.players.get('ordered-abilities')!;
+orderedAbilitiesPlayer.forest = [{ tree: createEnhancedCard(1)!, isSapling: true }];
+orderedAbilitiesPlayer.hand = [createEnhancedCard(214)!, createEnhancedCard(41)!];
+orderedEffectBonusGame.clearing = [
+    createEnhancedCard(30)!,
+    createEnhancedCard(31)!,
+    createEnhancedCard(32)!
+];
+orderedEffectBonusGame.playCard('ordered-abilities', 214, [41], 0, 0, 'top');
+assert.equal(orderedEffectBonusGame.pendingAction?.kind, 'chooseCardEffectAndBonus');
+orderedEffectBonusGame.resolvePendingAction('ordered-abilities', [], false, undefined, true, true);
+assert.equal(
+    (orderedEffectBonusGame.pendingAction as { kind?: string } | undefined)?.kind,
+    'selectClearingCards'
+);
+assert.equal(
+    (orderedEffectBonusGame.pendingAction as { destination?: string } | undefined)?.destination,
+    'hand'
+);
+orderedEffectBonusGame.resolvePendingAction('ordered-abilities', [30]);
+assert.equal(
+    (orderedEffectBonusGame.pendingAction as { kind?: string } | undefined)?.kind,
+    'selectClearingCards'
+);
+assert.equal(
+    (orderedEffectBonusGame.pendingAction as { destination?: string } | undefined)?.destination,
+    'cave'
+);
+orderedEffectBonusGame.resolvePendingAction('ordered-abilities', [31, 32]);
+assert.deepEqual(orderedAbilitiesPlayer.hand.map(card => card.cardId), [30]);
+assert.deepEqual(orderedAbilitiesPlayer.cave.map(card => card.cardId).sort((a, b) => a - b), [31, 32]);
+assert.equal(orderedEffectBonusGame.activePlayerIndex, 1);
 
 console.log('✅ Game action validation checks passed');

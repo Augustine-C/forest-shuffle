@@ -1,4 +1,4 @@
-import { EnhancedCard, getCardCost } from './cards';
+import { EnhancedCard, getCardBonus, getCardCost, getCardEffect } from './cards';
 import { createDeck } from './deck';
 import { executeEffect, executeBonus, drawCardsOneByOne, revealCardToClearing } from './effectsEngine';
 import { calculatePlayerScore } from './scoringEngine';
@@ -57,6 +57,9 @@ export class GameState {
     turnNumber: number;
     private deferredCardResolution?: DeferredCardResolution;
     private triggeredDrawCompletion?: 'resumeCard' | 'completeAction';
+    private deferredChoiceResolutions: Map<string, DeferredCardResolution>;
+    private deferredBonusResolutions: Map<string, { resolution: DeferredCardResolution; useBonus: boolean }>;
+    private resolutionSequence: number;
 
     constructor(playerCount: number = 2) {
         this.players = new Map();
@@ -68,6 +71,9 @@ export class GameState {
         this.pendingActions = [];
         this.extraTurnsPending = 0;
         this.turnNumber = 0;
+        this.deferredChoiceResolutions = new Map();
+        this.deferredBonusResolutions = new Map();
+        this.resolutionSequence = 0;
     }
 
     addPlayer(id: string, socketId: string, name: string, isHost: boolean = false) {
@@ -100,6 +106,9 @@ export class GameState {
         this.turnNumber = 0;
         this.deferredCardResolution = undefined;
         this.triggeredDrawCompletion = undefined;
+        this.deferredChoiceResolutions.clear();
+        this.deferredBonusResolutions.clear();
+        this.resolutionSequence = 0;
         this.activePlayerIndex = 0;
         this.players.forEach(player => {
             player.hand = [];
@@ -382,7 +391,9 @@ export class GameState {
         playerId: string,
         cardIds: number[] = [],
         decline: boolean = false,
-        choiceId?: string
+        choiceId?: string,
+        useEffect: boolean = false,
+        useBonus: boolean = false
     ) {
         if (this.gameEnded) throw new Error('The game has ended');
         const action = this.pendingAction;
@@ -391,6 +402,10 @@ export class GameState {
 
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
         if (activePlayerId !== playerId) throw new Error('Not your turn');
+        if (action.kind === 'chooseCardEffectAndBonus') {
+            this.resolveCardChoices(action, useEffect, useBonus);
+            return;
+        }
         if (action.kind === 'triggeredDraws') {
             this.resolveTriggeredDraw(action, cardIds, decline, choiceId);
             return;
@@ -552,22 +567,101 @@ export class GameState {
             this.finishTurn();
             return;
         }
+        const effectText = getCardEffect(resolution.card, resolution.speciesIndex);
+        const bonusText = resolution.bonusActive
+            ? getCardBonus(resolution.card, resolution.speciesIndex)
+            : '';
+        const selectableEffectText = this.isSelectableEffect(effectText) ? effectText : undefined;
+        const selectableBonusText = bonusText || undefined;
+        if (!selectableEffectText && !selectableBonusText) {
+            this.applyCardChoices(resolution, false, false);
+            return;
+        }
+
+        const resolutionId = `resolution-${++this.resolutionSequence}`;
+        this.deferredChoiceResolutions.set(resolutionId, resolution);
+        this.pendingAction = {
+            kind: 'chooseCardEffectAndBonus',
+            playerId: resolution.player.id,
+            resolutionId,
+            cardName: resolution.card.species[resolution.speciesIndex].speciesData.name,
+            effectText: selectableEffectText,
+            bonusText: selectableBonusText,
+            optional: false,
+            prompt: 'Choose which card abilities to use'
+        };
+    }
+
+    private isSelectableEffect(effectText: string): boolean {
+        if (!effectText) return false;
+        return ![
+            'Whenever you play',
+            'may share this spot',
+            'Counts as',
+            'counts as one additional tree'
+        ].some(passiveText => effectText.includes(passiveText));
+    }
+
+    private resolveCardChoices(
+        action: Extract<PendingAction, { kind: 'chooseCardEffectAndBonus' }>,
+        useEffect: boolean,
+        useBonus: boolean
+    ) {
+        if (useEffect && !action.effectText) throw new Error('This card has no selectable effect');
+        if (useBonus && !action.bonusText) throw new Error('This card has no active bonus');
+        const resolution = this.deferredChoiceResolutions.get(action.resolutionId);
+        if (!resolution) throw new Error('Missing card ability resolution');
+        this.deferredChoiceResolutions.delete(action.resolutionId);
+        this.pendingAction = undefined;
+        this.applyCardChoices(resolution, useEffect, useBonus);
+    }
+
+    private applyCardChoices(
+        resolution: DeferredCardResolution,
+        useEffect: boolean,
+        useBonus: boolean
+    ) {
         const { player, card, speciesIndex, placedTree, targetSlot } = resolution;
-        const effectResult = executeEffect({
+        const effectResult = useEffect ? executeEffect({
             gameState: this,
             player,
             card,
             speciesIndex,
             targetTree: placedTree,
             targetSlot
-        });
+        }) : { cardsDrawn: 0, cardsMoved: [], extraTurn: false, bonusActions: [] };
         if (effectResult.cardsDrawn > 0) drawCardsOneByOne(this, player, effectResult.cardsDrawn);
         if (this.gameEnded) {
             this.clearPendingActions();
             return;
         }
 
-        const bonusResult = resolution.bonusActive ? executeBonus({
+        this.extraTurnsPending += Number(effectResult.extraTurn);
+        const effectActions = this.createPendingActions(player, effectResult.bonusActions);
+        if (effectActions.length > 0) {
+            const resolutionId = `bonus-${++this.resolutionSequence}`;
+            this.deferredBonusResolutions.set(resolutionId, { resolution, useBonus });
+            const continuation: PendingAction = {
+                kind: 'continueCardBonus',
+                playerId: player.id,
+                resolutionId,
+                optional: false,
+                prompt: ''
+            };
+            this.pendingActions = [
+                ...effectActions.slice(1),
+                continuation,
+                ...this.pendingActions
+            ];
+            this.pendingAction = effectActions[0];
+            return;
+        }
+        this.applyCardBonus(resolution, useBonus);
+    }
+
+    private applyCardBonus(resolution: DeferredCardResolution, useBonus: boolean) {
+        const { player, card, speciesIndex, placedTree, targetSlot } = resolution;
+        const bonusResult = useBonus ? executeBonus({
             gameState: this,
             player,
             card,
@@ -581,17 +675,13 @@ export class GameState {
             return;
         }
 
-        const generatedActions = [
-            ...this.createPendingActions(player, effectResult.bonusActions),
-            ...this.createPendingActions(player, bonusResult?.bonusActions ?? [])
-        ];
-        const awardedExtraTurns = Number(effectResult.extraTurn) + Number(Boolean(bonusResult?.extraTurn));
-        this.extraTurnsPending += awardedExtraTurns;
-        if (generatedActions.length > 0) {
+        const bonusActions = this.createPendingActions(player, bonusResult?.bonusActions ?? []);
+        this.extraTurnsPending += Number(Boolean(bonusResult?.extraTurn));
+        if (bonusActions.length > 0) {
             const resumeActions = resolution.resolvingPendingAction
                 ? [resolution.resolvingPendingAction, ...this.pendingActions]
                 : this.pendingActions;
-            this.pendingActions = [...generatedActions, ...resumeActions];
+            this.pendingActions = [...bonusActions, ...resumeActions];
             this.pendingAction = this.pendingActions.shift();
             return;
         }
@@ -603,6 +693,13 @@ export class GameState {
         this.pendingAction = this.pendingActions.shift();
         if (this.pendingAction) return;
         this.finishTurn();
+    }
+
+    private resolveDeferredBonus(resolutionId: string) {
+        const deferred = this.deferredBonusResolutions.get(resolutionId);
+        if (!deferred) throw new Error('Missing deferred bonus resolution');
+        this.deferredBonusResolutions.delete(resolutionId);
+        this.applyCardBonus(deferred.resolution, deferred.useBonus);
     }
 
     private resolveTriggeredDraw(
@@ -942,6 +1039,12 @@ export class GameState {
 
     private completePendingAction() {
         this.pendingAction = this.pendingActions.shift();
+        if (this.pendingAction?.kind === 'continueCardBonus') {
+            const resolutionId = this.pendingAction.resolutionId;
+            this.pendingAction = undefined;
+            this.resolveDeferredBonus(resolutionId);
+            return;
+        }
         if (this.pendingAction) return;
 
         this.finishTurn();
@@ -953,6 +1056,8 @@ export class GameState {
         this.extraTurnsPending = 0;
         this.deferredCardResolution = undefined;
         this.triggeredDrawCompletion = undefined;
+        this.deferredChoiceResolutions.clear();
+        this.deferredBonusResolutions.clear();
     }
 
     private finishTurn() {

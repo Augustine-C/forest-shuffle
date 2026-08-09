@@ -41,6 +41,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const handSelectionPendingAction = handExchangePendingAction ?? saplingPendingAction;
     const takeAllPendingAction = myPendingAction?.kind === 'takeAllMatching' ? myPendingAction : undefined;
     const triggeredDrawAction = myPendingAction?.kind === 'triggeredDraws' ? myPendingAction : undefined;
+    const cardChoiceAction = myPendingAction?.kind === 'chooseCardEffectAndBonus' ? myPendingAction : undefined;
 
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
@@ -118,6 +119,16 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             playerId,
             choiceId,
             decline: choiceId === undefined
+        });
+    };
+
+    const handleCardChoices = (useEffect: boolean, useBonus: boolean) => {
+        if (!cardChoiceAction || !playerId) return;
+        socket.emit('resolve_pending_action', {
+            roomCode,
+            playerId,
+            useEffect,
+            useBonus
         });
     };
 
@@ -363,6 +374,31 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                         ))}
                         <button className="action-btn" onClick={() => handleTriggeredDraw()}>
                             Finish triggers
+                        </button>
+                    </div>
+                )}
+                {isMyTurn && cardChoiceAction && (
+                    <div className="pending-action">
+                        <strong>{cardChoiceAction.cardName}: choose abilities</strong>
+                        {cardChoiceAction.effectText && <span>Effect: {cardChoiceAction.effectText}</span>}
+                        {cardChoiceAction.bonusText && <span>Bonus: {cardChoiceAction.bonusText}</span>}
+                        {cardChoiceAction.effectText && cardChoiceAction.bonusText && (
+                            <button className="action-btn primary" onClick={() => handleCardChoices(true, true)}>
+                                Use effect, then bonus
+                            </button>
+                        )}
+                        {cardChoiceAction.effectText && (
+                            <button className="action-btn" onClick={() => handleCardChoices(true, false)}>
+                                Use effect only
+                            </button>
+                        )}
+                        {cardChoiceAction.bonusText && (
+                            <button className="action-btn" onClick={() => handleCardChoices(false, true)}>
+                                Use bonus only
+                            </button>
+                        )}
+                        <button className="action-btn" onClick={() => handleCardChoices(false, false)}>
+                            Use neither
                         </button>
                     </div>
                 )}

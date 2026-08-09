@@ -140,6 +140,25 @@ export interface PendingTriggeredDraws {
     prompt: string;
 }
 
+export interface PendingCardChoices {
+    kind: 'chooseCardEffectAndBonus';
+    playerId: string;
+    resolutionId: string;
+    cardName: string;
+    effectText?: string;
+    bonusText?: string;
+    optional: false;
+    prompt: string;
+}
+
+export interface PendingBonusContinuation {
+    kind: 'continueCardBonus';
+    playerId: string;
+    resolutionId: string;
+    optional: false;
+    prompt: string;
+}
+
 export type PendingAction =
     | PendingClearingSelection
     | PendingFreeCardPlay
@@ -147,7 +166,9 @@ export type PendingAction =
     | PendingHandExchange
     | PendingSaplingSelection
     | PendingTakeAllMatching
-    | PendingTriggeredDraws;
+    | PendingTriggeredDraws
+    | PendingCardChoices
+    | PendingBonusContinuation;
 
 export interface SerializedGameState {
     players: Player[];

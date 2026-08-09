@@ -30,10 +30,10 @@ This document records gaps found by comparing the game implementation with the b
   - [x] Replace the `checkSharedSlot()` stub in `server/src/game/cardMatching.ts`.
   - [x] Update serialization, client rendering, placement validation, card counting, and scoring for shared slots.
 
-- [ ] Make effects and bonuses optional.
-  - Ask the player whether to use an eligible effect or color-matched bonus.
-  - Always resolve the effect before the bonus when both are chosen.
-  - Permit a player to decline either or both without blocking the turn.
+- [x] Make effects and bonuses optional.
+  - [x] Ask the player whether to use an eligible effect or color-matched bonus.
+  - [x] Always resolve the effect before the bonus when both are chosen.
+  - [x] Permit a player to decline either or both without blocking the turn.
 
 - [ ] Correct end-of-turn and extra-turn sequencing.
   - Check and empty a clearing containing 10 or more cards before beginning an awarded extra turn.

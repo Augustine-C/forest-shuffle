@@ -7,6 +7,19 @@ import { GameState } from './gameState';
 import { createEnhancedCard, getSpeciesData } from './cards';
 import assert from 'node:assert/strict';
 
+function acceptCardChoices(game: GameState) {
+    const action = game.pendingAction;
+    if (action?.kind !== 'chooseCardEffectAndBonus') return;
+    game.resolvePendingAction(
+        action.playerId,
+        [],
+        false,
+        undefined,
+        Boolean(action.effectText),
+        Boolean(action.bonusText)
+    );
+}
+
 async function runTest() {
     console.log('🧪 Starting Forest Shuffle Game Logic Integration Test\n');
 
@@ -36,6 +49,7 @@ async function runTest() {
 
     const handSizeBeforePlay = alice.hand.length; // e.g. 7
     game.playCard('p1', birchCardId, costCardIds, 0);
+    acceptCardChoices(game);
 
     console.log(`Alice forest size: ${alice.forest.length}`);
     console.log(`Alice hand size after play: ${alice.hand.length}`);

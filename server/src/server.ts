@@ -194,7 +194,15 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('resolve_pending_action', ({ roomCode, playerId, cardIds = [], decline = false, choiceId }) => {
+    socket.on('resolve_pending_action', ({
+        roomCode,
+        playerId,
+        cardIds = [],
+        decline = false,
+        choiceId,
+        useEffect = false,
+        useBonus = false
+    }) => {
         const game = games.get(roomCode);
         const meta = roomMetadata.get(roomCode);
         if (!game || meta?.status !== 'PLAYING') return;
@@ -204,7 +212,7 @@ io.on('connection', (socket) => {
         }
 
         try {
-            game.resolvePendingAction(playerId, cardIds, decline, choiceId);
+            game.resolvePendingAction(playerId, cardIds, decline, choiceId, useEffect, useBonus);
             if (game.gameEnded) meta.status = 'ENDED';
             emitGameEvent(roomCode, game, 'game_state_update');
         } catch (error) {
