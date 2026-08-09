@@ -4,10 +4,11 @@
   "description": "",
   "main": "dist/server/src/server.js",
   "scripts": {
-    "test": "npm run test:game && npm run test:integration && npm run test:validation && npm run verify:data",
+    "test": "npm run test:game && npm run test:integration && npm run test:validation && npm run test:scoring && npm run verify:data",
     "test:game": "ts-node src/game/testGameState.ts",
     "test:integration": "ts-node src/game/testIntegration.ts",
     "test:validation": "ts-node src/game/testValidation.ts",
+    "test:scoring": "ts-node src/game/testScoring.ts",
     "verify:data": "ts-node src/game/verifyCardData.ts",
     "dev": "ts-node src/server.ts",
     "build": "tsc",

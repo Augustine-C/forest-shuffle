@@ -132,7 +132,7 @@ This document records gaps found by comparing the game implementation with the b
 
 ## P1 - Tests required for rule confidence
 
-- [ ] Add deterministic unit tests for every species' scoring rule.
+- [x] Add deterministic unit tests for every species' scoring rule.
 - [ ] Add effect and bonus tests covering both use and decline paths.
 - [ ] Add nested-resolution tests for mushrooms, Mole, Water Vole, free plays, and winter interruption.
 - [ ] Add placement tests for all orientations, shrubs, shared slots, and full trees.
