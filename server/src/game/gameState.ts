@@ -2,17 +2,32 @@ import { EnhancedCard, getCardCost } from './cards';
 import { createDeck } from './deck';
 import { executeEffect, executeBonus, drawCardsOneByOne, revealCardToClearing } from './effectsEngine';
 import { calculatePlayerScore } from './scoringEngine';
-import type { PendingAction } from '../../../shared/types';
+import type { PendingAction, TriggeredDrawChoice } from '../../../shared/types';
 import type { CardTag } from './cardDefinitions';
 
 export interface PlacedTree {
     tree: EnhancedCard;
     isSapling?: boolean;
+    treePlayedTurn?: number;
     top?: EnhancedCard;
     bottom?: EnhancedCard;
     left?: EnhancedCard;
     right?: EnhancedCard;
     speciesIndices?: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>;
+    slotPlayedTurns?: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>;
+}
+
+interface DeferredCardResolution {
+    player: Player;
+    card: EnhancedCard;
+    speciesIndex: number;
+    placedTree: PlacedTree;
+    targetSlot?: 'top' | 'bottom' | 'left' | 'right';
+    bonusActive: boolean;
+    resolvingPendingAction?: PendingAction;
+    freePlay: boolean;
+    pendingPaidPlay: boolean;
+    suppressEffectsAndBonus: boolean;
 }
 
 export interface Player {
@@ -35,6 +50,9 @@ export class GameState {
     pendingAction?: PendingAction;
     private pendingActions: PendingAction[];
     private extraTurnsPending: number;
+    private turnNumber: number;
+    private deferredCardResolution?: DeferredCardResolution;
+    private triggeredDrawCompletion?: 'resumeCard' | 'completeAction';
 
     constructor(playerCount: number = 2) {
         this.players = new Map();
@@ -45,6 +63,7 @@ export class GameState {
         this.gameEnded = false;
         this.pendingActions = [];
         this.extraTurnsPending = 0;
+        this.turnNumber = 0;
     }
 
     addPlayer(id: string, socketId: string, name: string, isHost: boolean = false) {
@@ -74,6 +93,9 @@ export class GameState {
         this.pendingAction = undefined;
         this.pendingActions = [];
         this.extraTurnsPending = 0;
+        this.turnNumber = 0;
+        this.deferredCardResolution = undefined;
+        this.triggeredDrawCompletion = undefined;
         this.activePlayerIndex = 0;
         this.players.forEach(player => {
             player.hand = [];
@@ -255,11 +277,11 @@ export class GameState {
         // 3. Place the card
         let placedTree: PlacedTree | undefined = undefined;
         if (asSapling) {
-            placedTree = { tree: cardToPlay, isSapling: true };
+            placedTree = { tree: cardToPlay, isSapling: true, treePlayedTurn: this.turnNumber };
             player.forest.push(placedTree);
         } else if (cardToPlay.orientation === 'Tree') {
             // Playing as a tree
-            placedTree = { tree: cardToPlay };
+            placedTree = { tree: cardToPlay, treePlayedTurn: this.turnNumber };
             player.forest.push(placedTree);
         } else if (cardToPlay.isSplitCard) {
             // Playing a split card (hCard or vCard) on a tree
@@ -269,9 +291,13 @@ export class GameState {
                 ...placedTree!.speciesIndices,
                 [targetSlot!]: speciesIndex
             };
+            placedTree!.slotPlayedTurns = {
+                ...placedTree!.slotPlayedTurns,
+                [targetSlot!]: this.turnNumber
+            };
         } else {
             // Playing as sapling (face down)
-            placedTree = { tree: cardToPlay };
+            placedTree = { tree: cardToPlay, treePlayedTurn: this.turnNumber };
             player.forest.push(placedTree);
         }
 
@@ -284,63 +310,38 @@ export class GameState {
             }
         }
 
-        if (placedTree && !asSapling && !suppressEffectsAndBonus) {
-            const effectResult = executeEffect({
-                gameState: this,
-                player,
-                card: cardToPlay,
-                speciesIndex,
-                targetTree: placedTree,
-                targetSlot
-            });
-
-            // Apply results (drawing cards, etc.)
-            if (effectResult.cardsDrawn > 0) {
-                drawCardsOneByOne(this, player, effectResult.cardsDrawn);
-            }
-
-            // Check for bonus if tree is completed
+        if (placedTree && !asSapling) {
             const playedSpecies = cardToPlay.species[speciesIndex];
             const bonusActive = requiredCost > 0 && paymentCards.every(payment =>
                 payment.species.some(species => species.treeSymbol === playedSpecies.treeSymbol)
             );
-            const bonusResult = bonusActive ? executeBonus({
-                gameState: this,
+            const resolution: DeferredCardResolution = {
                 player,
                 card: cardToPlay,
                 speciesIndex,
-                targetTree: placedTree,
-                targetSlot
-            }) : undefined;
-            if (bonusResult?.cardsDrawn) {
-                drawCardsOneByOne(this, player, bonusResult.cardsDrawn);
-            }
-
-            if (this.gameEnded) {
-                this.clearPendingActions();
+                placedTree,
+                targetSlot,
+                bonusActive,
+                resolvingPendingAction,
+                freePlay,
+                pendingPaidPlay,
+                suppressEffectsAndBonus
+            };
+            const triggers = this.getPermanentTriggers(player, cardToPlay, speciesIndex, placedTree, targetSlot);
+            if (triggers.length > 0) {
+                this.deferredCardResolution = resolution;
+                this.triggeredDrawCompletion = 'resumeCard';
+                this.pendingAction = {
+                    kind: 'triggeredDraws',
+                    playerId: player.id,
+                    triggers,
+                    optional: true,
+                    prompt: 'Choose the order of permanent-effect draws'
+                };
                 return;
             }
-
-            const pendingActions = [
-                ...this.createPendingActions(player, effectResult.bonusActions),
-                ...this.createPendingActions(player, bonusResult?.bonusActions ?? [])
-            ];
-            const awardedExtraTurns = Number(effectResult.extraTurn) + Number(Boolean(bonusResult?.extraTurn));
-            this.extraTurnsPending += awardedExtraTurns;
-            if (pendingActions.length > 0) {
-                const resumeActions = resolvingPendingAction
-                    ? [resolvingPendingAction, ...this.pendingActions]
-                    : this.pendingActions;
-                this.pendingActions = [...pendingActions, ...resumeActions];
-                this.pendingAction = this.pendingActions.shift();
-                return;
-            }
-
-            if (resolvingPendingAction) return;
-            if (awardedExtraTurns > 0) {
-                this.finishTurn();
-                return;
-            }
+            this.resolveCardEffects(resolution);
+            return;
         }
 
         if (freePlay) {
@@ -358,7 +359,12 @@ export class GameState {
         this.finishTurn();
     }
 
-    resolvePendingAction(playerId: string, cardIds: number[] = [], decline: boolean = false) {
+    resolvePendingAction(
+        playerId: string,
+        cardIds: number[] = [],
+        decline: boolean = false,
+        choiceId?: string
+    ) {
         if (this.gameEnded) throw new Error('The game has ended');
         const action = this.pendingAction;
         if (!action) throw new Error('There is no pending action');
@@ -366,6 +372,10 @@ export class GameState {
 
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
         if (activePlayerId !== playerId) throw new Error('Not your turn');
+        if (action.kind === 'triggeredDraws') {
+            this.resolveTriggeredDraw(action, cardIds, decline, choiceId);
+            return;
+        }
         if (decline) {
             if (!action.optional) throw new Error('This action cannot be declined');
             if (cardIds.length > 0) throw new Error('Do not select cards when declining an action');
@@ -467,6 +477,184 @@ export class GameState {
         if (this.pendingAction) throw new Error('Resolve the pending action first');
     }
 
+    private resolveCardEffects(resolution: DeferredCardResolution) {
+        if (resolution.suppressEffectsAndBonus) {
+            if (resolution.freePlay && resolution.resolvingPendingAction?.kind === 'playFreeCard') {
+                this.pendingAction = resolution.resolvingPendingAction;
+                if (!resolution.resolvingPendingAction.repeatable) this.completePendingAction();
+                return;
+            }
+            if (resolution.resolvingPendingAction) {
+                this.pendingAction = resolution.resolvingPendingAction;
+                return;
+            }
+            this.finishTurn();
+            return;
+        }
+        const { player, card, speciesIndex, placedTree, targetSlot } = resolution;
+        const effectResult = executeEffect({
+            gameState: this,
+            player,
+            card,
+            speciesIndex,
+            targetTree: placedTree,
+            targetSlot
+        });
+        if (effectResult.cardsDrawn > 0) drawCardsOneByOne(this, player, effectResult.cardsDrawn);
+        if (this.gameEnded) {
+            this.clearPendingActions();
+            return;
+        }
+
+        const bonusResult = resolution.bonusActive ? executeBonus({
+            gameState: this,
+            player,
+            card,
+            speciesIndex,
+            targetTree: placedTree,
+            targetSlot
+        }) : undefined;
+        if (bonusResult?.cardsDrawn) drawCardsOneByOne(this, player, bonusResult.cardsDrawn);
+        if (this.gameEnded) {
+            this.clearPendingActions();
+            return;
+        }
+
+        const generatedActions = [
+            ...this.createPendingActions(player, effectResult.bonusActions),
+            ...this.createPendingActions(player, bonusResult?.bonusActions ?? [])
+        ];
+        const awardedExtraTurns = Number(effectResult.extraTurn) + Number(Boolean(bonusResult?.extraTurn));
+        this.extraTurnsPending += awardedExtraTurns;
+        if (generatedActions.length > 0) {
+            const resumeActions = resolution.resolvingPendingAction
+                ? [resolution.resolvingPendingAction, ...this.pendingActions]
+                : this.pendingActions;
+            this.pendingActions = [...generatedActions, ...resumeActions];
+            this.pendingAction = this.pendingActions.shift();
+            return;
+        }
+
+        if (resolution.resolvingPendingAction) {
+            this.pendingAction = resolution.resolvingPendingAction;
+            return;
+        }
+        this.pendingAction = this.pendingActions.shift();
+        if (this.pendingAction) return;
+        this.finishTurn();
+    }
+
+    private resolveTriggeredDraw(
+        action: Extract<PendingAction, { kind: 'triggeredDraws' }>,
+        cardIds: number[],
+        decline: boolean,
+        choiceId?: string
+    ) {
+        if (cardIds.length > 0) throw new Error('Triggered draws do not accept card selections');
+        if (!decline) {
+            if (!choiceId) throw new Error('Choose a permanent effect to resolve');
+            const triggerIndex = action.triggers.findIndex(trigger => trigger.id === choiceId);
+            if (triggerIndex < 0) throw new Error('The selected permanent effect is not available');
+            drawCardsOneByOne(this, this.players.get(action.playerId)!, 1);
+            if (this.gameEnded) {
+                this.clearPendingActions();
+                return;
+            }
+            action.triggers.splice(triggerIndex, 1);
+            if (action.triggers.length > 0) return;
+        }
+        const completion = this.triggeredDrawCompletion;
+        this.triggeredDrawCompletion = undefined;
+        if (completion === 'completeAction') {
+            this.pendingAction = undefined;
+            this.completePendingAction();
+            return;
+        }
+        this.resumeDeferredCardResolution();
+    }
+
+    private resumeDeferredCardResolution() {
+        const resolution = this.deferredCardResolution;
+        if (!resolution) throw new Error('Missing deferred card resolution');
+        this.deferredCardResolution = undefined;
+        this.pendingAction = undefined;
+        this.resolveCardEffects(resolution);
+    }
+
+    private getPermanentTriggers(
+        player: Player,
+        playedCard: EnhancedCard,
+        speciesIndex: number,
+        targetTree: PlacedTree,
+        targetSlot?: 'top' | 'bottom' | 'left' | 'right'
+    ): TriggeredDrawChoice[] {
+        const playedSpecies = playedCard.species[speciesIndex];
+        const playedTags = playedSpecies.speciesData.tags;
+        const targetIsShrub = targetTree.tree.species.some(species =>
+            species.speciesData.tags.includes('Shrub')
+        );
+        const delayedTriggers = new Set(['Chanterelle', 'Fly Agaric', 'Parasol Mushroom', 'Penny Bun']);
+        const triggers: TriggeredDrawChoice[] = [];
+        const addTrigger = (card: EnhancedCard, placedSpeciesIndex: number, playedTurn?: number) => {
+            if (card.cardId === playedCard.cardId) return;
+            const species = card.species[placedSpeciesIndex];
+            if (!species) return;
+            const name = species.speciesData.name;
+            if (delayedTriggers.has(name) && playedTurn === this.turnNumber) return;
+
+            const matches =
+                (name === 'Chanterelle' && playedCard.orientation === 'Tree' && !targetIsShrub) ||
+                (name === 'Fly Agaric' && playedTags.includes('Paw')) ||
+                (name === 'Parasol Mushroom' && targetSlot === 'bottom' && !targetIsShrub) ||
+                (name === 'Penny Bun' && targetSlot === 'top' && !targetIsShrub) ||
+                (name === 'Craterellus Cornucopiodes' && playedTags.includes('Mountain')) ||
+                (name === 'Blackthorn' && playedTags.includes('Butterfly')) ||
+                (name === 'Common Hazel' && playedTags.includes('Bat')) ||
+                (name === 'Elderberry' && playedTags.includes('Plant'));
+            if (!matches) return;
+            const sourceName = name === 'Craterellus Cornucopiodes' ? 'Black Trumpet' : name;
+            triggers.push({
+                id: `${card.cardId}:${placedSpeciesIndex}`,
+                sourceCardId: card.cardId,
+                sourceName
+            });
+        };
+
+        player.forest.forEach(tree => {
+            if (!tree.isSapling) addTrigger(tree.tree, 0, tree.treePlayedTurn);
+            (['top', 'bottom', 'left', 'right'] as const).forEach(slot => {
+                const card = tree[slot];
+                if (!card) return;
+                const defaultIndex = slot === 'bottom' || slot === 'right' ? 1 : 0;
+                addTrigger(card, tree.speciesIndices?.[slot] ?? defaultIndex, tree.slotPlayedTurns?.[slot]);
+            });
+        });
+        return triggers;
+    }
+
+    private getChanterelleSaplingTriggers(player: Player, saplingCount: number): TriggeredDrawChoice[] {
+        const sources: Array<{ card: EnhancedCard; speciesIndex: number }> = [];
+        player.forest.forEach(tree => {
+            (['top', 'bottom', 'left', 'right'] as const).forEach(slot => {
+                const card = tree[slot];
+                if (!card) return;
+                const defaultIndex = slot === 'bottom' || slot === 'right' ? 1 : 0;
+                const speciesIndex = tree.speciesIndices?.[slot] ?? defaultIndex;
+                if (card.species[speciesIndex]?.speciesData.name !== 'Chanterelle') return;
+                if (tree.slotPlayedTurns?.[slot] === this.turnNumber) return;
+                sources.push({ card, speciesIndex });
+            });
+        });
+
+        return Array.from({ length: saplingCount }, (_, saplingIndex) =>
+            sources.map(source => ({
+                id: `${source.card.cardId}:${source.speciesIndex}:sapling:${saplingIndex}`,
+                sourceCardId: source.card.cardId,
+                sourceName: 'Chanterelle'
+            }))
+        ).flat();
+    }
+
     private resolveHandExchange(playerId: string, cardIds: number[]) {
         if (new Set(cardIds).size !== cardIds.length) {
             throw new Error('Selection contains duplicate cards');
@@ -501,13 +689,29 @@ export class GameState {
 
         const selectedCards = indexes.map(index => player.hand[index]);
         indexes.sort((a, b) => b - a).forEach(index => player.hand.splice(index, 1));
-        player.forest.push(...selectedCards.map(card => ({ tree: card, isSapling: true })));
+        player.forest.push(...selectedCards.map(card => ({
+            tree: card,
+            isSapling: true,
+            treePlayedTurn: this.turnNumber
+        })));
 
         for (let index = 0; index < selectedCards.length && !this.gameEnded; index++) {
             revealCardToClearing(this);
         }
         if (this.gameEnded) {
             this.clearPendingActions();
+            return;
+        }
+        const chanterelleTriggers = this.getChanterelleSaplingTriggers(player, selectedCards.length);
+        if (chanterelleTriggers.length > 0) {
+            this.pendingAction = {
+                kind: 'triggeredDraws',
+                playerId,
+                triggers: chanterelleTriggers,
+                optional: true,
+                prompt: 'Resolve Chanterelle draws for the Water Vole saplings'
+            };
+            this.triggeredDrawCompletion = 'completeAction';
             return;
         }
         this.completePendingAction();
@@ -689,10 +893,13 @@ export class GameState {
         this.pendingAction = undefined;
         this.pendingActions = [];
         this.extraTurnsPending = 0;
+        this.deferredCardResolution = undefined;
+        this.triggeredDrawCompletion = undefined;
     }
 
     private finishTurn() {
         if (this.clearing.length >= 10) this.clearing = [];
+        this.turnNumber++;
         if (this.extraTurnsPending > 0) {
             this.extraTurnsPending--;
             return;

@@ -32,6 +32,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const saplingPendingAction = myPendingAction?.kind === 'playSaplings' ? myPendingAction : undefined;
     const handSelectionPendingAction = handExchangePendingAction ?? saplingPendingAction;
     const takeAllPendingAction = myPendingAction?.kind === 'takeAllMatching' ? myPendingAction : undefined;
+    const triggeredDrawAction = myPendingAction?.kind === 'triggeredDraws' ? myPendingAction : undefined;
 
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
@@ -100,6 +101,16 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
         });
         setClearingCardIds([]);
         setCostCardIds([]);
+    };
+
+    const handleTriggeredDraw = (choiceId?: string) => {
+        if (!triggeredDrawAction || !playerId) return;
+        socket.emit('resolve_pending_action', {
+            roomCode,
+            playerId,
+            choiceId,
+            decline: choiceId === undefined
+        });
     };
 
     const handlePlayCard = (treeIndex?: number, slot?: string, asSapling = false) => {
@@ -260,6 +271,24 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                         </button>
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
                             Decline
+                        </button>
+                    </div>
+                )}
+                {isMyTurn && triggeredDrawAction && (
+                    <div className="pending-action">
+                        <strong>{triggeredDrawAction.prompt}</strong>
+                        <span>Resolve any triggers you want in your chosen order.</span>
+                        {triggeredDrawAction.triggers.map(trigger => (
+                            <button
+                                key={trigger.id}
+                                className="action-btn primary"
+                                onClick={() => handleTriggeredDraw(trigger.id)}
+                            >
+                                Draw for {trigger.sourceName}
+                            </button>
+                        ))}
+                        <button className="action-btn" onClick={() => handleTriggeredDraw()}>
+                            Finish triggers
                         </button>
                     </div>
                 )}

@@ -157,9 +157,8 @@ export function executeEffect(context: EffectContext): EffectResult {
 
     // Pattern: "Whenever you play a card with [tag] receive 1 card"
     if (effectText.includes('Whenever you play a card with')) {
-        // This is an ongoing trigger effect - needs to be registered
-        result.bonusActions.push(`REGISTER_TRIGGER:${effectText}`);
-        result.message = 'Ongoing effect registered';
+        // Permanent triggers are derived from cards in the forest by GameState.
+        result.message = 'Permanent effect active';
         return result;
     }
 

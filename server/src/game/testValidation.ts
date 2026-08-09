@@ -356,4 +356,196 @@ assert.deepEqual(
 assert.deepEqual(takeAllGame.clearing.map(card => card.cardId), [clearingNonBat.cardId, 41]);
 assert.equal(takeAllGame.activePlayerIndex, 1);
 
+const permanentTriggerCases: Array<{
+    sourceCardId: number;
+    sourceSpeciesIndex: number;
+    expectedName: string;
+    targetCardId: number;
+    targetSpeciesIndex: number;
+    targetSlot?: 'top' | 'bottom' | 'left' | 'right';
+}> = [
+    { sourceCardId: 139, sourceSpeciesIndex: 1, expectedName: 'Chanterelle', targetCardId: 1, targetSpeciesIndex: 0 },
+    { sourceCardId: 144, sourceSpeciesIndex: 1, expectedName: 'Fly Agaric', targetCardId: 70, targetSpeciesIndex: 0, targetSlot: 'left' },
+    { sourceCardId: 150, sourceSpeciesIndex: 1, expectedName: 'Parasol Mushroom', targetCardId: 114, targetSpeciesIndex: 1, targetSlot: 'bottom' },
+    { sourceCardId: 145, sourceSpeciesIndex: 1, expectedName: 'Penny Bun', targetCardId: 118, targetSpeciesIndex: 0, targetSlot: 'top' },
+    { sourceCardId: 185, sourceSpeciesIndex: 1, expectedName: 'Black Trumpet', targetCardId: 186, targetSpeciesIndex: 1, targetSlot: 'bottom' },
+    { sourceCardId: 206, sourceSpeciesIndex: 0, expectedName: 'Blackthorn', targetCardId: 118, targetSpeciesIndex: 0, targetSlot: 'top' },
+    { sourceCardId: 202, sourceSpeciesIndex: 0, expectedName: 'Common Hazel', targetCardId: 71, targetSpeciesIndex: 1, targetSlot: 'right' },
+    { sourceCardId: 198, sourceSpeciesIndex: 0, expectedName: 'Elderberry', targetCardId: 114, targetSpeciesIndex: 1, targetSlot: 'bottom' }
+];
+
+permanentTriggerCases.forEach((testCase, caseIndex) => {
+    const triggerGame = new GameState(2);
+    triggerGame.addPlayer('trigger', 'socket-trigger', 'Trigger Tester', true);
+    triggerGame.addPlayer('other', 'socket-other', 'Other Tester');
+    const triggerPlayer = triggerGame.players.get('trigger')!;
+    const sourceCard = createEnhancedCard(testCase.sourceCardId)!;
+    const sourceIsShrub = sourceCard.orientation === 'Tree';
+    triggerPlayer.forest = sourceIsShrub
+        ? [{ tree: sourceCard }, { tree: createEnhancedCard(2)! }]
+        : [{
+            tree: createEnhancedCard(2)!,
+            bottom: sourceCard,
+            speciesIndices: { bottom: testCase.sourceSpeciesIndex }
+        }, { tree: createEnhancedCard(3)! }];
+    const targetCard = createEnhancedCard(testCase.targetCardId)!;
+    const targetCost = targetCard.species[testCase.targetSpeciesIndex].speciesData.cost;
+    const payments = Array.from({ length: targetCost }, (_, index) => createEnhancedCard(40 + caseIndex * 3 + index)!);
+    triggerPlayer.hand = [targetCard, ...payments];
+    triggerGame.deck = [createEnhancedCard(34)!, createEnhancedCard(35)!, createEnhancedCard(36)!];
+    triggerGame.playCard(
+        'trigger',
+        targetCard.cardId,
+        payments.map(card => card.cardId),
+        testCase.targetSpeciesIndex,
+        testCase.targetSlot ? 1 : undefined,
+        testCase.targetSlot
+    );
+    assert.equal(triggerGame.pendingAction?.kind, 'triggeredDraws', `${testCase.expectedName} must trigger`);
+    assert.equal(
+        triggerGame.pendingAction?.kind === 'triggeredDraws'
+            ? triggerGame.pendingAction.triggers[0]?.sourceName
+            : undefined,
+        testCase.expectedName
+    );
+    triggerGame.resolvePendingAction('trigger', [], true);
+});
+
+const orderedTriggerGame = new GameState(2);
+orderedTriggerGame.addPlayer('ordered', 'socket-ordered', 'Ordered Trigger Tester', true);
+orderedTriggerGame.addPlayer('other', 'socket-other', 'Other Tester');
+const orderedPlayer = orderedTriggerGame.players.get('ordered')!;
+orderedPlayer.forest = [
+    { tree: createEnhancedCard(1)!, bottom: createEnhancedCard(139)!, speciesIndices: { bottom: 1 } },
+    { tree: createEnhancedCard(2)!, bottom: createEnhancedCard(158)!, speciesIndices: { bottom: 1 } }
+];
+orderedPlayer.hand = [createEnhancedCard(23)!];
+orderedTriggerGame.deck = [
+    createEnhancedCard(34)!,
+    createEnhancedCard(35)!,
+    createEnhancedCard(36)!,
+    createEnhancedCard(37)!
+];
+orderedTriggerGame.playCard('ordered', 23, [], 0);
+assert.equal(orderedTriggerGame.pendingAction?.kind, 'triggeredDraws');
+const orderedAction = orderedTriggerGame.pendingAction;
+assert.equal(orderedAction?.kind === 'triggeredDraws' ? orderedAction.triggers.length : 0, 2);
+orderedTriggerGame.resolvePendingAction('ordered', [], false, '158:1');
+assert.deepEqual(orderedPlayer.hand.map(card => card.cardId), [35]);
+assert.deepEqual(
+    orderedTriggerGame.pendingAction?.kind === 'triggeredDraws'
+        ? orderedTriggerGame.pendingAction.triggers.map(trigger => trigger.id)
+        : [],
+    ['139:1']
+);
+orderedTriggerGame.resolvePendingAction('ordered', [], false, '139:1');
+assert.deepEqual(orderedPlayer.hand.map(card => card.cardId), [35, 36, 37]);
+assert.equal(orderedTriggerGame.activePlayerIndex, 1);
+
+const delayedTriggerGame = new GameState(2);
+delayedTriggerGame.addPlayer('delayed', 'socket-delayed', 'Delayed Trigger Tester', true);
+delayedTriggerGame.addPlayer('other', 'socket-other', 'Other Tester');
+const delayedPlayer = delayedTriggerGame.players.get('delayed')!;
+delayedPlayer.forest = [{
+    tree: createEnhancedCard(1)!,
+    bottom: createEnhancedCard(139)!,
+    speciesIndices: { bottom: 1 },
+    slotPlayedTurns: { bottom: 0 }
+}];
+delayedPlayer.hand = [createEnhancedCard(23)!];
+delayedTriggerGame.deck = [createEnhancedCard(34)!, createEnhancedCard(35)!];
+delayedTriggerGame.playCard('delayed', 23, [], 0);
+assert.equal(delayedTriggerGame.pendingAction, undefined, 'Chanterelle starts triggering on the next turn');
+
+const winterTriggerGame = new GameState(2);
+winterTriggerGame.addPlayer('winter-trigger', 'socket-winter-trigger', 'Winter Trigger Tester', true);
+winterTriggerGame.addPlayer('other', 'socket-other', 'Other Tester');
+const winterTriggerPlayer = winterTriggerGame.players.get('winter-trigger')!;
+winterTriggerPlayer.forest = [
+    { tree: createEnhancedCard(1)!, bottom: createEnhancedCard(144)!, speciesIndices: { bottom: 1 } },
+    { tree: createEnhancedCard(2)!, bottom: createEnhancedCard(157)!, speciesIndices: { bottom: 1 } }
+];
+winterTriggerPlayer.hand = [createEnhancedCard(70)!];
+winterTriggerGame.winterCardsDrawn = 2;
+winterTriggerGame.deck = [winter, createEnhancedCard(34)!];
+winterTriggerGame.playCard('winter-trigger', 70, [], 0, 0, 'left');
+const winterTriggerAction = winterTriggerGame.pendingAction;
+assert.equal(winterTriggerAction?.kind === 'triggeredDraws' ? winterTriggerAction.triggers.length : 0, 2);
+winterTriggerGame.resolvePendingAction(
+    'winter-trigger',
+    [],
+    false,
+    winterTriggerAction?.kind === 'triggeredDraws' ? winterTriggerAction.triggers[0].id : undefined
+);
+assert.equal(winterTriggerGame.gameEnded, true);
+assert.equal(winterTriggerGame.pendingAction, undefined);
+assert.equal(winterTriggerGame.deck[0].cardId, 34, 'resolution stops after a trigger reveals the third winter card');
+
+const voleChanterelleGame = new GameState(2);
+voleChanterelleGame.addPlayer('vole-trigger', 'socket-vole-trigger', 'Vole Chanterelle Tester', true);
+voleChanterelleGame.addPlayer('other', 'socket-other', 'Other Tester');
+const voleChanterellePlayer = voleChanterelleGame.players.get('vole-trigger')!;
+voleChanterellePlayer.forest = [{
+    tree: createEnhancedCard(1)!,
+    bottom: createEnhancedCard(139)!,
+    speciesIndices: { bottom: 1 }
+}, { tree: createEnhancedCard(2)! }];
+voleChanterellePlayer.hand = [
+    createEnhancedCard(213)!,
+    createEnhancedCard(30)!,
+    createEnhancedCard(31)!,
+    createEnhancedCard(32)!,
+    createEnhancedCard(33)!
+];
+voleChanterelleGame.deck = [
+    createEnhancedCard(34)!,
+    createEnhancedCard(35)!,
+    createEnhancedCard(36)!,
+    createEnhancedCard(37)!
+];
+voleChanterelleGame.playCard('vole-trigger', 213, [30, 31], 1, 1, 'bottom');
+voleChanterelleGame.resolvePendingAction('vole-trigger', [32, 33]);
+assert.equal(voleChanterelleGame.clearing.length, 4, 'Water Vole reveals happen before Chanterelle draws');
+const voleTriggers = voleChanterelleGame.pendingAction;
+assert.equal(voleTriggers?.kind === 'triggeredDraws' ? voleTriggers.triggers.length : 0, 2);
+if (voleChanterelleGame.pendingAction?.kind === 'triggeredDraws') {
+    voleChanterelleGame.resolvePendingAction(
+        'vole-trigger', [], false, voleChanterelleGame.pendingAction.triggers[0].id
+    );
+}
+if (voleChanterelleGame.pendingAction?.kind === 'triggeredDraws') {
+    voleChanterelleGame.resolvePendingAction(
+        'vole-trigger', [], false, voleChanterelleGame.pendingAction.triggers[0].id
+    );
+}
+assert.deepEqual(voleChanterellePlayer.hand.map(card => card.cardId), [36, 37]);
+assert.equal(voleChanterelleGame.activePlayerIndex, 1);
+
+const suppressedEffectTriggerGame = new GameState(2);
+suppressedEffectTriggerGame.addPlayer('suppressed', 'socket-suppressed', 'Suppressed Effect Tester', true);
+suppressedEffectTriggerGame.addPlayer('other', 'socket-other', 'Other Tester');
+const suppressedPlayer = suppressedEffectTriggerGame.players.get('suppressed')!;
+suppressedPlayer.forest = [
+    { tree: createEnhancedCard(1)!, bottom: createEnhancedCard(144)!, speciesIndices: { bottom: 1 } },
+    { tree: createEnhancedCard(2)! }
+];
+suppressedPlayer.hand = [createEnhancedCard(118)!, createEnhancedCard(56)!, createEnhancedCard(79)!];
+suppressedEffectTriggerGame.deck = [createEnhancedCard(34)!];
+suppressedEffectTriggerGame.playCard('suppressed', 118, [56], 1, 1, 'bottom');
+assert.equal(suppressedEffectTriggerGame.pendingAction?.kind, 'playFreeCard');
+suppressedEffectTriggerGame.playPendingFreeCard('suppressed', 79, 0, 0, 'left');
+assert.equal(suppressedEffectTriggerGame.pendingAction?.kind, 'triggeredDraws');
+const suppressedTrigger = suppressedEffectTriggerGame.pendingAction;
+const suppressedTriggerId = (suppressedTrigger as { triggers?: Array<{ id: string }> } | undefined)
+    ?.triggers?.[0]?.id;
+suppressedEffectTriggerGame.resolvePendingAction(
+    'suppressed',
+    [],
+    false,
+    suppressedTriggerId
+);
+assert.deepEqual(suppressedPlayer.hand.map(card => card.cardId), [34]);
+assert.equal(suppressedPlayer.cave.length, 0, 'the free Brown Bear must not use its own effect');
+assert.equal(suppressedEffectTriggerGame.activePlayerIndex, 1);
+
 console.log('✅ Game action validation checks passed');

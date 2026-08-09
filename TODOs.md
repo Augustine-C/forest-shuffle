@@ -4,8 +4,8 @@ This document records gaps found by comparing the game implementation with the b
 
 ## P0 - Complete playable rule flow
 
-- [ ] Implement pending effect and bonus actions end to end.
-  - Consume the `bonusActions` produced by `server/src/game/effectsEngine.ts` instead of discarding them in `GameState.playCard()`.
+- [x] Implement pending effect and bonus actions end to end.
+  - [x] Consume the `bonusActions` produced by `server/src/game/effectsEngine.ts` instead of discarding them in `GameState.playCard()`.
   - Add server events, validation, serialized pending-action state, and client controls for:
     - [x] selecting clearing cards for a hand or cave;
     - [x] playing one eligible card for free;
@@ -15,14 +15,14 @@ This document records gaps found by comparing the game implementation with the b
     - [x] playing cards as saplings (Water Vole);
     - [x] taking all matching cards from the clearing;
     - [x] playing a Squeaker for free.
-  - Keep the active turn open until every required selection and nested effect is resolved.
-  - Reject unrelated actions while a mandatory selection is pending.
+  - [x] Keep the active turn open until every required selection and nested effect is resolved.
+  - [x] Reject unrelated actions while a mandatory selection is pending.
 
-- [ ] Implement permanent and triggered effects.
-  - Trigger Chanterelle, Fly Agaric, Parasol Mushroom, Penny Bun, Black Trumpet, and expansion shrubs at the timing specified in the appendix.
-  - Resolve permanent effects after payment but before the played card's own effect and bonus.
-  - Support multiple copies of a trigger and the ordering of simultaneous triggers.
-  - Stop all remaining resolution immediately if the third winter card appears.
+- [x] Implement permanent and triggered effects.
+  - [x] Trigger Chanterelle, Fly Agaric, Parasol Mushroom, Penny Bun, Black Trumpet, and expansion shrubs at the timing specified in the appendix.
+  - [x] Resolve permanent effects after payment but before the played card's own effect and bonus.
+  - [x] Support multiple copies of a trigger and the ordering of simultaneous triggers.
+  - [x] Stop all remaining resolution immediately if the third winter card appears.
 
 - [ ] Support cards sharing a slot.
   - Change `PlacedTree` slots from a single card to a representation that can hold multiple cards where allowed.

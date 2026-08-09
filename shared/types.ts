@@ -53,11 +53,13 @@ export interface EnhancedCard {
 export interface PlacedTree {
     tree: EnhancedCard;
     isSapling?: boolean;
+    treePlayedTurn?: number;
     top?: EnhancedCard;
     bottom?: EnhancedCard;
     left?: EnhancedCard;
     right?: EnhancedCard;
     speciesIndices?: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>;
+    slotPlayedTurns?: Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>;
 }
 
 export interface Player {
@@ -120,13 +122,28 @@ export interface PendingTakeAllMatching {
     prompt: string;
 }
 
+export interface TriggeredDrawChoice {
+    id: string;
+    sourceCardId: number;
+    sourceName: string;
+}
+
+export interface PendingTriggeredDraws {
+    kind: 'triggeredDraws';
+    playerId: string;
+    triggers: TriggeredDrawChoice[];
+    optional: boolean;
+    prompt: string;
+}
+
 export type PendingAction =
     | PendingClearingSelection
     | PendingFreeCardPlay
     | PendingPaidCardPlays
     | PendingHandExchange
     | PendingSaplingSelection
-    | PendingTakeAllMatching;
+    | PendingTakeAllMatching
+    | PendingTriggeredDraws;
 
 export interface SerializedGameState {
     players: Player[];
