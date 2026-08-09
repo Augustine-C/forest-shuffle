@@ -256,4 +256,30 @@ assert.equal(moleGame.activePlayerIndex, 0, 'the second nested extra turn must b
 moleGame.playerDrawsTwo('mole');
 assert.equal(moleGame.activePlayerIndex, 1, 'play advances after all nested extra turns are used');
 
+const raccoonGame = new GameState(2);
+raccoonGame.addPlayer('raccoon', 'socket-raccoon', 'Raccoon Tester', true);
+raccoonGame.addPlayer('other', 'socket-other', 'Other Tester');
+const raccoonPlayer = raccoonGame.players.get('raccoon')!;
+raccoonPlayer.forest = [{ tree: createEnhancedCard(23)! }];
+const raccoon = createEnhancedCard(73)!;
+const exchangeOne = createEnhancedCard(30)!;
+const exchangeTwo = createEnhancedCard(31)!;
+raccoonPlayer.hand = [raccoon, createEnhancedCard(32)!, exchangeOne, exchangeTwo];
+raccoonGame.deck = [createEnhancedCard(34)!, createEnhancedCard(35)!];
+raccoonGame.playCard('raccoon', raccoon.cardId, [32], 0, 0, 'left');
+assert.equal(raccoonGame.pendingAction?.kind, 'exchangeHandForDeck');
+assert.throws(
+    () => raccoonGame.resolvePendingAction('raccoon', [exchangeOne.cardId, exchangeOne.cardId]),
+    /duplicate cards/
+);
+assert.equal(raccoonPlayer.cave.length, 0, 'an invalid Raccoon exchange must be atomic');
+assert.equal(raccoonPlayer.hand.includes(exchangeOne), true);
+raccoonGame.resolvePendingAction('raccoon', [exchangeOne.cardId, exchangeTwo.cardId]);
+assert.deepEqual(
+    raccoonPlayer.cave.map(card => card.cardId).sort((a, b) => a - b),
+    [exchangeOne.cardId, exchangeTwo.cardId].sort((a, b) => a - b)
+);
+assert.deepEqual(raccoonPlayer.hand.map(card => card.cardId), [34, 35]);
+assert.equal(raccoonGame.activePlayerIndex, 1);
+
 console.log('✅ Game action validation checks passed');

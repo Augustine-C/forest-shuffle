@@ -374,6 +374,10 @@ export class GameState {
         }
 
         if (action.kind !== 'selectClearingCards') {
+            if (action.kind === 'exchangeHandForDeck') {
+                this.resolveHandExchange(playerId, cardIds);
+                return;
+            }
             throw new Error('This pending action must be completed by playing a card');
         }
 
@@ -455,6 +459,28 @@ export class GameState {
         if (this.pendingAction) throw new Error('Resolve the pending action first');
     }
 
+    private resolveHandExchange(playerId: string, cardIds: number[]) {
+        if (new Set(cardIds).size !== cardIds.length) {
+            throw new Error('Selection contains duplicate cards');
+        }
+        const player = this.players.get(playerId)!;
+        const indexes = cardIds.map(cardId => player.hand.findIndex(card => card.cardId === cardId));
+        if (indexes.some(index => index < 0)) {
+            throw new Error('Every exchanged card must be in your hand');
+        }
+
+        const selectedCards = indexes.map(index => player.hand[index]);
+        indexes.sort((a, b) => b - a).forEach(index => player.hand.splice(index, 1));
+        player.cave.push(...selectedCards);
+        drawCardsOneByOne(this, player, selectedCards.length);
+
+        if (this.gameEnded) {
+            this.clearPendingActions();
+            return;
+        }
+        this.completePendingAction();
+    }
+
     private assertPendingFreePlayAllowed(playerId: string, cardIdNum: number, speciesIndex: number) {
         if (this.gameEnded) throw new Error('The game has ended');
         const action = this.pendingAction;
@@ -526,6 +552,15 @@ export class GameState {
                     playerId: player.id,
                     optional: true,
                     prompt: 'Play any number of cards by paying their combined costs'
+                }];
+            }
+
+            if (actionCode === 'EXCHANGE_HAND_FOR_DECK') {
+                return [{
+                    kind: 'exchangeHandForDeck' as const,
+                    playerId: player.id,
+                    optional: true,
+                    prompt: 'Place any number of hand cards in your cave, then draw the same number'
                 }];
             }
 

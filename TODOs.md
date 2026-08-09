@@ -11,7 +11,7 @@ This document records gaps found by comparing the game implementation with the b
     - [x] playing one eligible card for free;
     - [x] playing any number of eligible cards for free;
     - [x] playing multiple cards while paying their combined costs (Mole);
-    - exchanging hand cards for deck cards (Raccoon);
+    - [x] exchanging hand cards for deck cards (Raccoon);
     - playing cards as saplings (Water Vole);
     - taking all matching cards from the clearing;
     - [x] playing a Squeaker for free.

@@ -28,9 +28,17 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const clearingPendingAction = myPendingAction?.kind === 'selectClearingCards' ? myPendingAction : undefined;
     const freePlayPendingAction = myPendingAction?.kind === 'playFreeCard' ? myPendingAction : undefined;
     const paidPlayPendingAction = myPendingAction?.kind === 'playPaidCards' ? myPendingAction : undefined;
+    const handExchangePendingAction = myPendingAction?.kind === 'exchangeHandForDeck' ? myPendingAction : undefined;
 
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
+        if (handExchangePendingAction) {
+            setCostCardIds(current => current.includes(card.cardId)
+                ? current.filter(cardId => cardId !== card.cardId)
+                : [...current, card.cardId]
+            );
+            return;
+        }
         if (myPendingAction && !freePlayPendingAction && !paidPlayPendingAction) return;
 
         if (selectedCardId === card.cardId) {
@@ -84,10 +92,11 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
         socket.emit('resolve_pending_action', {
             roomCode,
             playerId,
-            cardIds: decline ? [] : clearingCardIds,
+            cardIds: decline ? [] : handExchangePendingAction ? costCardIds : clearingCardIds,
             decline
         });
         setClearingCardIds([]);
+        setCostCardIds([]);
     };
 
     const handlePlayCard = (treeIndex?: number, slot?: string, asSapling = false) => {
@@ -208,6 +217,18 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                         )}
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
                             Done
+                        </button>
+                    </div>
+                )}
+                {isMyTurn && handExchangePendingAction && (
+                    <div className="pending-action">
+                        <strong>{handExchangePendingAction.prompt}</strong>
+                        <span>{costCardIds.length} hand card(s) selected.</span>
+                        <button className="action-btn primary" onClick={() => handlePendingAction(false)}>
+                            Exchange selected cards
+                        </button>
+                        <button className="action-btn" onClick={() => handlePendingAction(true)}>
+                            Decline
                         </button>
                     </div>
                 )}

@@ -97,7 +97,18 @@ export interface PendingPaidCardPlays {
     prompt: string;
 }
 
-export type PendingAction = PendingClearingSelection | PendingFreeCardPlay | PendingPaidCardPlays;
+export interface PendingHandExchange {
+    kind: 'exchangeHandForDeck';
+    playerId: string;
+    optional: boolean;
+    prompt: string;
+}
+
+export type PendingAction =
+    | PendingClearingSelection
+    | PendingFreeCardPlay
+    | PendingPaidCardPlays
+    | PendingHandExchange;
 
 export interface SerializedGameState {
     players: Player[];
