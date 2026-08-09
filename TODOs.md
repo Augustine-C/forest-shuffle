@@ -137,7 +137,7 @@ This document records gaps found by comparing the game implementation with the b
 - [x] Add nested-resolution tests for mushrooms, Mole, Water Vole, free plays, and winter interruption.
 - [x] Add placement tests for all orientations, shrubs, shared slots, and full trees.
 - [x] Add clearing tests for exactly 10 cards, more than 10 cards, cave movement, and removal from the game.
-- [ ] Add setup tests for 2-5 players, mulligans, deck combinations, and winter-card placement.
+- [x] Add setup tests for 2-5 players, mulligans, deck combinations, and winter-card placement.
 - [ ] Add scoring examples from the rulebook and appendix as regression fixtures.
 - [ ] Add multiplayer tests for invalid turns, hidden information, reconnects, and final-score synchronization.
 - [ ] Keep the required verification suite green:
