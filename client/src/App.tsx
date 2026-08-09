@@ -15,15 +15,22 @@ function App() {
   const [isHost, setIsHost] = useState(false);
 
   useEffect(() => {
+    // Check for existing session
+    const savedSession = localStorage.getItem('forest_shuffle_session');
+    if (savedSession) {
+      const { roomCode: savedRoom, playerId: savedId } = JSON.parse(savedSession);
+      console.log('Found saved session:', savedRoom, savedId);
+      setRoomCode(savedRoom);
+      setPlayerId(savedId);
+      socket.emit('rejoin_game', { roomCode: savedRoom, playerId: savedId });
+    }
+
     function onConnect() {
       setIsConnected(true);
-      setPlayerId(socket.id);
     }
 
     function onDisconnect() {
       setIsConnected(false);
-      setRoomCode(null);
-      setPlayers([]);
     }
 
     function onGameStart({ gameState }: { gameState: any }) {
@@ -35,23 +42,39 @@ function App() {
     function onGameStateUpdate(gameState: any) {
       console.log('Game state updated:', gameState);
       setGameState(gameState);
+      if (gameState.gameEnded) {
+        localStorage.removeItem('forest_shuffle_session');
+      }
     }
 
-    function onGameCreated({ roomCode }: { roomCode: string, currentPlayerId: string }) {
+    function onGameCreated({ roomCode, currentPlayerId }: { roomCode: string, currentPlayerId: string }) {
       console.log('Game created:', roomCode);
       setRoomCode(roomCode);
+      setPlayerId(currentPlayerId);
       setIsHost(true);
+      localStorage.setItem('forest_shuffle_session', JSON.stringify({ roomCode, playerId: currentPlayerId }));
     }
 
-    function onGameJoined({ roomCode }: { roomCode: string, currentPlayerId: string }) {
+    function onGameJoined({ roomCode, currentPlayerId, isHost }: { roomCode: string, currentPlayerId: string, isHost?: boolean }) {
       console.log('Joined game:', roomCode);
       setRoomCode(roomCode);
-      setIsHost(false);
+      setPlayerId(currentPlayerId);
+      if (isHost !== undefined) setIsHost(isHost);
+      localStorage.setItem('forest_shuffle_session', JSON.stringify({ roomCode, playerId: currentPlayerId }));
     }
 
     function onPlayerListUpdate(players: any[]) {
       console.log('Player list updated:', players);
       setPlayers(players);
+    }
+
+    function onError(msg: string) {
+      alert(msg);
+      if (msg.includes('not found')) {
+        localStorage.removeItem('forest_shuffle_session');
+        setRoomCode(null);
+        setGameStarted(false);
+      }
     }
 
     socket.on('connect', onConnect);
@@ -61,6 +84,7 @@ function App() {
     socket.on('game_created', onGameCreated);
     socket.on('game_joined', onGameJoined);
     socket.on('player_list_update', onPlayerListUpdate);
+    socket.on('error', onError);
 
     socket.connect();
 
@@ -72,7 +96,7 @@ function App() {
       socket.off('game_created', onGameCreated);
       socket.off('game_joined', onGameJoined);
       socket.off('player_list_update', onPlayerListUpdate);
-      socket.disconnect();
+      socket.off('error', onError);
     };
   }, []);
 

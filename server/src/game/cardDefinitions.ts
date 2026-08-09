@@ -6,39 +6,23 @@
 import cardsDataJson from './data/cardsData.json';
 import speciesDataJson from './data/speciesData.json';
 
-// ===== Type Definitions =====
+import {
+    CardOrientation,
+    CardTag,
+    DeckType,
+    TreeSymbol,
+    SpeciesData,
+    CardData
+} from '../../../shared/types';
 
-export type CardOrientation = 'wCard' | 'vCard' | 'hCard' | 'Tree';
-
-export type CardTag =
-    | 'Butterfly' | 'Insect' | 'Mushroom' | 'Bird' | 'Bat'
-    | 'Paw' | 'Amphibian' | 'Plant' | 'Tree' | 'Deer'
-    | 'Cloven-hoofed animal' | 'Mountain' | 'Woodland Edge' | 'Shrub';
-
-export type DeckType = 'basic' | 'alpine' | 'edge';
-
-export type TreeSymbol =
-    | 'Linden' | 'Oak' | 'Silver Fir' | 'Birch' | 'Beech'
-    | 'Sycamore' | 'Douglas Fir' | 'Horse Chestnut'
-    | 'Larix' | 'Pinus';
-
-export interface SpeciesData {
-    name: string;
-    nb: number;
-    tags: CardTag[];
-    cost: number;
-    type: CardOrientation;
-    effect: string;
-    bonus: string;
-    points: string;
-}
-
-export interface CardData {
-    type: CardOrientation;
-    species: string[];
-    tree_symbol: TreeSymbol[];
-    deck: DeckType;
-}
+export {
+    CardOrientation,
+    CardTag,
+    DeckType,
+    TreeSymbol,
+    SpeciesData,
+    CardData
+};
 
 // ===== Constants =====
 

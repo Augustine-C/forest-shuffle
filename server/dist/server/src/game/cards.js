@@ -68,7 +68,7 @@ function createEnhancedCard(cardId) {
                 bonus: '',
                 points: '',
             },
-            treeSymbol: cardData.tree_symbol[index] || '',
+            treeSymbol: (cardData.tree_symbol && cardData.tree_symbol[index]) || '',
         };
     });
     return {

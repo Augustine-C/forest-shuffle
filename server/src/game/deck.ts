@@ -1,66 +1,103 @@
-import { GameCard } from './cards';
-import { CARD_DEFINITIONS } from './cardData';
+/**
+ * Deck creation using complete Forest Shuffle card database
+ * Updated to work with EnhancedCard system
+ */
 
-export function createDeck(playerCount: number): GameCard[] {
-    let rawDeck: GameCard[] = [];
+import { EnhancedCard, getEnhancedCards } from './cards';
+import { BASIC_DECK, ALPINE_DECK, EDGE_DECK, type DeckType } from './cardDefinitions';
 
-    // 1. Expand definitions into individual cards
-    CARD_DEFINITIONS.forEach(def => {
-        for (let i = 0; i < def.deckCount; i++) {
-            rawDeck.push({ ...def, id: `${def.id}_${i}` } as GameCard);
-        }
-    });
+/**
+ * Create a shuffled deck for specified number of players
+ * Uses complete card database from cardDefinitions
+ * 
+ * @param playerCount Number of players (2-5)
+ * @param includedDecks Which expansion decks to include (default: basic only)
+ * @returns Shuffled deck with winter cards in bottom third
+ */
+export function createDeck(
+    playerCount: number,
+    includedDecks: DeckType[] = [BASIC_DECK]
+): EnhancedCard[] {
+    // Get all cards for selected decks
+    let rawDeck = getEnhancedCards(includedDecks);
 
-    // 2. Shuffle generic shuffle function
-    rawDeck = shuffle(rawDeck);
+    // Filter out winter cards (handled separately)
+    const normalCards = rawDeck.filter(card => !card.isWinterCard);
 
-    // 3. Remove cards based on player count
-    // 2p: remove 30, 3p: remove 20, 4p: remove 10
+    // Shuffle the deck
+    let shuffledDeck = shuffle([...normalCards]);
+
+    // Remove cards based on player count
+    // 2p: remove 30, 3p: remove 20, 4p: remove 10, 5p: remove 0
     let removeCount = 0;
     if (playerCount === 2) removeCount = 30;
     else if (playerCount === 3) removeCount = 20;
     else if (playerCount === 4) removeCount = 10;
 
-    if (removeCount > 0 && rawDeck.length > removeCount) {
-        // "Return to box" - remove from beginning
-        rawDeck = rawDeck.slice(removeCount);
+    if (removeCount > 0 && shuffledDeck.length > removeCount) {
+        // "Return to box" - remove from beginning (already shuffled)
+        shuffledDeck = shuffledDeck.slice(removeCount);
     }
 
-    // 4. Prepare Winter Cards
-    const winterCards: GameCard[] = [
-        { id: 'winter_1', name: 'Winter is Coming', type: 'tree', cost: 0, deckCount: 1, slots: { top: null, bottom: null, left: null, right: null } }, // Using tree type as placeholder for now
-        { id: 'winter_2', name: 'Winter is Coming', type: 'tree', cost: 0, deckCount: 1, slots: { top: null, bottom: null, left: null, right: null } },
-        { id: 'winter_3', name: 'Winter Arrives', type: 'tree', cost: 0, deckCount: 1, slots: { top: null, bottom: null, left: null, right: null } }
-    ];
+    // Prepare Winter Cards (3 cards)
+    const winterCards = rawDeck.filter(card => card.isWinterCard);
 
-    // 5. Divide into thirds
-    const thirdSize = Math.floor(rawDeck.length / 3);
-    const pile1 = rawDeck.slice(0, thirdSize);
-    const pile2 = rawDeck.slice(thirdSize, thirdSize * 2);
-    let pile3 = rawDeck.slice(thirdSize * 2);
+    // Divide deck into thirds
+    const thirdSize = Math.floor(shuffledDeck.length / 3);
+    const pile1 = shuffledDeck.slice(0, thirdSize);
+    const pile2 = shuffledDeck.slice(thirdSize, thirdSize * 2);
+    let pile3 = shuffledDeck.slice(thirdSize * 2);
 
-    // 6. Add Winter cards to Pile 3 and shuffle
+    // Add Winter cards to Pile 3 and shuffle
     pile3.push(...winterCards);
     pile3 = shuffle(pile3);
 
-    // 7. Stack: Pile 1 (top) -> Pile 2 -> Pile 3 (bottom)
+    // Stack: Pile 1 (top) -> Pile 2 -> Pile 3 (bottom with winter cards)
     return [...pile1, ...pile2, ...pile3];
 }
 
-function shuffle(array: any[]): any[] {
-    let currentIndex = array.length, randomIndex;
+/**
+ * Fisher-Yates shuffle algorithm
+ */
+function shuffle<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    let currentIndex = shuffled.length;
 
-    // While there remain elements to shuffle.
-    while (currentIndex != 0) {
-
-        // Pick a remaining element.
-        randomIndex = Math.floor(Math.random() * currentIndex);
+    while (currentIndex !== 0) {
+        const randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
 
-        // And swap it with the current element.
-        [array[currentIndex], array[randomIndex]] = [
-            array[randomIndex], array[currentIndex]];
+        [shuffled[currentIndex], shuffled[randomIndex]] = [
+            shuffled[randomIndex],
+            shuffled[currentIndex],
+        ];
     }
 
-    return array;
+    return shuffled;
+}
+
+/**
+ * Get initial hand for a player (usually 6 cards)
+ */
+export function drawInitialHand(deck: EnhancedCard[], handSize: number = 6): {
+    hand: EnhancedCard[];
+    remainingDeck: EnhancedCard[];
+} {
+    const hand = deck.slice(0, handSize);
+    const remainingDeck = deck.slice(handSize);
+
+    return { hand, remainingDeck };
+}
+
+/**
+ * Draw cards from deck
+ */
+export function drawCards(deck: EnhancedCard[], count: number): {
+    drawn: EnhancedCard[];
+    remainingDeck: EnhancedCard[];
+} {
+    const drawn = deck.slice(0, count);
+    const remainingDeck = deck.slice(count);
+
+    return { drawn, remainingDeck };
 }
