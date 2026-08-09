@@ -111,12 +111,22 @@ export interface PendingSaplingSelection {
     prompt: string;
 }
 
+export interface PendingTakeAllMatching {
+    kind: 'takeAllMatching';
+    playerId: string;
+    eligibleTag: CardTag;
+    count: number;
+    optional: boolean;
+    prompt: string;
+}
+
 export type PendingAction =
     | PendingClearingSelection
     | PendingFreeCardPlay
     | PendingPaidCardPlays
     | PendingHandExchange
-    | PendingSaplingSelection;
+    | PendingSaplingSelection
+    | PendingTakeAllMatching;
 
 export interface SerializedGameState {
     players: Player[];

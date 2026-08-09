@@ -31,6 +31,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const handExchangePendingAction = myPendingAction?.kind === 'exchangeHandForDeck' ? myPendingAction : undefined;
     const saplingPendingAction = myPendingAction?.kind === 'playSaplings' ? myPendingAction : undefined;
     const handSelectionPendingAction = handExchangePendingAction ?? saplingPendingAction;
+    const takeAllPendingAction = myPendingAction?.kind === 'takeAllMatching' ? myPendingAction : undefined;
 
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
@@ -240,6 +241,22 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                         <span>{costCardIds.length} hand card(s) selected.</span>
                         <button className="action-btn primary" onClick={() => handlePendingAction(false)}>
                             Play selected saplings
+                        </button>
+                        <button className="action-btn" onClick={() => handlePendingAction(true)}>
+                            Decline
+                        </button>
+                    </div>
+                )}
+                {isMyTurn && takeAllPendingAction && (
+                    <div className="pending-action">
+                        <strong>{takeAllPendingAction.prompt}</strong>
+                        <span>The matching cards will all move to your hand.</span>
+                        <button
+                            className="action-btn primary"
+                            disabled={myPlayer.hand.length + takeAllPendingAction.count > 10}
+                            onClick={() => handlePendingAction(false)}
+                        >
+                            Take all matching cards
                         </button>
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
                             Decline

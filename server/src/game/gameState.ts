@@ -382,6 +382,10 @@ export class GameState {
                 this.resolveSaplingSelection(playerId, cardIds);
                 return;
             }
+            if (action.kind === 'takeAllMatching') {
+                this.resolveTakeAllMatching(playerId, cardIds, action.eligibleTag);
+                return;
+            }
             throw new Error('This pending action must be completed by playing a card');
         }
 
@@ -509,6 +513,22 @@ export class GameState {
         this.completePendingAction();
     }
 
+    private resolveTakeAllMatching(playerId: string, cardIds: number[], eligibleTag: CardTag) {
+        if (cardIds.length > 0) throw new Error('This action does not accept a card selection');
+        const player = this.players.get(playerId)!;
+        const matchingCards = this.clearing.filter(card => card.species.some(species =>
+            species.speciesData.tags.some(tag => tag.toLowerCase() === eligibleTag.toLowerCase())
+        ));
+        if (player.hand.length + matchingCards.length > 10) {
+            throw new Error('Taking all matching cards would exceed the hand limit');
+        }
+
+        const matchingIds = new Set(matchingCards.map(card => card.cardId));
+        this.clearing = this.clearing.filter(card => !matchingIds.has(card.cardId));
+        player.hand.push(...matchingCards);
+        this.completePendingAction();
+    }
+
     private assertPendingFreePlayAllowed(playerId: string, cardIdNum: number, speciesIndex: number) {
         if (this.gameEnded) throw new Error('The game has ended');
         const action = this.pendingAction;
@@ -598,6 +618,24 @@ export class GameState {
                     playerId: player.id,
                     optional: true,
                     prompt: 'Play any number of cards from your hand as tree saplings'
+                }];
+            }
+
+            const takeAllMatch = actionCode.match(/^TAKE_ALL_(.+)_FROM_CLEARING$/);
+            if (takeAllMatch) {
+                const tag = this.normalizeCardTag(takeAllMatch[1]);
+                if (!tag) return [];
+                const count = this.clearing.filter(card => card.species.some(species =>
+                    species.speciesData.tags.some(cardTag => cardTag.toLowerCase() === tag.toLowerCase())
+                )).length;
+                if (count === 0) return [];
+                return [{
+                    kind: 'takeAllMatching' as const,
+                    playerId: player.id,
+                    eligibleTag: tag,
+                    count,
+                    optional: true,
+                    prompt: `Take all ${count} clearing card(s) with a ${tag} symbol`
                 }];
             }
 

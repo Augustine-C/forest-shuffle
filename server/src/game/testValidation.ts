@@ -332,4 +332,28 @@ assert.equal(interruptedVolePlayer.forest.length, 3, 'all selected saplings are 
 assert.equal(interruptedSaplingGame.deck[0].cardId, 34, 'reveals stop immediately at the third winter card');
 assert.equal(interruptedSaplingGame.pendingAction, undefined);
 
+const takeAllGame = new GameState(2);
+takeAllGame.addPlayer('take-all', 'socket-take-all', 'Take All Tester', true);
+takeAllGame.addPlayer('other', 'socket-other', 'Other Tester');
+const takeAllPlayer = takeAllGame.players.get('take-all')!;
+takeAllPlayer.forest = [{ tree: createEnhancedCard(23)! }];
+const craneFly = createEnhancedCard(226)!;
+const clearingBatOne = createEnhancedCard(71)!;
+const clearingBatTwo = createEnhancedCard(93)!;
+const clearingNonBat = createEnhancedCard(24)!;
+takeAllPlayer.hand = [craneFly, createEnhancedCard(41)!];
+takeAllGame.clearing = [clearingBatOne, clearingNonBat, clearingBatTwo];
+takeAllGame.playCard('take-all', craneFly.cardId, [41], 1, 0, 'right');
+assert.equal(takeAllGame.pendingAction?.kind, 'playFreeCard');
+takeAllGame.resolvePendingAction('take-all', [], true);
+assert.equal(takeAllGame.pendingAction?.kind, 'takeAllMatching');
+assert.equal((takeAllGame.pendingAction as { count?: number } | undefined)?.count, 2);
+takeAllGame.resolvePendingAction('take-all');
+assert.deepEqual(
+    takeAllPlayer.hand.map(card => card.cardId).sort((a, b) => a - b),
+    [clearingBatOne.cardId, clearingBatTwo.cardId].sort((a, b) => a - b)
+);
+assert.deepEqual(takeAllGame.clearing.map(card => card.cardId), [clearingNonBat.cardId, 41]);
+assert.equal(takeAllGame.activePlayerIndex, 1);
+
 console.log('✅ Game action validation checks passed');
