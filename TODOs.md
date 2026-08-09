@@ -35,10 +35,10 @@ This document records gaps found by comparing the game implementation with the b
   - [x] Always resolve the effect before the bonus when both are chosen.
   - [x] Permit a player to decline either or both without blocking the turn.
 
-- [ ] Correct end-of-turn and extra-turn sequencing.
-  - Check and empty a clearing containing 10 or more cards before beginning an awarded extra turn.
-  - Preserve multiple extra turns earned during nested Mole resolutions.
-  - Do not advance the active player while an extra turn or pending action remains.
+- [x] Correct end-of-turn and extra-turn sequencing.
+  - [x] Check and empty a clearing containing 10 or more cards before beginning an awarded extra turn.
+  - [x] Preserve multiple extra turns earned during nested Mole resolutions.
+  - [x] Do not advance the active player while an extra turn or pending action remains.
 
 ## P0 - Complete scoring
 

@@ -753,4 +753,38 @@ assert.deepEqual(orderedAbilitiesPlayer.hand.map(card => card.cardId), [30]);
 assert.deepEqual(orderedAbilitiesPlayer.cave.map(card => card.cardId).sort((a, b) => a - b), [31, 32]);
 assert.equal(orderedEffectBonusGame.activePlayerIndex, 1);
 
+const clearingBeforeExtraTurnGame = new GameState(2);
+clearingBeforeExtraTurnGame.addPlayer('extra', 'socket-extra', 'Extra Turn Tester', true);
+clearingBeforeExtraTurnGame.addPlayer('other', 'socket-other', 'Other Tester');
+const extraTurnPlayer = clearingBeforeExtraTurnGame.players.get('extra')!;
+extraTurnPlayer.forest = [{ tree: createEnhancedCard(1)!, isSapling: true }];
+extraTurnPlayer.hand = [createEnhancedCard(126)!, createEnhancedCard(30)!];
+clearingBeforeExtraTurnGame.clearing = Array.from(
+    { length: 9 },
+    (_, index) => createEnhancedCard(40 + index)!
+);
+clearingBeforeExtraTurnGame.playCard('extra', 126, [30], 0, 0, 'top');
+acceptCardChoices(clearingBeforeExtraTurnGame, true, false);
+assert.equal(clearingBeforeExtraTurnGame.clearing.length, 0, 'a full clearing is emptied before an extra turn');
+assert.equal(clearingBeforeExtraTurnGame.activePlayerIndex, 0, 'the awarded extra turn keeps the same player active');
+
+const combinedBonusGame = new GameState(2);
+combinedBonusGame.addPlayer('combined', 'socket-combined', 'Combined Bonus Tester', true);
+combinedBonusGame.addPlayer('other', 'socket-other', 'Other Tester');
+const combinedBonusPlayer = combinedBonusGame.players.get('combined')!;
+combinedBonusPlayer.forest = [{ tree: createEnhancedCard(23)!, isSapling: true }];
+combinedBonusPlayer.hand = [
+    createEnhancedCard(79)!,
+    createEnhancedCard(1)!,
+    createEnhancedCard(2)!,
+    createEnhancedCard(3)!
+];
+combinedBonusGame.deck = [createEnhancedCard(34)!, createEnhancedCard(35)!, createEnhancedCard(36)!];
+combinedBonusGame.playCard('combined', 79, [1, 2, 3], 0, 0, 'left');
+acceptCardChoices(combinedBonusGame, false, true);
+assert.deepEqual(combinedBonusPlayer.hand.map(card => card.cardId), [34]);
+assert.equal(combinedBonusGame.activePlayerIndex, 0, 'draw-and-extra-turn bonus preserves the awarded turn');
+combinedBonusGame.playerDrawsTwo('combined');
+assert.equal(combinedBonusGame.activePlayerIndex, 1);
+
 console.log('✅ Game action validation checks passed');

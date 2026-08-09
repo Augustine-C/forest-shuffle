@@ -206,6 +206,15 @@ export function executeBonus(context: EffectContext): EffectResult {
 
     // Most bonus patterns are similar to effects
 
+    // Pattern: "Receive N cards and take another turn"
+    const drawAndTurnMatch = bonusText.match(/Receive (\d+) cards? and take another turn/i);
+    if (drawAndTurnMatch) {
+        result.cardsDrawn = parseInt(drawAndTurnMatch[1]);
+        result.extraTurn = true;
+        result.message = `Bonus: Drew ${result.cardsDrawn} card(s) and get extra turn!`;
+        return result;
+    }
+
     // Pattern: "Receive N card(s)"
     const drawMatch = bonusText.match(/Receive (\d+) cards?/i);
     if (drawMatch) {
@@ -219,15 +228,6 @@ export function executeBonus(context: EffectContext): EffectResult {
     if (bonusText.includes('Take another turn')) {
         result.extraTurn = true;
         result.message = 'Bonus: Extra turn!';
-        return result;
-    }
-
-    // Pattern: "Receive N cards and take another turn"
-    const drawAndTurnMatch = bonusText.match(/Receive (\d+) cards? and take another turn/i);
-    if (drawAndTurnMatch) {
-        result.cardsDrawn = parseInt(drawAndTurnMatch[1]);
-        result.extraTurn = true;
-        result.message = `Bonus: Drew ${result.cardsDrawn} card(s) and get extra turn!`;
         return result;
     }
 
