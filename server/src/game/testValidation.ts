@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { GameState } from './gameState';
 import { createEnhancedCard } from './cards';
+import { SPECIES_DATA } from './cardDefinitions';
+import { hasScoringRule } from './scoringEngine';
 import type { EnhancedCard } from './cards';
 import { createDeck } from './deck';
 import { checkSharedSlot } from './cardMatching';
@@ -786,5 +788,14 @@ assert.deepEqual(combinedBonusPlayer.hand.map(card => card.cardId), [34]);
 assert.equal(combinedBonusGame.activePlayerIndex, 0, 'draw-and-extra-turn bonus preserves the awarded turn');
 combinedBonusGame.playerDrawsTwo('combined');
 assert.equal(combinedBonusGame.activePlayerIndex, 1);
+
+const speciesWithoutScoringRules = Object.values(SPECIES_DATA)
+    .filter(species => species.points && !hasScoringRule(species.name))
+    .map(species => species.name);
+assert.deepEqual(
+    speciesWithoutScoringRules,
+    [],
+    `scored species without an explicit implementation: ${speciesWithoutScoringRules.join(', ')}`
+);
 
 console.log('✅ Game action validation checks passed');

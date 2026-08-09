@@ -42,7 +42,7 @@ This document records gaps found by comparing the game implementation with the b
 
 ## P0 - Complete scoring
 
-- [ ] Replace the partial text parser with explicit, testable scoring rules for every supported species.
+- [x] Replace the partial text parser with explicit, testable scoring rules for every supported species.
   - The current parser returns zero for many conditional and species-based cards, including Beech, Linden, bats, Hares, deer, Lynx, Wild Boar, Moss, and several expansion species.
   - Avoid treating phrases such as "per fully occupied tree" as fixed points.
   - Add an exhaustive test that fails when a species with scoring text has no scoring implementation.
