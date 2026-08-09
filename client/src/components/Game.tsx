@@ -25,9 +25,12 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const selectedCard = myPlayer?.hand.find((c: EnhancedCard) => c.cardId === selectedCardId);
     const pendingAction = gameState.pendingAction;
     const myPendingAction = pendingAction?.playerId === playerId ? pendingAction : undefined;
+    const clearingPendingAction = myPendingAction?.kind === 'selectClearingCards' ? myPendingAction : undefined;
+    const freePlayPendingAction = myPendingAction?.kind === 'playFreeCard' ? myPendingAction : undefined;
 
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
+        if (myPendingAction && !freePlayPendingAction) return;
 
         if (selectedCardId === card.cardId) {
             // If it's a split card, cycle species index or deselect
@@ -68,7 +71,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
 
     const handleClearingCardClick = (cardId: number) => {
         if (!isMyTurn || selectedCardId !== null) return;
-        const selectionLimit = myPendingAction?.count ?? 2;
+        const selectionLimit = clearingPendingAction?.count ?? 2;
         setClearingCardIds(current => current.includes(cardId)
             ? current.filter(id => id !== cardId)
             : current.length < selectionLimit ? [...current, cardId] : current
@@ -100,17 +103,19 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             }
         }
 
-        const requiredCost = asSapling ? 0 : selectedCard.species[speciesIndex]?.speciesData.cost || 0;
+        const requiredCost = asSapling || freePlayPendingAction
+            ? 0
+            : selectedCard.species[speciesIndex]?.speciesData.cost || 0;
         if (costCardIds.length < requiredCost) {
             alert(`Need ${requiredCost} cards for cost. Selected ${costCardIds.length}.`);
             return;
         }
 
-        socket.emit('play_card', {
+        socket.emit(freePlayPendingAction ? 'play_pending_card' : 'play_card', {
             roomCode,
             playerId,
             cardId: selectedCardId,
-            costCardIds,
+            costCardIds: freePlayPendingAction ? [] : costCardIds,
             speciesIndex,
             targetTreeIndex: treeIndex,
             targetSlot: slot,
@@ -154,18 +159,34 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             </div>
 
             <div className="actions">
-                {isMyTurn && myPendingAction && (
+                {isMyTurn && clearingPendingAction && (
                     <div className="pending-action">
-                        <strong>{myPendingAction.prompt}</strong>
-                        <span>Select exactly {myPendingAction.count} card(s) from the clearing.</span>
+                        <strong>{clearingPendingAction.prompt}</strong>
+                        <span>Select exactly {clearingPendingAction.count} card(s) from the clearing.</span>
                         <button
                             className="action-btn primary"
-                            disabled={clearingCardIds.length !== myPendingAction.count}
+                            disabled={clearingCardIds.length !== clearingPendingAction.count}
                             onClick={() => handlePendingAction(false)}
                         >
                             Confirm selection
                         </button>
-                        {myPendingAction.optional && (
+                        {clearingPendingAction.optional && (
+                            <button className="action-btn" onClick={() => handlePendingAction(true)}>
+                                Decline
+                            </button>
+                        )}
+                    </div>
+                )}
+                {isMyTurn && freePlayPendingAction && (
+                    <div className="pending-action">
+                        <strong>{freePlayPendingAction.prompt}</strong>
+                        <span>Select an eligible card from your hand, then choose its forest position.</span>
+                        {selectedCard?.orientation === 'Tree' && (
+                            <button className="action-btn primary" onClick={() => handlePlayCard()}>
+                                Play {selectedCard.species[selectedSpeciesIndex]?.name} for free
+                            </button>
+                        )}
+                        {freePlayPendingAction.optional && (
                             <button className="action-btn" onClick={() => handlePendingAction(true)}>
                                 Decline
                             </button>

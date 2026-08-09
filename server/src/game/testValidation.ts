@@ -112,7 +112,13 @@ const marketCard = createEnhancedCard(25)!;
 handPlayer.hand = [magpie, magpiePayment];
 handSelectionGame.clearing = [marketCard];
 handSelectionGame.playCard('hand', magpie.cardId, [magpiePayment.cardId], 0, 0, 'top');
-assert.equal(handSelectionGame.pendingAction?.destination, 'hand');
+assert.equal(handSelectionGame.pendingAction?.kind, 'selectClearingCards');
+assert.equal(
+    handSelectionGame.pendingAction?.kind === 'selectClearingCards'
+        ? handSelectionGame.pendingAction.destination
+        : undefined,
+    'hand'
+);
 handSelectionGame.resolvePendingAction('hand', [marketCard.cardId]);
 assert.equal(handPlayer.hand.some(card => card.cardId === marketCard.cardId), true);
 
@@ -127,5 +133,58 @@ declineGame.playCard('decline', 190, [24], 0, 0, 'top');
 declineGame.resolvePendingAction('decline', [], true);
 assert.equal(declinePlayer.cave.length, 0);
 assert.equal(declineGame.activePlayerIndex, 1);
+
+const freePlayGame = new GameState(2);
+freePlayGame.addPlayer('free', 'socket-free', 'Free Play Tester', true);
+freePlayGame.addPlayer('other', 'socket-other', 'Other Tester');
+const freePlayer = freePlayGame.players.get('free')!;
+freePlayer.forest = [{ tree: createEnhancedCard(23)! }];
+const fireSalamander = createEnhancedCard(118)!;
+const matchingPayment = createEnhancedCard(56)!;
+const brownBear = createEnhancedCard(79)!;
+const ineligibleBird = createEnhancedCard(126)!;
+const untouchedClearingCard = createEnhancedCard(25)!;
+freePlayer.hand = [fireSalamander, matchingPayment, brownBear, ineligibleBird];
+freePlayGame.clearing = [untouchedClearingCard];
+freePlayGame.playCard('free', fireSalamander.cardId, [matchingPayment.cardId], 1, 0, 'bottom');
+assert.equal(freePlayGame.pendingAction?.kind, 'playFreeCard');
+assert.equal(
+    freePlayGame.pendingAction?.kind === 'playFreeCard' ? freePlayGame.pendingAction.eligibleTag : undefined,
+    'Paw'
+);
+assert.throws(
+    () => freePlayGame.playPendingFreeCard('free', ineligibleBird.cardId, 0, 0, 'top'),
+    /must have a Paw symbol/
+);
+assert.equal(freePlayer.hand.includes(ineligibleBird), true, 'an ineligible free play must be atomic');
+
+const clearingCountBeforeFreePlay = freePlayGame.clearing.length;
+freePlayGame.playPendingFreeCard('free', brownBear.cardId, 0, 0, 'left');
+assert.equal(freePlayer.forest[0].left?.cardId, brownBear.cardId);
+assert.equal(freePlayer.cave.length, 0, 'a free card must not execute its effect');
+assert.equal(freePlayGame.clearing.length, clearingCountBeforeFreePlay);
+assert.equal(freePlayGame.pendingAction, undefined);
+assert.equal(freePlayGame.activePlayerIndex, 1);
+
+const squeakerGame = new GameState(2);
+squeakerGame.addPlayer('squeaker', 'socket-squeaker', 'Squeaker Tester', true);
+squeakerGame.addPlayer('other', 'socket-other', 'Other Tester');
+const squeakerPlayer = squeakerGame.players.get('squeaker')!;
+squeakerPlayer.forest = [{ tree: createEnhancedCard(23)! }];
+const femaleWildBoar = createEnhancedCard(222)!;
+const squeaker = createEnhancedCard(99)!;
+squeakerPlayer.hand = [femaleWildBoar, createEnhancedCard(24)!, createEnhancedCard(25)!, squeaker];
+squeakerGame.playCard('squeaker', femaleWildBoar.cardId, [24, 25], 0, 0, 'left');
+assert.equal(
+    squeakerGame.pendingAction?.kind === 'playFreeCard' ? squeakerGame.pendingAction.eligibleSpecies : undefined,
+    'Squeaker'
+);
+assert.throws(
+    () => squeakerGame.playPendingFreeCard('squeaker', createEnhancedCard(79)!.cardId, 0, 0, 'right'),
+    /Card is not in player hand/
+);
+squeakerGame.playPendingFreeCard('squeaker', squeaker.cardId, 1, 0, 'right');
+assert.equal(squeakerPlayer.forest[0].right?.cardId, squeaker.cardId);
+assert.equal(squeakerGame.activePlayerIndex, 1);
 
 console.log('✅ Game action validation checks passed');

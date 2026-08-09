@@ -8,13 +8,13 @@ This document records gaps found by comparing the game implementation with the b
   - Consume the `bonusActions` produced by `server/src/game/effectsEngine.ts` instead of discarding them in `GameState.playCard()`.
   - Add server events, validation, serialized pending-action state, and client controls for:
     - [x] selecting clearing cards for a hand or cave;
-    - playing one eligible card for free;
+    - [x] playing one eligible card for free;
     - playing any number of eligible cards for free;
     - playing multiple cards while paying their combined costs (Mole);
     - exchanging hand cards for deck cards (Raccoon);
     - playing cards as saplings (Water Vole);
     - taking all matching cards from the clearing;
-    - playing a Squeaker for free.
+    - [x] playing a Squeaker for free.
   - Keep the active turn open until every required selection and nested effect is resolved.
   - Reject unrelated actions while a mandatory selection is pending.
 

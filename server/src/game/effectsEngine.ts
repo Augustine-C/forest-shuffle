@@ -233,15 +233,17 @@ export function executeBonus(context: EffectContext): EffectResult {
     }
 
     // Pattern: "Play a card with [tag] for free"
-    const playFreeMatch = bonusText.match(/Play a card with a (.+) symbol for free/i);
-    if (playFreeMatch) {
-        result.bonusActions.push(`PLAY_FREE_ONE_${playFreeMatch[1].toUpperCase()}`);
-        result.message = `Bonus: Can play one ${playFreeMatch[1]} card for free`;
+    const playFreeMatches = [...bonusText.matchAll(/a card with an? (.+?) symbol/gi)];
+    if (playFreeMatches.length > 0 && bonusText.toLowerCase().includes('for free')) {
+        playFreeMatches.forEach(match => {
+            result.bonusActions.push(`PLAY_FREE_ONE_${match[1].toUpperCase()}`);
+        });
+        result.message = `Bonus: Can play ${playFreeMatches.length} matching card(s) for free`;
         return result;
     }
 
     // Pattern: "Play [specific cards] for free"
-    if (bonusText.includes('Play a squeaker for free')) {
+    if (bonusText.toLowerCase().includes('play a squeaker for free')) {
         result.bonusActions.push('PLAY_FREE_SQUEAKER');
         result.message = 'Bonus: Can play a squeaker for free';
         return result;

@@ -3,6 +3,7 @@ import { createDeck } from './deck';
 import { executeEffect, executeBonus, drawCardsOneByOne, revealCardToClearing } from './effectsEngine';
 import { calculatePlayerScore } from './scoringEngine';
 import type { PendingAction } from '../../../shared/types';
+import type { CardTag } from './cardDefinitions';
 
 export interface PlacedTree {
     tree: EnhancedCard;
@@ -158,7 +159,32 @@ export class GameState {
         targetSlot?: 'top' | 'bottom' | 'left' | 'right',
         asSapling: boolean = false
     ) {
-        this.assertActionAllowed(playerId);
+        this.playCardInternal(
+            playerId,
+            cardIdNum,
+            costCardIds,
+            speciesIndex,
+            targetTreeIndex,
+            targetSlot,
+            asSapling,
+            false,
+            false
+        );
+    }
+
+    private playCardInternal(
+        playerId: string,
+        cardIdNum: number,
+        costCardIds: number[],
+        speciesIndex: number,
+        targetTreeIndex: number | undefined,
+        targetSlot: 'top' | 'bottom' | 'left' | 'right' | undefined,
+        asSapling: boolean,
+        freePlay: boolean = false,
+        suppressEffectsAndBonus: boolean = false
+    ) {
+        if (freePlay) this.assertPendingFreePlayAllowed(playerId, cardIdNum, speciesIndex);
+        else this.assertActionAllowed(playerId);
         const player = this.players.get(playerId);
         if (!player) throw new Error('Player not found');
 
@@ -172,7 +198,7 @@ export class GameState {
         }
 
         // 2. Validate and Pay Cost
-        const requiredCost = asSapling ? 0 : getCardCost(cardToPlay, speciesIndex);
+        const requiredCost = asSapling || freePlay ? 0 : getCardCost(cardToPlay, speciesIndex);
 
         if (player.hand.length - 1 < requiredCost) {
             throw new Error(`Not enough cards! Need ${requiredCost}, have ${player.hand.length - 1}`);
@@ -249,10 +275,13 @@ export class GameState {
         // 4. Execute Effect
         if (cardToPlay.orientation === 'Tree' && !asSapling) {
             revealCardToClearing(this);
-            if (this.gameEnded) return;
+            if (this.gameEnded) {
+                this.clearPendingActions();
+                return;
+            }
         }
 
-        if (placedTree && !asSapling) {
+        if (placedTree && !asSapling && !suppressEffectsAndBonus) {
             const effectResult = executeEffect({
                 gameState: this,
                 player,
@@ -303,6 +332,11 @@ export class GameState {
             if (effectResult.extraTurn || bonusResult?.extraTurn) return;
         }
 
+        if (freePlay) {
+            this.completePendingAction();
+            return;
+        }
+
         // 5. Update Clearing Wipe Logic
         if (this.clearing.length >= 10) {
             this.clearing = [];
@@ -324,6 +358,10 @@ export class GameState {
             if (cardIds.length > 0) throw new Error('Do not select cards when declining an action');
             this.completePendingAction();
             return;
+        }
+
+        if (action.kind !== 'selectClearingCards') {
+            throw new Error('This pending action must be completed by playing a card');
         }
 
         if (new Set(cardIds).size !== cardIds.length) {
@@ -350,6 +388,26 @@ export class GameState {
         this.completePendingAction();
     }
 
+    playPendingFreeCard(
+        playerId: string,
+        cardIdNum: number,
+        speciesIndex: number = 0,
+        targetTreeIndex?: number,
+        targetSlot?: 'top' | 'bottom' | 'left' | 'right'
+    ) {
+        this.playCardInternal(
+            playerId,
+            cardIdNum,
+            [],
+            speciesIndex,
+            targetTreeIndex,
+            targetSlot,
+            false,
+            true,
+            true
+        );
+    }
+
     private assertActionAllowed(playerId: string) {
         if (this.gameEnded) throw new Error('The game has ended');
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
@@ -357,24 +415,80 @@ export class GameState {
         if (this.pendingAction) throw new Error('Resolve the pending action first');
     }
 
-    private createPendingActions(player: Player, actionCodes: string[]): PendingAction[] {
-        return actionCodes.flatMap(actionCode => {
-            const match = actionCode.match(/^SELECT_(\d+)_FROM_CLEARING_TO_(HAND|CAVE)$/);
-            if (!match) return [];
+    private assertPendingFreePlayAllowed(playerId: string, cardIdNum: number, speciesIndex: number) {
+        if (this.gameEnded) throw new Error('The game has ended');
+        const action = this.pendingAction;
+        if (!action || action.kind !== 'playFreeCard') {
+            throw new Error('There is no pending free-card action');
+        }
+        if (action.playerId !== playerId) throw new Error('This pending action belongs to another player');
+        const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
+        if (activePlayerId !== playerId) throw new Error('Not your turn');
 
-            const destination = match[2] === 'HAND' ? 'hand' : 'cave';
-            const capacity = destination === 'hand' ? Math.max(0, 10 - player.hand.length) : this.clearing.length;
-            const count = Math.min(Number(match[1]), this.clearing.length, capacity);
-            if (count === 0) return [];
+        const player = this.players.get(playerId);
+        const card = player?.hand.find(candidate => candidate.cardId === cardIdNum);
+        if (!card) throw new Error('Card is not in player hand');
+        const species = card.species[speciesIndex];
+        if (!species) throw new Error('Invalid card side');
+        if (action.eligibleTag && !species.speciesData.tags.some(tag =>
+            tag.toLowerCase() === action.eligibleTag!.toLowerCase()
+        )) {
+            throw new Error(`The selected card side must have a ${action.eligibleTag} symbol`);
+        }
+        if (action.eligibleSpecies && species.name.toLowerCase() !== action.eligibleSpecies.toLowerCase()) {
+            throw new Error(`The selected card side must be ${action.eligibleSpecies}`);
+        }
+    }
+
+    private createPendingActions(player: Player, actionCodes: string[]): PendingAction[] {
+        return actionCodes.flatMap<PendingAction>(actionCode => {
+            const match = actionCode.match(/^SELECT_(\d+)_FROM_CLEARING_TO_(HAND|CAVE)$/);
+            if (match) {
+                const destination = match[2] === 'HAND' ? 'hand' : 'cave';
+                const capacity = destination === 'hand' ? Math.max(0, 10 - player.hand.length) : this.clearing.length;
+                const count = Math.min(Number(match[1]), this.clearing.length, capacity);
+                if (count === 0) return [];
+                return [{
+                    kind: 'selectClearingCards' as const,
+                    playerId: player.id,
+                    destination,
+                    count,
+                    optional: true,
+                    prompt: `${destination === 'hand' ? 'Take' : 'Place'} ${count} clearing card(s) ${destination === 'hand' ? 'into your hand' : 'in your cave'}`
+                }];
+            }
+
+            if (actionCode === 'PLAY_FREE_SQUEAKER') {
+                return [{
+                    kind: 'playFreeCard' as const,
+                    playerId: player.id,
+                    eligibleSpecies: 'Squeaker',
+                    optional: true,
+                    prompt: 'Play a Squeaker for free'
+                }];
+            }
+
+            const freePlayMatch = actionCode.match(/^PLAY_FREE_ONE_(.+)$/);
+            if (!freePlayMatch) return [];
+            const tag = this.normalizeCardTag(freePlayMatch[1]);
+            if (!tag) return [];
             return [{
-                kind: 'selectClearingCards' as const,
+                kind: 'playFreeCard' as const,
                 playerId: player.id,
-                destination,
-                count,
+                eligibleTag: tag,
                 optional: true,
-                prompt: `${destination === 'hand' ? 'Take' : 'Place'} ${count} clearing card(s) ${destination === 'hand' ? 'into your hand' : 'in your cave'}`
+                prompt: `Play a card with a ${tag} symbol for free`
             }];
         });
+    }
+
+    private normalizeCardTag(value: string): CardTag | undefined {
+        const tags: CardTag[] = [
+            'Tree', 'Bird', 'Plant', 'Butterfly', 'Mammal', 'Amphibian', 'Insect',
+            'Arachnid', 'Mushroom', 'Alpine', 'Bat', 'Deer', 'Beetle', 'Paw', 'Wing',
+            'Cloven-hoofed animal', 'Mountain', 'Woodland Edge', 'Shrub'
+        ];
+        return tags.find(tag => tag.toLowerCase() === value.trim().toLowerCase());
     }
 
     private completePendingAction() {
