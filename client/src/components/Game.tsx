@@ -188,7 +188,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                         )}
                         {freePlayPendingAction.optional && (
                             <button className="action-btn" onClick={() => handlePendingAction(true)}>
-                                Decline
+                                {freePlayPendingAction.repeatable ? 'Done' : 'Decline'}
                             </button>
                         )}
                     </div>

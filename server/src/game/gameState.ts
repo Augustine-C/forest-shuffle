@@ -333,6 +333,7 @@ export class GameState {
         }
 
         if (freePlay) {
+            if (this.pendingAction?.kind === 'playFreeCard' && this.pendingAction.repeatable) return;
             this.completePendingAction();
             return;
         }
@@ -395,6 +396,10 @@ export class GameState {
         targetTreeIndex?: number,
         targetSlot?: 'top' | 'bottom' | 'left' | 'right'
     ) {
+        const action = this.pendingAction;
+        if (!action || action.kind !== 'playFreeCard') {
+            throw new Error('There is no pending free-card action');
+        }
         this.playCardInternal(
             playerId,
             cardIdNum,
@@ -404,7 +409,7 @@ export class GameState {
             targetSlot,
             false,
             true,
-            true
+            action.suppressEffectsAndBonus
         );
     }
 
@@ -463,8 +468,24 @@ export class GameState {
                     kind: 'playFreeCard' as const,
                     playerId: player.id,
                     eligibleSpecies: 'Squeaker',
+                    suppressEffectsAndBonus: true,
                     optional: true,
                     prompt: 'Play a Squeaker for free'
+                }];
+            }
+
+            const freeAnyMatch = actionCode.match(/^PLAY_FREE_ANY_(.+?)(?: CARDS?)?$/);
+            if (freeAnyMatch) {
+                const tag = this.normalizeCardTag(freeAnyMatch[1]);
+                if (!tag) return [];
+                return [{
+                    kind: 'playFreeCard' as const,
+                    playerId: player.id,
+                    eligibleTag: tag,
+                    repeatable: true,
+                    suppressEffectsAndBonus: false,
+                    optional: true,
+                    prompt: `Play any number of cards with a ${tag} symbol for free`
                 }];
             }
 
@@ -476,6 +497,7 @@ export class GameState {
                 kind: 'playFreeCard' as const,
                 playerId: player.id,
                 eligibleTag: tag,
+                suppressEffectsAndBonus: true,
                 optional: true,
                 prompt: `Play a card with a ${tag} symbol for free`
             }];

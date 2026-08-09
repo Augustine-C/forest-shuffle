@@ -187,4 +187,35 @@ squeakerGame.playPendingFreeCard('squeaker', squeaker.cardId, 1, 0, 'right');
 assert.equal(squeakerPlayer.forest[0].right?.cardId, squeaker.cardId);
 assert.equal(squeakerGame.activePlayerIndex, 1);
 
+const repeatableFreePlayGame = new GameState(2);
+repeatableFreePlayGame.addPlayer('repeatable', 'socket-repeatable', 'Repeatable Tester', true);
+repeatableFreePlayGame.addPlayer('other', 'socket-other', 'Other Tester');
+const repeatablePlayer = repeatableFreePlayGame.players.get('repeatable')!;
+repeatablePlayer.forest = [
+    { tree: createEnhancedCard(23)! },
+    { tree: createEnhancedCard(24)! }
+];
+const gnat = createEnhancedCard(98)!;
+const firstBat = createEnhancedCard(71)!;
+const secondBat = createEnhancedCard(93)!;
+repeatablePlayer.hand = [gnat, firstBat, secondBat];
+repeatableFreePlayGame.playCard('repeatable', gnat.cardId, [], 1, 0, 'right');
+assert.equal(repeatableFreePlayGame.pendingAction?.kind, 'playFreeCard');
+assert.equal(
+    repeatableFreePlayGame.pendingAction?.kind === 'playFreeCard'
+        ? repeatableFreePlayGame.pendingAction.repeatable
+        : undefined,
+    true
+);
+repeatableFreePlayGame.playPendingFreeCard('repeatable', firstBat.cardId, 1, 1, 'right');
+assert.equal(repeatablePlayer.forest[1].right?.cardId, firstBat.cardId);
+assert.equal(repeatableFreePlayGame.pendingAction?.kind, 'playFreeCard');
+assert.equal(repeatableFreePlayGame.activePlayerIndex, 0);
+repeatableFreePlayGame.playPendingFreeCard('repeatable', secondBat.cardId, 0, 1, 'left');
+assert.equal(repeatablePlayer.forest[1].left?.cardId, secondBat.cardId);
+assert.equal(repeatableFreePlayGame.pendingAction?.kind, 'playFreeCard');
+repeatableFreePlayGame.resolvePendingAction('repeatable', [], true);
+assert.equal(repeatableFreePlayGame.pendingAction, undefined);
+assert.equal(repeatableFreePlayGame.activePlayerIndex, 1);
+
 console.log('✅ Game action validation checks passed');

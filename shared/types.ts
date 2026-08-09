@@ -84,6 +84,8 @@ export interface PendingFreeCardPlay {
     playerId: string;
     eligibleTag?: CardTag;
     eligibleSpecies?: string;
+    repeatable?: boolean;
+    suppressEffectsAndBonus: boolean;
     optional: boolean;
     prompt: string;
 }

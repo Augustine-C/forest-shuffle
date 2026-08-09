@@ -9,7 +9,7 @@ This document records gaps found by comparing the game implementation with the b
   - Add server events, validation, serialized pending-action state, and client controls for:
     - [x] selecting clearing cards for a hand or cave;
     - [x] playing one eligible card for free;
-    - playing any number of eligible cards for free;
+    - [x] playing any number of eligible cards for free;
     - playing multiple cards while paying their combined costs (Mole);
     - exchanging hand cards for deck cards (Raccoon);
     - playing cards as saplings (Water Vole);
