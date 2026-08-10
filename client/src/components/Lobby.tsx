@@ -7,9 +7,10 @@ interface LobbyProps {
     players: Player[];
     isHost: boolean;
     playerId: string | undefined;
+    onOpenGallery: () => void;
 }
 
-export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProps) {
+export default function Lobby({ roomCode, players, isHost, playerId, onOpenGallery }: LobbyProps) {
     const [joinRoomCode, setJoinRoomCode] = useState('');
     const [playerName, setPlayerName] = useState('');
     const [startingPlayerId, setStartingPlayerId] = useState(playerId ?? '');
@@ -128,6 +129,7 @@ export default function Lobby({ roomCode, players, isHost, playerId }: LobbyProp
                     <button onClick={handleJoinGame}>Join Game</button>
                 </div>
             </div>
+            <button className="gallery-entry" onClick={onOpenGallery}>Browse all cards</button>
         </div>
     );
 }

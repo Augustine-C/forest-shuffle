@@ -75,6 +75,12 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
+.gallery-entry {
+  border: 1px solid #646057;
+  background: transparent;
+  color: #d7d2c6;
+}
+
 /* Game Layout */
 .game-board {
   display: flex;

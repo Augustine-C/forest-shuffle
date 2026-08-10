@@ -125,7 +125,7 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
             ref={cardRef}
             style={artworkStyle}
             role={onClick ? 'button' : undefined}
-            aria-label={card.species.map(species => species.name).join(' / ')}
+            aria-label={card.species.map(species => species.name).join(' / ') || `Winter card ${card.cardId}`}
         >
             {!artworkStyle && !slot && <div className="card-id">#{card.cardId}</div>}
             <div className="card-inner">

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { socket } from './services/socket';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
+import CardGallery from './components/CardGallery';
 import type { Player, SerializedGameState } from '../../shared/types';
 import './App.css';
 
@@ -30,6 +31,7 @@ function App() {
   const [roomCode, setRoomCode] = useState<string | null>(savedSession?.roomCode ?? null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [isHost, setIsHost] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
 
   useEffect(() => {
     // Check for existing session
@@ -123,12 +125,15 @@ function App() {
           playerId={playerId || socket.id}
           roomCode={roomCode || ''}
         />
+      ) : showGallery && !roomCode ? (
+        <CardGallery onBack={() => setShowGallery(false)} />
       ) : (
         <Lobby
           roomCode={roomCode}
           players={players}
           isHost={isHost}
           playerId={playerId}
+          onOpenGallery={() => setShowGallery(true)}
         />
       )}
     </>
