@@ -8,6 +8,8 @@ The runtime card database supports the base game, Alpine expansion, and Woodland
 
 The digital appendix under `help/game-rules/` is broader than the runtime database: Exploration cards and promotional cards are retained there as rules reference material only. They are not offered in the lobby, dealt, rendered, or scored by the application.
 
+Rules reference: [English rules](help/game-rules/rules.md) · [中文规则](help/game-rules/rules.zh-CN.md) · [card appendix](help/game-rules/appendix.md)
+
 ## Development
 
 Install and start the server:

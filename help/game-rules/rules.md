@@ -1,5 +1,7 @@
 # Forest Shuffle Rules
 
+> 中文版：[《森森不息》中文版规则](rules.zh-CN.md)
+>
 > Markdown reference proofread against `rules.pdf`. This edition is for 2-5 players, ages 10 and up, with a playing time of about 60 minutes. Illustrated examples are omitted. Card-specific rulings are in [appendix.md](appendix.md).
 
 ## Object of the game
