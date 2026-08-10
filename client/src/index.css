@@ -63,24 +63,6 @@ body {
   z-index: 1000;
 }
 
-.lobby {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 500px;
-  margin: 100px auto;
-  background: #2a2a2a;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-.gallery-entry {
-  border: 1px solid #646057;
-  background: transparent;
-  color: #d7d2c6;
-}
-
 /* Game Layout */
 .game-board {
   display: flex;
