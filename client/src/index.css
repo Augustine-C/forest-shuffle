@@ -461,6 +461,17 @@ body {
   background: rgba(70, 160, 96, 0.12);
 }
 
+.slot.chosen {
+  border: 3px solid #ffd166;
+  background: rgba(255, 209, 102, 0.2);
+  box-shadow: 0 0 18px rgba(255, 209, 102, 0.45);
+}
+
+.placement-guidance {
+  color: #ffd166;
+  font-weight: 700;
+}
+
 .shared-placement-icon {
   position: absolute;
   z-index: 30;

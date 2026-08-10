@@ -11,6 +11,11 @@ import type {
 
 type ForestSlot = 'top' | 'bottom' | 'left' | 'right';
 
+interface SelectedPlacement {
+    treeIndex: number;
+    slot: ForestSlot;
+}
+
 interface GameProps {
     gameState: SerializedGameState;
     playerId: string | undefined;
@@ -20,6 +25,7 @@ interface GameProps {
 export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
     const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState<number>(0);
+    const [selectedPlacement, setSelectedPlacement] = useState<SelectedPlacement | null>(null);
     const [costCardIds, setCostCardIds] = useState<number[]>([]);
     const [clearingCardIds, setClearingCardIds] = useState<number[]>([]);
 
@@ -45,6 +51,13 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
     const mulliganAction = myPendingAction?.kind === 'initialMulligan' ? myPendingAction : undefined;
     const drawSourceAction = myPendingAction?.kind === 'chooseDrawSource' ? myPendingAction : undefined;
 
+    const resetCardSelection = () => {
+        setSelectedCardId(null);
+        setSelectedSpeciesIndex(0);
+        setSelectedPlacement(null);
+        setCostCardIds([]);
+    };
+
     const handleCardClick = (card: EnhancedCard) => {
         if (!isMyTurn) return;
         if (handSelectionPendingAction) {
@@ -57,24 +70,13 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
         if (myPendingAction && !freePlayPendingAction && !paidPlayPendingAction) return;
 
         if (selectedCardId === card.cardId) {
-            // If it's a split card, cycle species index or deselect
-            if (card.isSplitCard) {
-                const nextIndex = (selectedSpeciesIndex + 1) % card.species.length;
-                if (nextIndex === 0 && selectedSpeciesIndex !== 0) {
-                    setSelectedCardId(null);
-                    setCostCardIds([]);
-                } else {
-                    setSelectedSpeciesIndex(nextIndex);
-                    setCostCardIds([]); // Reset cost if cost might change (though usually same)
-                }
-            } else {
-                setSelectedCardId(null);
-                setCostCardIds([]);
-            }
+            resetCardSelection();
         } else if (selectedCardId && costCardIds.includes(card.cardId)) {
             // Remove from cost
             setCostCardIds(prev => prev.filter(id => id !== card.cardId));
         } else if (selectedCardId) {
+            // A split card's forest position determines its played species and cost.
+            if (selectedCard?.isSplitCard && !selectedPlacement) return;
             // Add to cost if we still need to pay
             const requiredCost = selectedCard?.species[selectedSpeciesIndex]?.speciesData.cost || 0;
             if (costCardIds.length < requiredCost) {
@@ -84,6 +86,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             // Select as card to play
             setSelectedCardId(card.cardId);
             setSelectedSpeciesIndex(0);
+            setSelectedPlacement(null);
             setCostCardIds([]);
         }
     };
@@ -145,17 +148,33 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
         });
     };
 
-    const handlePlayCard = (treeIndex?: number, slot?: string, asSapling = false) => {
+    const handleSelectPlacement = (treeIndex: number, slot: ForestSlot) => {
+        if (!selectedCard) return;
+        const speciesIndex = selectedCard.orientation === 'vCard'
+            ? slot === 'top' ? 0 : 1
+            : slot === 'left' ? 0 : 1;
+        if (speciesIndex !== selectedSpeciesIndex) setCostCardIds([]);
+        setSelectedSpeciesIndex(speciesIndex);
+        setSelectedPlacement({ treeIndex, slot });
+    };
+
+    const handlePlayCard = (treeIndex?: number, slot?: ForestSlot, asSapling = false) => {
         if (selectedCardId === null || !selectedCard) return;
+
+        const targetTreeIndex = asSapling ? undefined : treeIndex ?? selectedPlacement?.treeIndex;
+        const targetSlot = asSapling ? undefined : slot ?? selectedPlacement?.slot;
+        if (selectedCard.isSplitCard && !asSapling && (targetTreeIndex === undefined || !targetSlot)) {
+            return;
+        }
 
         let speciesIndex = selectedSpeciesIndex;
 
         // Smart auto-selection for split cards
-        if (selectedCard.isSplitCard && slot) {
+        if (selectedCard.isSplitCard && targetSlot) {
             if (selectedCard.orientation === 'vCard') {
-                speciesIndex = slot === 'top' ? 0 : 1;
+                speciesIndex = targetSlot === 'top' ? 0 : 1;
             } else if (selectedCard.orientation === 'hCard') {
-                speciesIndex = slot === 'left' ? 0 : 1;
+                speciesIndex = targetSlot === 'left' ? 0 : 1;
             }
         }
 
@@ -176,15 +195,13 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             cardId: selectedCardId,
             costCardIds: freePlayPendingAction ? [] : costCardIds,
             speciesIndex,
-            targetTreeIndex: treeIndex,
-            targetSlot: slot,
+            targetTreeIndex,
+            targetSlot,
             asSapling
         });
 
         // Reset local state
-        setSelectedCardId(null);
-        setSelectedSpeciesIndex(0);
-        setCostCardIds([]);
+        resetCardSelection();
         setClearingCardIds([]);
     };
 
@@ -339,6 +356,14 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                                 Play {selectedCard.species[selectedSpeciesIndex]?.name} for free
                             </button>
                         )}
+                        {selectedCard?.isSplitCard && !selectedPlacement && (
+                            <span>Choose a highlighted forest slot to select the card half.</span>
+                        )}
+                        {selectedCard?.isSplitCard && selectedPlacement && (
+                            <button className="action-btn primary" onClick={() => handlePlayCard()}>
+                                Play {selectedCard.species[selectedSpeciesIndex]?.name} for free
+                            </button>
+                        )}
                         {freePlayPendingAction.optional && (
                             <button className="action-btn" onClick={() => handlePendingAction(true)}>
                                 {freePlayPendingAction.repeatable ? 'Done' : 'Decline'}
@@ -353,6 +378,14 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                         {selectedCard?.orientation === 'Tree' && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
                                 Plant {selectedCard.species[0].name} (Pay {selectedCard.species[0].speciesData.cost})
+                            </button>
+                        )}
+                        {selectedCard?.isSplitCard && !selectedPlacement && (
+                            <span>Choose a highlighted forest slot to select the card half and its cost.</span>
+                        )}
+                        {selectedCard?.isSplitCard && selectedPlacement && (
+                            <button className="action-btn primary" onClick={() => handlePlayCard()}>
+                                Play {selectedCard.species[selectedSpeciesIndex]?.name} (Pay {selectedCard.species[selectedSpeciesIndex]?.speciesData.cost})
                             </button>
                         )}
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
@@ -459,9 +492,12 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                                 Plant {selectedCard.species[0].name} (Pay {selectedCard.species[0].speciesData.cost})
                             </button>
                         )}
-                        {selectedCard && !selectedCard.isSplitCard && selectedCard.orientation !== 'Tree' && (
+                        {selectedCard?.isSplitCard && !selectedPlacement && (
+                            <span className="placement-guidance">Choose a highlighted forest slot to select the card half and its cost.</span>
+                        )}
+                        {selectedCard?.isSplitCard && selectedPlacement && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                Play Sapling
+                                Play {selectedCard.species[selectedSpeciesIndex]?.name} (Pay {selectedCard.species[selectedSpeciesIndex]?.speciesData.cost})
                             </button>
                         )}
                         {selectedCard && (
@@ -514,22 +550,22 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
 
                             return (
                                 <div key={treeIndex} className="tree-slot">
-                                    <div className={`slot top ${showTop ? 'available' : ''}`} onClick={() => showTop && handlePlayCard(treeIndex, 'top')}>
+                                    <div className={`slot top ${showTop ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'top' ? 'chosen' : ''}`} onClick={() => showTop && handleSelectPlacement(treeIndex, 'top')}>
                                         {renderPlacedCards(slot.top, 'top')}
                                         {showTop && <span className="placement-icon shared-placement-icon">+</span>}
                                     </div>
-                                    <div className={`slot left ${showLeft ? 'available' : ''}`} onClick={() => showLeft && handlePlayCard(treeIndex, 'left')}>
+                                    <div className={`slot left ${showLeft ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'left' ? 'chosen' : ''}`} onClick={() => showLeft && handleSelectPlacement(treeIndex, 'left')}>
                                         {renderPlacedCards(slot.left, 'left')}
                                         {showLeft && <span className="placement-icon shared-placement-icon">+</span>}
                                     </div>
                                     <div className="tree-card">
                                         {slot.isSapling ? <div className="card sapling-card">Sapling</div> : <Card card={slot.tree} />}
                                     </div>
-                                    <div className={`slot right ${showRight ? 'available' : ''}`} onClick={() => showRight && handlePlayCard(treeIndex, 'right')}>
+                                    <div className={`slot right ${showRight ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'right' ? 'chosen' : ''}`} onClick={() => showRight && handleSelectPlacement(treeIndex, 'right')}>
                                         {renderPlacedCards(slot.right, 'right')}
                                         {showRight && <span className="placement-icon shared-placement-icon">+</span>}
                                     </div>
-                                    <div className={`slot bottom ${showBottom ? 'available' : ''}`} onClick={() => showBottom && handlePlayCard(treeIndex, 'bottom')}>
+                                    <div className={`slot bottom ${showBottom ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'bottom' ? 'chosen' : ''}`} onClick={() => showBottom && handleSelectPlacement(treeIndex, 'bottom')}>
                                         {renderPlacedCards(slot.bottom, 'bottom')}
                                         {showBottom && <span className="placement-icon shared-placement-icon">+</span>}
                                     </div>
@@ -551,7 +587,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                                 card={c}
                                 isSelected={selectedCardId === c.cardId}
                                 isCostSelected={costCardIds.includes(c.cardId)}
-                                selectedSpeciesIndex={selectedCardId === c.cardId ? selectedSpeciesIndex : undefined}
+                                selectedSpeciesIndex={selectedCardId === c.cardId && (!c.isSplitCard || selectedPlacement) ? selectedSpeciesIndex : undefined}
                                 onClick={() => handleCardClick(c)}
                             />
                         ))}
