@@ -128,7 +128,7 @@ body {
 .card {
   position: relative;
   width: 140px;
-  height: 200px;
+  height: 217px;
   flex-shrink: 0;
   background: #1e2832;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -139,6 +139,20 @@ body {
   /* ALLOW TOOLTIPS TO POP OUT */
   user-select: none;
   display: flex;
+  background-repeat: no-repeat;
+}
+
+.card.has-card-art .protrusion-info {
+  opacity: 0;
+}
+
+.card.has-card-art:hover .protrusion-info,
+.card.has-card-art.selected .protrusion-info {
+  opacity: 1;
+}
+
+.card.has-card-art .protrusion-info {
+  transition: opacity 0.15s ease;
 }
 
 .card:hover {
@@ -332,20 +346,19 @@ body {
   position: relative;
   width: 280px;
   /* 70 (left) + 140 (tree) + 70 (right) */
-  height: 400px;
-  /* 100 (top) + 200 (tree) + 100 (bottom) */
+  height: 434px;
+  /* 108.5 (top) + 217 (tree) + 108.5 (bottom) */
   flex-shrink: 0;
 }
 
 .tree-card {
   position: absolute;
-  top: 100px;
-  /* Shifted for 100px top slot */
+  top: 108px;
   left: 70px;
   /* Shifted for 70px left slot */
   z-index: 10;
   width: 140px;
-  height: 200px;
+  height: 217px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -377,7 +390,7 @@ body {
   top: 0;
   left: 70px;
   width: 140px;
-  height: 100px;
+  height: 109px;
 }
 
 .slot-top-wrapper .card {
@@ -385,22 +398,22 @@ body {
 }
 
 .slot.bottom {
-  top: 300px;
+  top: 325px;
   left: 70px;
   width: 140px;
-  height: 100px;
+  height: 109px;
 }
 
 .slot-bottom-wrapper .card {
-  margin-top: -100px;
-  /* Shows bottom 100px of 200px card */
+  margin-top: -108px;
+  /* Shows the bottom half of the card */
 }
 
 .slot.left {
-  top: 100px;
+  top: 108px;
   left: 0;
   width: 70px;
-  height: 200px;
+  height: 217px;
 }
 
 .slot-left-wrapper .card {
@@ -408,10 +421,10 @@ body {
 }
 
 .slot.right {
-  top: 100px;
+  top: 108px;
   left: 210px;
   width: 70px;
-  height: 200px;
+  height: 217px;
 }
 
 .slot-right-wrapper .card {
@@ -504,7 +517,7 @@ body {
 
 .new-tree-zone {
   width: 140px;
-  height: 200px;
+  height: 217px;
   border: 2px dashed rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   display: flex;
@@ -545,7 +558,7 @@ body {
   /* More bottom padding for scrollbar */
   background: rgba(0, 0, 0, 0.2);
   border-radius: 12px;
-  min-height: 230px;
+  min-height: 247px;
   align-items: center;
 }
 

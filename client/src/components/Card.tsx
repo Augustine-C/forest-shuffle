@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { EnhancedCard, SpeciesData } from '../../../shared/types';
+import { getCardArtwork } from './cardArtwork';
 
 interface CardProps {
     card: EnhancedCard;
@@ -94,12 +95,15 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
 
     const classNames = [
         'card',
+        getCardArtwork(card) ? 'has-card-art' : '',
         isSelected ? 'selected' : '',
         isCostSelected ? 'cost-selected' : '',
         `orientation-${card.orientation}`,
         card.isWinterCard ? 'winter-card' : '',
         slot ? `in-slot slot-${slot}` : ''
     ].join(' ');
+
+    const artworkStyle = getCardArtwork(card);
 
     // Determine which species to show if in a slot
     let visibleSpecies = card.species;
@@ -116,7 +120,14 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
     }
 
     return (
-        <div className={classNames} onClick={onClick} ref={cardRef}>
+        <div
+            className={classNames}
+            onClick={onClick}
+            ref={cardRef}
+            style={artworkStyle}
+            role={onClick ? 'button' : undefined}
+            aria-label={card.species.map(species => species.name).join(' / ')}
+        >
             {!slot && <div className="card-id">#{card.cardId}</div>}
             <div className="card-inner">
                 {visibleSpecies.map((s, idx) => (
