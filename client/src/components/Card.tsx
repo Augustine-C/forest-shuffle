@@ -93,17 +93,16 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
     // Update rect on scroll or resize if needed, but simple hover is usually enough.
     // Ideally we listen to scroll to close it, but let's keep it simple.
 
+    const artworkStyle = getCardArtwork(card);
     const classNames = [
         'card',
-        getCardArtwork(card) ? 'has-card-art' : '',
+        artworkStyle ? 'has-card-art' : '',
         isSelected ? 'selected' : '',
         isCostSelected ? 'cost-selected' : '',
         `orientation-${card.orientation}`,
         card.isWinterCard ? 'winter-card' : '',
         slot ? `in-slot slot-${slot}` : ''
     ].join(' ');
-
-    const artworkStyle = getCardArtwork(card);
 
     // Determine which species to show if in a slot
     let visibleSpecies = card.species;
@@ -128,7 +127,7 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
             role={onClick ? 'button' : undefined}
             aria-label={card.species.map(species => species.name).join(' / ')}
         >
-            {!slot && <div className="card-id">#{card.cardId}</div>}
+            {!artworkStyle && !slot && <div className="card-id">#{card.cardId}</div>}
             <div className="card-inner">
                 {visibleSpecies.map((s, idx) => (
                     <div
@@ -137,15 +136,17 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
                         onMouseEnter={(e) => handleMouseEnter(idx, e)}
                         onMouseLeave={handleMouseLeave}
                     >
-                        <div className="protrusion-info">
-                            <div className="card-header">
-                                <span className="name">{s.name}</span>
-                                <span className="cost">{s.speciesData.cost}</span>
+                        {!artworkStyle && (
+                            <div className="protrusion-info">
+                                <div className="card-header">
+                                    <span className="name">{s.name}</span>
+                                    <span className="cost">{s.speciesData.cost}</span>
+                                </div>
+                                {s.treeSymbol && (
+                                    <div className="tree-symbol">🌳 {s.treeSymbol}</div>
+                                )}
                             </div>
-                            {s.treeSymbol && (
-                                <div className="tree-symbol">🌳 {s.treeSymbol}</div>
-                            )}
-                        </div>
+                        )}
 
                         {hoveredIndex === idx && (
                             <TooltipPortal

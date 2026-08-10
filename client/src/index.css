@@ -142,19 +142,6 @@ body {
   background-repeat: no-repeat;
 }
 
-.card.has-card-art .protrusion-info {
-  opacity: 0;
-}
-
-.card.has-card-art:hover .protrusion-info,
-.card.has-card-art.selected .protrusion-info {
-  opacity: 1;
-}
-
-.card.has-card-art .protrusion-info {
-  transition: opacity 0.15s ease;
-}
-
 .card:hover {
   transform: translateY(-8px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
