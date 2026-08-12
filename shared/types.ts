@@ -164,6 +164,7 @@ export interface PendingDrawSource {
     kind: 'chooseDrawSource';
     playerId: string;
     remaining: number;
+    canCancel: boolean;
     optional: false;
     prompt: string;
 }

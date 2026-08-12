@@ -1164,6 +1164,20 @@ assert.equal(handLimitPlayer.hand.length, 10);
 assert.equal(handLimitGame.deck.length, 1);
 assert.equal(handLimitGame.activePlayerIndex, 1);
 
+const cancellableDrawGame = new GameState(2);
+cancellableDrawGame.addPlayer('cancel', 'socket-cancel', 'Cancel Draw Tester', true);
+cancellableDrawGame.addPlayer('other', 'socket-other', 'Other Tester');
+cancellableDrawGame.clearing = [createEnhancedCard(30)!, createEnhancedCard(31)!];
+cancellableDrawGame.deck = [createEnhancedCard(40)!];
+cancellableDrawGame.playerDrawsTwo('cancel');
+assert.equal(cancellableDrawGame.pendingAction?.kind, 'chooseDrawSource');
+cancellableDrawGame.resolvePendingAction('cancel', [], true);
+assert.equal(cancellableDrawGame.pendingAction, undefined);
+assert.equal(cancellableDrawGame.activePlayerIndex, 0);
+assert.equal(cancellableDrawGame.players.get('cancel')!.hand.length, 0);
+assert.equal(cancellableDrawGame.clearing.length, 2);
+assert.equal(cancellableDrawGame.deck.length, 1);
+
 const sequentialDrawGame = new GameState(2);
 sequentialDrawGame.addPlayer('draw', 'socket-draw', 'Sequential Draw Tester', true);
 sequentialDrawGame.addPlayer('other', 'socket-other', 'Other Tester');
@@ -1171,11 +1185,6 @@ const sequentialDrawPlayer = sequentialDrawGame.players.get('draw')!;
 sequentialDrawGame.clearing = [createEnhancedCard(30)!, createEnhancedCard(31)!];
 sequentialDrawGame.deck = [createEnhancedCard(40)!];
 sequentialDrawGame.playerDrawsTwo('draw');
-assert.equal(sequentialDrawGame.pendingAction?.kind, 'chooseDrawSource');
-assert.throws(
-    () => sequentialDrawGame.resolvePendingAction('draw', [], true),
-    /cannot be declined/
-);
 assert.equal(
     sequentialDrawGame.pendingAction?.kind === 'chooseDrawSource'
         ? sequentialDrawGame.pendingAction.remaining
@@ -1185,6 +1194,10 @@ assert.equal(
 sequentialDrawGame.resolvePendingAction('draw', [30], false, 'clearing');
 assert.deepEqual(sequentialDrawPlayer.hand.map(card => card.cardId), [30]);
 assert.deepEqual(sequentialDrawGame.clearing.map(card => card.cardId), [31]);
+assert.throws(
+    () => sequentialDrawGame.resolvePendingAction('draw', [], true),
+    /cannot be cancelled after taking a card/
+);
 assert.equal(
     sequentialDrawGame.pendingAction?.kind === 'chooseDrawSource'
         ? sequentialDrawGame.pendingAction.remaining
@@ -1363,6 +1376,7 @@ engineGuardGame.pendingAction = {
     kind: 'chooseDrawSource',
     playerId: 'inactive',
     remaining: 1,
+    canCancel: true,
     optional: false,
     prompt: 'Choose a source'
 };

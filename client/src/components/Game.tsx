@@ -342,6 +342,11 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                         >
                             Take selected clearing card
                         </button>
+                        {drawSourceAction.canCancel && (
+                            <button className="action-btn" onClick={() => handlePendingAction(true)}>
+                                Back to turn options
+                            </button>
+                        )}
                     </div>
                 )}
                 {isMyTurn && clearingPendingAction && (
@@ -527,21 +532,6 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                 )}
             </div>
 
-            <div className="opponents">
-                <h3>Opponents</h3>
-                {otherPlayers.map((p: Player) => (
-                    <button
-                        key={p.id}
-                        type="button"
-                        className={`opponent ${viewedForestPlayer?.id === p.id ? 'selected' : ''}`}
-                        onClick={() => setViewedForestPlayerId(p.id)}
-                    >
-                        👤 {p.name} - Hand: {p.handCount ?? p.hand.length} cards | Forest: {p.forest.length} trees | Cave: {p.caveCount ?? p.cave.length} cards
-                        <span>View forest</span>
-                    </button>
-                ))}
-            </div>
-
             <section className="my-hand game-section">
                 <h3>My Hand ({myPlayer.hand.length})</h3>
                 <div className="hand-cards">
@@ -642,6 +632,21 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                 <div className="hand-cards">
                     {myPlayer.cave.map(card => <Card key={card.cardId} card={card} />)}
                 </div>
+            </section>
+
+            <section className="opponents game-section">
+                <h3>Opponents</h3>
+                {otherPlayers.map((p: Player) => (
+                    <button
+                        key={p.id}
+                        type="button"
+                        className={`opponent ${viewedForestPlayer?.id === p.id ? 'selected' : ''}`}
+                        onClick={() => setViewedForestPlayerId(p.id)}
+                    >
+                        👤 {p.name} - Hand: {p.handCount ?? p.hand.length} cards | Forest: {p.forest.length} trees | Cave: {p.caveCount ?? p.cave.length} cards
+                        <span>View forest</span>
+                    </button>
+                ))}
             </section>
         </div>
     );

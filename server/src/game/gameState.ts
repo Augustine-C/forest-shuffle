@@ -193,6 +193,7 @@ export class GameState {
             kind: 'chooseDrawSource',
             playerId,
             remaining: cardsToDraw,
+            canCancel: true,
             optional: false,
             prompt: `Choose the source for card 1 of ${cardsToDraw}`
         };
@@ -437,7 +438,12 @@ export class GameState {
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
         if (activePlayerId !== playerId) throw new Error('Not your turn');
         if (action.kind === 'chooseDrawSource') {
-            if (decline) throw new Error('A draw-source choice cannot be declined');
+            if (decline) {
+                if (!action.canCancel) throw new Error('A draw cannot be cancelled after taking a card');
+                if (cardIds.length > 0) throw new Error('Do not select cards when cancelling a draw');
+                this.pendingAction = undefined;
+                return;
+            }
             if (useEffect || useBonus) throw new Error('A draw-source choice does not accept ability choices');
             this.resolveDrawSource(action, cardIds, choiceId);
             return;
@@ -1125,6 +1131,7 @@ export class GameState {
             this.pendingAction = {
                 ...action,
                 remaining,
+                canCancel: false,
                 prompt: 'Choose the source for your second card'
             };
             return;
