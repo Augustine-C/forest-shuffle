@@ -641,7 +641,6 @@ body {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  margin-bottom: 40px;
   transition: all 0.2s;
 }
 
