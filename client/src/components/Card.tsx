@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import type { EnhancedCard, SpeciesData } from '../../../shared/types';
 import { getCardArtwork } from './cardArtwork';
 import { useI18n } from '../i18n';
+import { translateCardTag, translateCardText, translateSpeciesName, translateTreeSymbol } from '../data/cardTranslations.zh-CN';
 
 interface CardProps {
     card: EnhancedCard;
@@ -21,7 +22,9 @@ interface TooltipProps {
 }
 
 function TooltipPortal({ species, cardId, deck, anchorRect }: TooltipProps) {
-    const { t } = useI18n();
+    const { language, t } = useI18n();
+    const localize = (text: string, kind: 'effect' | 'bonus' | 'points') =>
+        language === 'zh-CN' ? translateCardText(text, kind) : text;
     if (!anchorRect) return null;
 
     // Calculate position: centered above the element
@@ -40,7 +43,7 @@ function TooltipPortal({ species, cardId, deck, anchorRect }: TooltipProps) {
     return createPortal(
         <div className="details-tooltip" style={style}>
             <div className="tooltip-header">
-                {species.name} <span className="tooltip-id">#{cardId}</span>
+                {language === 'zh-CN' ? translateSpeciesName(species.name) : species.name} <span className="tooltip-id">#{cardId}</span>
             </div>
             <div className="tooltip-meta">
                 <span className="tooltip-cost">{t('cost')}: {species.speciesData.cost}</span>
@@ -49,26 +52,26 @@ function TooltipPortal({ species, cardId, deck, anchorRect }: TooltipProps) {
             <div className="tooltip-tags">
                 {species.speciesData.tags.map(tag => (
                     <span key={tag} className={`tag tag-${tag.toLowerCase().replace(/\|(?!\s)/g, '-').replace(/\s+/g, '-')}`}>
-                        {tag}
+                        {language === 'zh-CN' ? translateCardTag(tag) : tag}
                     </span>
                 ))}
             </div>
             {species.treeSymbol && (
-                <div className="tooltip-symbol">{t('symbol')}: 🌳 {species.treeSymbol}</div>
+                <div className="tooltip-symbol">{t('symbol')}: 🌳 {language === 'zh-CN' ? translateTreeSymbol(species.treeSymbol) : species.treeSymbol}</div>
             )}
             {species.speciesData.effect && (
                 <div className="tooltip-effect">
-                    <strong>{t('effect')}:</strong> {species.speciesData.effect}
+                    <strong>{t('effect')}:</strong> {localize(species.speciesData.effect, 'effect')}
                 </div>
             )}
             {species.speciesData.bonus && (
                 <div className="tooltip-bonus">
-                    <strong>{t('bonus')}:</strong> {species.speciesData.bonus}
+                    <strong>{t('bonus')}:</strong> {localize(species.speciesData.bonus, 'bonus')}
                 </div>
             )}
             {species.speciesData.points && (
                 <div className="tooltip-points">
-                    <strong>{t('points')}:</strong> {species.speciesData.points}
+                    <strong>{t('points')}:</strong> {localize(species.speciesData.points, 'points')}
                 </div>
             )}
         </div>,
@@ -77,7 +80,7 @@ function TooltipPortal({ species, cardId, deck, anchorRect }: TooltipProps) {
 }
 
 export default function Card({ card, isSelected, isCostSelected, selectedSpeciesIndex, onClick, slot }: CardProps) {
-    const { t } = useI18n();
+    const { language, t } = useI18n();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
     const cardRef = useRef<HTMLDivElement>(null);
@@ -128,7 +131,7 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
             ref={cardRef}
             style={artworkStyle}
             role={onClick ? 'button' : undefined}
-            aria-label={card.species.map(species => species.name).join(' / ') || `${t('winterCard')} ${card.cardId}`}
+            aria-label={card.species.map(species => language === 'zh-CN' ? translateSpeciesName(species.name) : species.name).join(' / ') || `${t('winterCard')} ${card.cardId}`}
         >
             {!artworkStyle && !slot && <div className="card-id">#{card.cardId}</div>}
             <div className="card-inner">
@@ -142,11 +145,11 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
                         {!artworkStyle && (
                             <div className="protrusion-info">
                                 <div className="card-header">
-                                    <span className="name">{s.name}</span>
+                                    <span className="name">{language === 'zh-CN' ? translateSpeciesName(s.name) : s.name}</span>
                                     <span className="cost">{s.speciesData.cost}</span>
                                 </div>
                                 {s.treeSymbol && (
-                                    <div className="tree-symbol">🌳 {s.treeSymbol}</div>
+                                    <div className="tree-symbol">🌳 {language === 'zh-CN' ? translateTreeSymbol(s.treeSymbol) : s.treeSymbol}</div>
                                 )}
                             </div>
                         )}

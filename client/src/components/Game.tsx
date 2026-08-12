@@ -10,6 +10,7 @@ import type {
     PendingAction
 } from '../../../shared/types';
 import { useI18n } from '../i18n';
+import { translateCardText, translateSpeciesName } from '../data/cardTranslations.zh-CN';
 
 type ForestSlot = 'top' | 'bottom' | 'left' | 'right';
 
@@ -58,6 +59,8 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
     const mulliganAction = myPendingAction?.kind === 'initialMulligan' ? myPendingAction : undefined;
     const drawSourceAction = myPendingAction?.kind === 'chooseDrawSource' ? myPendingAction : undefined;
     const deckLabel = (deck: string) => deck === 'edge' ? t('edge') : deck === 'alpine' ? t('alpine') : t('baseGame');
+    const speciesName = (name: string | undefined) => language === 'zh-CN' && name ? translateSpeciesName(name) : name ?? '';
+    const abilityText = (text: string, kind: 'effect' | 'bonus') => language === 'zh-CN' ? translateCardText(text, kind) : text;
 
     const pendingPrompt = (action: PendingAction) => {
         if (language === 'en') return action.prompt;
@@ -394,7 +397,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                         <span>{t('selectEligible')}</span>
                         {selectedCard?.orientation === 'Tree' && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                {t('playFree', { name: selectedCard.species[selectedSpeciesIndex]?.name })}
+                                {t('playFree', { name: speciesName(selectedCard.species[selectedSpeciesIndex]?.name) })}
                             </button>
                         )}
                         {selectedCard?.isSplitCard && !selectedPlacement && (
@@ -402,7 +405,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                         )}
                         {selectedCard?.isSplitCard && selectedPlacement && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                {t('playFree', { name: selectedCard.species[selectedSpeciesIndex]?.name })}
+                                {t('playFree', { name: speciesName(selectedCard.species[selectedSpeciesIndex]?.name) })}
                             </button>
                         )}
                         {freePlayPendingAction.optional && (
@@ -418,7 +421,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                         <span>{t('paidPlayHelp')}</span>
                         {selectedCard?.orientation === 'Tree' && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                {t('plantPay', { name: selectedCard.species[0].name, cost: selectedCard.species[0].speciesData.cost })}
+                                {t('plantPay', { name: speciesName(selectedCard.species[0].name), cost: selectedCard.species[0].speciesData.cost })}
                             </button>
                         )}
                         {selectedCard?.isSplitCard && !selectedPlacement && (
@@ -426,7 +429,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                         )}
                         {selectedCard?.isSplitCard && selectedPlacement && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                {t('playPay', { name: selectedCard.species[selectedSpeciesIndex]?.name, cost: selectedCard.species[selectedSpeciesIndex]?.speciesData.cost })}
+                                {t('playPay', { name: speciesName(selectedCard.species[selectedSpeciesIndex]?.name), cost: selectedCard.species[selectedSpeciesIndex]?.speciesData.cost })}
                             </button>
                         )}
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
@@ -484,7 +487,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                                 className="action-btn primary"
                                 onClick={() => handleTriggeredDraw(trigger.id)}
                             >
-                                {t('drawFor', { name: trigger.sourceName })}
+                                {t('drawFor', { name: speciesName(trigger.sourceName) })}
                             </button>
                         ))}
                         <button className="action-btn" onClick={() => handleTriggeredDraw()}>
@@ -494,9 +497,9 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                 )}
                 {isMyTurn && cardChoiceAction && (
                     <div className="pending-action">
-                        <strong>{t('chooseAbilities', { name: cardChoiceAction.cardName })}</strong>
-                        {cardChoiceAction.effectText && <span>{t('effect')}: {cardChoiceAction.effectText}</span>}
-                        {cardChoiceAction.bonusText && <span>{t('bonus')}: {cardChoiceAction.bonusText}</span>}
+                        <strong>{t('chooseAbilities', { name: speciesName(cardChoiceAction.cardName) })}</strong>
+                        {cardChoiceAction.effectText && <span>{t('effect')}: {abilityText(cardChoiceAction.effectText, 'effect')}</span>}
+                        {cardChoiceAction.bonusText && <span>{t('bonus')}: {abilityText(cardChoiceAction.bonusText, 'bonus')}</span>}
                         {cardChoiceAction.effectText && cardChoiceAction.bonusText && (
                             <button className="action-btn primary" onClick={() => handleCardChoices(true, true)}>
                                 {t('useBoth')}
@@ -530,7 +533,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                         </button>
                         {selectedCard && selectedCard.orientation === 'Tree' && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                {t('plantPay', { name: selectedCard.species[0].name, cost: selectedCard.species[0].speciesData.cost })}
+                                {t('plantPay', { name: speciesName(selectedCard.species[0].name), cost: selectedCard.species[0].speciesData.cost })}
                             </button>
                         )}
                         {selectedCard?.isSplitCard && !selectedPlacement && (
@@ -538,7 +541,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                         )}
                         {selectedCard?.isSplitCard && selectedPlacement && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                {t('playPay', { name: selectedCard.species[selectedSpeciesIndex]?.name, cost: selectedCard.species[selectedSpeciesIndex]?.speciesData.cost })}
+                                {t('playPay', { name: speciesName(selectedCard.species[selectedSpeciesIndex]?.name), cost: selectedCard.species[selectedSpeciesIndex]?.speciesData.cost })}
                             </button>
                         )}
                         {selectedCard && (

@@ -3,6 +3,7 @@ import type { CardOrientation, DeckType, EnhancedCard } from '../../../shared/ty
 import { cardCatalog } from '../data/cardCatalog';
 import Card from './Card';
 import { useI18n } from '../i18n';
+import { translateCardTag, translateCardText, translateSpeciesName, translateTreeSymbol } from '../data/cardTranslations.zh-CN';
 import './CardGallery.css';
 
 type DeckFilter = 'all' | DeckType;
@@ -17,7 +18,10 @@ const artworkKey = (card: EnhancedCard) => card.orientation === 'Tree' || card.i
   : `${card.deck}:${card.cardId}`;
 
 export default function CardGallery({ onBack }: CardGalleryProps) {
-  const { t } = useI18n();
+  const { language, t } = useI18n();
+  const speciesName = (name: string) => language === 'zh-CN' ? translateSpeciesName(name) : name;
+  const cardText = (text: string, kind: 'effect' | 'bonus' | 'points') =>
+    language === 'zh-CN' ? translateCardText(text, kind) : text;
   const deckLabels: Record<DeckType, string> = {
     basic: t('baseGame'), alpine: t('alpine'), edge: t('edge')
   };
@@ -37,7 +41,8 @@ export default function CardGallery({ onBack }: CardGalleryProps) {
       if (deck !== 'all' && card.deck !== deck) return false;
       if (orientation !== 'all' && card.orientation !== orientation) return false;
       if (query && !String(card.cardId).includes(query) &&
-        !card.species.some(species => species.name.toLowerCase().includes(query))) return false;
+        !card.species.some(species => species.name.toLowerCase().includes(query) ||
+          translateSpeciesName(species.name).includes(search.trim()))) return false;
       if (!hideDuplicates) return true;
       const key = artworkKey(card);
       if (seenArtwork.has(key)) return false;
@@ -137,7 +142,7 @@ export default function CardGallery({ onBack }: CardGalleryProps) {
               <div className="gallery-details-heading">
                 <div>
                   <span>{t('cardNumber', { number: selectedCard.cardId })}</span>
-                  <h2>{selectedCard.species.map(species => species.name).join(' / ') || t('winterCard')}</h2>
+                  <h2>{selectedCard.species.map(species => speciesName(species.name)).join(' / ') || t('winterCard')}</h2>
                 </div>
                 <button onClick={() => setSelectedCard(null)} aria-label={t('closeDetails')}>×</button>
               </div>
@@ -147,17 +152,17 @@ export default function CardGallery({ onBack }: CardGalleryProps) {
               </div>
               {selectedCard.species.map((species, index) => (
                 <section key={`${species.name}-${index}`} className="gallery-species-details">
-                  <h3>{species.name}</h3>
+                  <h3>{speciesName(species.name)}</h3>
                   <div className="gallery-species-meta">
                     <span>{t('cost')} {species.speciesData.cost}</span>
-                    {species.treeSymbol && <span>{t('treeSymbol')}: {species.treeSymbol}</span>}
+                    {species.treeSymbol && <span>{t('treeSymbol')}: {language === 'zh-CN' ? translateTreeSymbol(species.treeSymbol) : species.treeSymbol}</span>}
                   </div>
                   <div className="gallery-tags">
-                    {species.speciesData.tags.map(tag => <span key={tag}>{tag}</span>)}
+                    {species.speciesData.tags.map(tag => <span key={tag}>{language === 'zh-CN' ? translateCardTag(tag) : tag}</span>)}
                   </div>
-                  {species.speciesData.effect && <p><strong>{t('effect')}:</strong> {species.speciesData.effect}</p>}
-                  {species.speciesData.bonus && <p><strong>{t('bonus')}:</strong> {species.speciesData.bonus}</p>}
-                  {species.speciesData.points && <p><strong>{t('points')}:</strong> {species.speciesData.points}</p>}
+                  {species.speciesData.effect && <p><strong>{t('effect')}:</strong> {cardText(species.speciesData.effect, 'effect')}</p>}
+                  {species.speciesData.bonus && <p><strong>{t('bonus')}:</strong> {cardText(species.speciesData.bonus, 'bonus')}</p>}
+                  {species.speciesData.points && <p><strong>{t('points')}:</strong> {cardText(species.speciesData.points, 'points')}</p>}
                 </section>
               ))}
             </>
