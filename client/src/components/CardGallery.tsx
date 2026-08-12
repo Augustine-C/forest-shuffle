@@ -5,6 +5,8 @@ import Card from './Card';
 import { useI18n } from '../i18n';
 import { translateCardTag, translateCardText, translateSpeciesName, translateTreeSymbol } from '../data/cardTranslations.zh-CN';
 import './CardGallery.css';
+import GameIcon from './GameIcon';
+import { iconForTag, iconForTreeSymbol } from './gameIconData';
 
 type DeckFilter = 'all' | DeckType;
 type OrientationFilter = 'all' | CardOrientation;
@@ -155,14 +157,14 @@ export default function CardGallery({ onBack }: CardGalleryProps) {
                   <h3>{speciesName(species.name)}</h3>
                   <div className="gallery-species-meta">
                     <span>{t('cost')} {species.speciesData.cost}</span>
-                    {species.treeSymbol && <span>{t('treeSymbol')}: {language === 'zh-CN' ? translateTreeSymbol(species.treeSymbol) : species.treeSymbol}</span>}
+                    {species.treeSymbol && <span><GameIcon name={iconForTreeSymbol(species.treeSymbol)} />{t('treeSymbol')}: {language === 'zh-CN' ? translateTreeSymbol(species.treeSymbol) : species.treeSymbol}</span>}
                   </div>
                   <div className="gallery-tags">
-                    {species.speciesData.tags.map(tag => <span key={tag}>{language === 'zh-CN' ? translateCardTag(tag) : tag}</span>)}
+                    {species.speciesData.tags.map(tag => <span key={tag}><GameIcon name={iconForTag(tag)} />{language === 'zh-CN' ? translateCardTag(tag) : tag}</span>)}
                   </div>
                   {species.speciesData.effect && <p><strong>{t('effect')}:</strong> {cardText(species.speciesData.effect, 'effect')}</p>}
                   {species.speciesData.bonus && <p><strong>{t('bonus')}:</strong> {cardText(species.speciesData.bonus, 'bonus')}</p>}
-                  {species.speciesData.points && <p><strong>{t('points')}:</strong> {cardText(species.speciesData.points, 'points')}</p>}
+                  {species.speciesData.points && <p className="gallery-points"><GameIcon name="points" /><span><strong>{t('points')}:</strong> {cardText(species.speciesData.points, 'points')}</span></p>}
                 </section>
               ))}
             </>

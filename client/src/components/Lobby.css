@@ -77,15 +77,19 @@
 
 .forest-mark {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  place-items: center;
   width: 54px;
   height: 54px;
   margin-bottom: 2.5rem;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 0;
   border-radius: 50%;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.05rem;
+}
+
+.forest-mark .game-icon {
+  width: 54px;
+  height: 54px;
 }
 
 .forest-mark span {
@@ -534,6 +538,11 @@
   border-radius: 10px;
   background: #20201d;
   cursor: pointer;
+}
+
+.deck-option > .game-icon {
+  width: 2.35rem;
+  height: 2.35rem;
 }
 
 .deck-option:has(input:checked) {

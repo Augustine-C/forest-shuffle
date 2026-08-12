@@ -98,6 +98,20 @@ body {
   white-space: nowrap;
 }
 
+.game-icon {
+  display: inline-block;
+  width: 1.25em;
+  height: 1.25em;
+  flex: 0 0 auto;
+  object-fit: contain;
+  vertical-align: -0.22em;
+}
+
+.live-score .game-icon {
+  width: 1.65rem;
+  height: 1.65rem;
+}
+
 .live-score span {
   font-size: 0.78rem;
   font-weight: 700;
@@ -188,8 +202,28 @@ body {
 }
 
 .deck-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
   font-family: monospace;
   font-size: 1.1rem;
+}
+
+.included-decks,
+.included-decks > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.included-decks {
+  gap: 0.55rem;
+}
+
+.included-decks .game-icon {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 /* Card Styling */
@@ -300,6 +334,10 @@ body {
 }
 
 .tree-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   font-size: 1.1rem;
   margin-top: 4px;
 }
@@ -390,6 +428,9 @@ body {
 }
 
 .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   background: #333;
   padding: 2px 8px;
   border-radius: 4px;
@@ -404,6 +445,25 @@ body {
   font-size: 0.85rem;
   color: #ccc;
   line-height: 1.4;
+}
+
+.tooltip-symbol,
+.tooltip-points,
+.icon-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.tooltip-symbol .game-icon,
+.tooltip-points .game-icon {
+  width: 1.55rem;
+  height: 1.55rem;
+}
+
+.icon-heading .game-icon {
+  width: 2rem;
+  height: 2rem;
 }
 
 /* Forest Grid */

@@ -182,11 +182,25 @@
 .gallery-details-meta span,
 .gallery-species-meta span,
 .gallery-tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
   background: #36342f;
   color: #c9c4b8;
   font-size: 0.72rem;
+}
+
+.gallery-points {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.gallery-points .game-icon {
+  width: 1.6rem;
+  height: 1.6rem;
 }
 
 .gallery-species-details + .gallery-species-details {

@@ -11,6 +11,8 @@ import type {
 } from '../../../shared/types';
 import { useI18n } from '../i18n';
 import { translateCardText, translateSpeciesName } from '../data/cardTranslations.zh-CN';
+import GameIcon from './GameIcon';
+import { iconForDeck } from './gameIconData';
 
 type ForestSlot = 'top' | 'bottom' | 'left' | 'right';
 
@@ -327,12 +329,18 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                 </div>
                 <div className="game-meta-actions">
                     <div className="live-score" aria-label={t('currentScore', { score: gameState.myScore })}>
+                        <GameIcon name="points" />
                         <span>{t('myScore')}</span>
                         <strong>{gameState.myScore}</strong>
                     </div>
                     <div className="deck-info">
-                        🎴 {t('deckCount', { count: gameState.deckCount })} | ❄️ {t('winterCount', { count: gameState.winterCardsDrawn })}
-                        {' | '}{gameState.includedDecks.map(deckLabel).join(' + ')}
+                        <span>🎴 {t('deckCount', { count: gameState.deckCount })}</span>
+                        <span>❄️ {t('winterCount', { count: gameState.winterCardsDrawn })}</span>
+                        <span className="included-decks">
+                            {gameState.includedDecks.map(deck => (
+                                <span key={deck}><GameIcon name={iconForDeck(deck)} />{deckLabel(deck)}</span>
+                            ))}
+                        </span>
                     </div>
                     <button type="button" className="game-rules-button" onClick={onOpenRules}>
                         <span aria-hidden="true">?</span> {t('rules')}
@@ -652,7 +660,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
             </section>
 
             <section className="my-cave game-section">
-                <h3>{t('myCave', { count: myPlayer.caveCount ?? myPlayer.cave.length })}</h3>
+                <h3 className="icon-heading"><GameIcon name="cave" />{t('myCave', { count: myPlayer.caveCount ?? myPlayer.cave.length })}</h3>
                 <div className="hand-cards">
                     {myPlayer.cave.map(card => <Card key={card.cardId} card={card} />)}
                 </div>

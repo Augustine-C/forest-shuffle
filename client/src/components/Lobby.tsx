@@ -3,6 +3,7 @@ import { socket } from '../services/socket';
 import type { DeckType, Player } from '../../../shared/types';
 import { useI18n } from '../i18n';
 import './Lobby.css';
+import GameIcon from './GameIcon';
 
 interface LobbyProps {
     roomCode: string | null;
@@ -135,6 +136,7 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
                                 <legend>{t('playableDecks')}</legend>
                                 <label className="deck-option always-on">
                                     <input type="checkbox" checked disabled />
+                                    <GameIcon name="tree" />
                                     <span><strong>{t('baseGame')}</strong><small>{t('baseDesc')}</small></span>
                                 </label>
                                 <label className="deck-option">
@@ -143,6 +145,7 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
                                         checked={includedDecks.includes('alpine')}
                                         onChange={() => toggleExpansion('alpine')}
                                     />
+                                    <GameIcon name="alps" />
                                     <span><strong>{t('alpine')}</strong><small>{t('alpineDesc')}</small></span>
                                 </label>
                                 <label className="deck-option">
@@ -151,6 +154,7 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
                                         checked={includedDecks.includes('edge')}
                                         onChange={() => toggleExpansion('edge')}
                                     />
+                                    <GameIcon name="woodland-edge" />
                                     <span><strong>{t('edge')}</strong><small>{t('edgeDesc')}</small></span>
                                 </label>
                                 <small className="deck-note">{t('deckNote')}</small>
@@ -177,7 +181,7 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
         <main className="lobby lobby-home">
             <section className="lobby-hero">
                 <div className="forest-mark" aria-hidden="true">
-                    <span>F</span><span>S</span>
+                    <GameIcon name="tree" />
                 </div>
                 <p className="lobby-eyebrow">{t('buildWoodland')}</p>
                 <h1>{language === 'en' ? <>Forest<br />Shuffle</> : t('forestShuffle')}</h1>
