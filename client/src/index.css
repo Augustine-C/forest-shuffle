@@ -304,13 +304,16 @@ body {
   margin-top: 4px;
 }
 
-/* Tooltip Styles - NOW POPPING OUT */
+/* Card description tooltip */
 .details-tooltip {
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-100%);
-  width: 240px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: translateX(-50%);
+  width: 260px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  box-sizing: border-box;
   background: #1a1a1a;
   border: 1px solid #444;
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9);
@@ -318,15 +321,41 @@ body {
   padding: 16px;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 2000;
-  pointer-events: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* New CSS logic handles JS-injected portal positioning */
+.details-tooltip.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.details-tooltip.placement-above {
+  animation: tooltip-enter-above 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.details-tooltip.placement-below {
+  animation: tooltip-enter-below 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes tooltip-enter-above {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(6px);
+  }
+}
+
+@keyframes tooltip-enter-below {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px);
+  }
+}
 
 .tooltip-header {
   font-size: 1.1rem;
@@ -375,11 +404,6 @@ body {
   font-size: 0.85rem;
   color: #ccc;
   line-height: 1.4;
-}
-
-.species-half:hover .details-tooltip {
-  opacity: 1;
-  visibility: visible;
 }
 
 /* Forest Grid */

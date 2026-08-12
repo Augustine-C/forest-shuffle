@@ -1,9 +1,15 @@
-import { useState, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { EnhancedCard, SpeciesData } from '../../../shared/types';
 import { getCardArtwork } from './cardArtwork';
 import { useI18n } from '../i18n';
 import { translateCardTag, translateCardText, translateSpeciesName, translateTreeSymbol } from '../data/cardTranslations.zh-CN';
+
+const cardDescriptionDelayMs = 600;
+const cardDescriptionLeaveDelayMs = 120;
+const tooltipWidthPx = 260;
+const tooltipViewportPaddingPx = 12;
+const tooltipCardGapPx = 10;
 
 interface CardProps {
     card: EnhancedCard;
@@ -19,29 +25,73 @@ interface TooltipProps {
     cardId: number;
     deck: string;
     anchorRect: DOMRect | null;
+    onMouseEnter: () => void;
+    onMouseLeave: () => void;
 }
 
-function TooltipPortal({ species, cardId, deck, anchorRect }: TooltipProps) {
+interface TooltipPosition {
+    placement: 'above' | 'below';
+    top: number;
+}
+
+function TooltipPortal({ species, cardId, deck, anchorRect, onMouseEnter, onMouseLeave }: TooltipProps) {
     const { language, t } = useI18n();
+    const tooltipRef = useRef<HTMLDivElement>(null);
+    const [position, setPosition] = useState<TooltipPosition | null>(null);
     const localize = (text: string, kind: 'effect' | 'bonus' | 'points') =>
         language === 'zh-CN' ? translateCardText(text, kind) : text;
-    if (!anchorRect) return null;
 
-    // Calculate position: centered above the element
-    const top = anchorRect.top - 10; // 10px spacing
-    const left = anchorRect.left + (anchorRect.width / 2);
+    const idealLeft = anchorRect ? anchorRect.left + (anchorRect.width / 2) : 0;
+    const minimumLeft = (tooltipWidthPx / 2) + tooltipViewportPaddingPx;
+    const maximumLeft = Math.max(
+        minimumLeft,
+        window.innerWidth - (tooltipWidthPx / 2) - tooltipViewportPaddingPx
+    );
+    const left = Math.min(Math.max(idealLeft, minimumLeft), maximumLeft);
+
+    useLayoutEffect(() => {
+        if (!anchorRect || !tooltipRef.current) return;
+
+        const tooltipHeight = Math.min(
+            tooltipRef.current.getBoundingClientRect().height,
+            window.innerHeight - (tooltipViewportPaddingPx * 2)
+        );
+        const spaceAbove = anchorRect.top - tooltipCardGapPx - tooltipViewportPaddingPx;
+        const spaceBelow = window.innerHeight - anchorRect.bottom - tooltipCardGapPx - tooltipViewportPaddingPx;
+        const placeAbove = tooltipHeight <= spaceAbove || spaceAbove >= spaceBelow;
+        const preferredTop = placeAbove
+            ? anchorRect.top - tooltipCardGapPx - tooltipHeight
+            : anchorRect.bottom + tooltipCardGapPx;
+        const maximumTop = Math.max(
+            tooltipViewportPaddingPx,
+            window.innerHeight - tooltipViewportPaddingPx - tooltipHeight
+        );
+
+        setPosition({
+            placement: placeAbove ? 'above' : 'below',
+            top: Math.min(Math.max(preferredTop, tooltipViewportPaddingPx), maximumTop),
+        });
+    }, [anchorRect, cardId, deck, language, species]);
+
+    if (!anchorRect) return null;
 
     const style: React.CSSProperties = {
         position: 'fixed',
-        top: `${top}px`,
+        top: `${position?.top ?? tooltipViewportPaddingPx}px`,
         left: `${left}px`,
-        transform: 'translate(-50%, -100%)', // Centered and above
-        zIndex: 9999, // On top of everything
-        pointerEvents: 'none',
+        transform: 'translateX(-50%)',
+        zIndex: 9999,
     };
 
     return createPortal(
-        <div className="details-tooltip" style={style}>
+        <div
+            ref={tooltipRef}
+            className={`details-tooltip ${position ? `placement-${position.placement} is-visible` : ''}`}
+            style={style}
+            role="tooltip"
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+        >
             <div className="tooltip-header">
                 {language === 'zh-CN' ? translateSpeciesName(species.name) : species.name} <span className="tooltip-id">#{cardId}</span>
             </div>
@@ -84,20 +134,53 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
     const cardRef = useRef<HTMLDivElement>(null);
+    const descriptionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const descriptionLeaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const handleMouseEnter = (index: number, e: React.MouseEvent) => {
-        const target = e.currentTarget as HTMLElement;
-        setAnchorRect(target.getBoundingClientRect());
-        setHoveredIndex(index);
+    const clearDescriptionTimer = () => {
+        if (descriptionTimerRef.current) {
+            clearTimeout(descriptionTimerRef.current);
+            descriptionTimerRef.current = null;
+        }
     };
 
-    const handleMouseLeave = () => {
+    const clearDescriptionLeaveTimer = () => {
+        if (descriptionLeaveTimerRef.current) {
+            clearTimeout(descriptionLeaveTimerRef.current);
+            descriptionLeaveTimerRef.current = null;
+        }
+    };
+
+    const hideDescription = () => {
         setHoveredIndex(null);
         setAnchorRect(null);
     };
 
-    // Update rect on scroll or resize if needed, but simple hover is usually enough.
-    // Ideally we listen to scroll to close it, but let's keep it simple.
+    useEffect(() => () => {
+        clearDescriptionTimer();
+        clearDescriptionLeaveTimer();
+    }, []);
+
+    const handleMouseEnter = (index: number, e: React.MouseEvent) => {
+        const target = e.currentTarget as HTMLElement;
+        clearDescriptionTimer();
+        clearDescriptionLeaveTimer();
+        setHoveredIndex(null);
+        setAnchorRect(target.getBoundingClientRect());
+        descriptionTimerRef.current = setTimeout(() => {
+            setHoveredIndex(index);
+            descriptionTimerRef.current = null;
+        }, cardDescriptionDelayMs);
+    };
+
+    const handleMouseLeave = () => {
+        clearDescriptionTimer();
+        clearDescriptionLeaveTimer();
+        descriptionLeaveTimerRef.current = setTimeout(() => {
+            hideDescription();
+            descriptionLeaveTimerRef.current = null;
+        }, cardDescriptionLeaveDelayMs);
+    };
 
     const artworkStyle = getCardArtwork(card);
     const classNames = [
@@ -160,6 +243,8 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
                                 cardId={card.cardId}
                                 deck={card.deck}
                                 anchorRect={anchorRect}
+                                onMouseEnter={clearDescriptionLeaveTimer}
+                                onMouseLeave={handleMouseLeave}
                             />
                         )}
                     </div>
