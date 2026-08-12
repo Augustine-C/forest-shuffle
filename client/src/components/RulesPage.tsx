@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import englishRules from '../../../help/game-rules/rules.md?raw';
 import chineseRules from '../../../help/game-rules/rules.zh-CN.md?raw';
+import { useI18n } from '../i18n';
+import type { Language } from '../i18n';
 import './RulesPage.css';
 
-type RulesLanguage = 'en' | 'zh-CN';
+type RulesLanguage = Language;
 
 interface RulesPageProps {
   returnLabel: string;
@@ -189,9 +191,7 @@ function RulesTableView({ table }: { table: RulesTable }) {
 }
 
 export default function RulesPage({ returnLabel, onClose }: RulesPageProps) {
-  const [language, setLanguage] = useState<RulesLanguage>(() =>
-    navigator.language.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en'
-  );
+  const { language, setLanguage, t } = useI18n();
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -207,11 +207,11 @@ export default function RulesPage({ returnLabel, onClose }: RulesPageProps) {
   }, [onClose]);
 
   return (
-    <div className="rules-overlay" role="dialog" aria-modal="true" aria-label="Forest Shuffle rules">
+    <div className="rules-overlay" role="dialog" aria-modal="true" aria-label={t('rulesDialog')}>
       <main className="rules-page">
         <header className="rules-toolbar">
           <button type="button" className="rules-back" onClick={onClose}>← {returnLabel}</button>
-          <div className="rules-language" role="group" aria-label="Rules language">
+          <div className="rules-language" role="group" aria-label={t('rulesLanguage')}>
             <button
               type="button"
               className={language === 'en' ? 'active' : ''}

@@ -4,6 +4,7 @@ import Lobby from './components/Lobby';
 import Game from './components/Game';
 import CardGallery from './components/CardGallery';
 import RulesPage from './components/RulesPage';
+import { LanguageSwitcher, useI18n } from './i18n';
 import type { Player, SerializedGameState } from '../../shared/types';
 import './App.css';
 
@@ -23,6 +24,7 @@ function loadSavedSession(): SavedSession | null {
 }
 
 function App() {
+  const { t } = useI18n();
   const [savedSession] = useState(loadSavedSession);
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [gameStarted, setGameStarted] = useState(false);
@@ -119,7 +121,8 @@ function App() {
   return (
     <>
       <div className="status-bar">
-        Status: {isConnected ? 'Connected' : 'Disconnected'}
+        <LanguageSwitcher />
+        <span>{t('status')}: {isConnected ? t('connected') : t('disconnected')}</span>
       </div>
       {gameStarted && gameState ? (
         <Game
@@ -142,7 +145,7 @@ function App() {
       )}
       {showRules && (
         <RulesPage
-          returnLabel={gameStarted ? 'Back to game' : 'Back to lobby'}
+          returnLabel={gameStarted ? t('backToGame') : t('backToLobby')}
           onClose={() => setShowRules(false)}
         />
       )}

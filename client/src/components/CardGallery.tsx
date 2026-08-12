@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { CardOrientation, DeckType, EnhancedCard } from '../../../shared/types';
 import { cardCatalog } from '../data/cardCatalog';
 import Card from './Card';
+import { useI18n } from '../i18n';
 import './CardGallery.css';
 
 type DeckFilter = 'all' | DeckType;
@@ -11,24 +12,18 @@ interface CardGalleryProps {
   onBack: () => void;
 }
 
-const deckLabels: Record<DeckType, string> = {
-  basic: 'Base game',
-  alpine: 'Alpine',
-  edge: 'Woodland Edge'
-};
-
-const orientationLabels: Record<CardOrientation, string> = {
-  Tree: 'Trees',
-  hCard: 'Left / right',
-  vCard: 'Top / bottom',
-  wCard: 'Winter'
-};
-
 const artworkKey = (card: EnhancedCard) => card.orientation === 'Tree' || card.isWinterCard
   ? `${card.deck}:${card.species[0]?.name ?? 'winter'}`
   : `${card.deck}:${card.cardId}`;
 
 export default function CardGallery({ onBack }: CardGalleryProps) {
+  const { t } = useI18n();
+  const deckLabels: Record<DeckType, string> = {
+    basic: t('baseGame'), alpine: t('alpine'), edge: t('edge')
+  };
+  const orientationLabels: Record<CardOrientation, string> = {
+    Tree: t('trees'), hCard: t('leftRight'), vCard: t('topBottom'), wCard: t('winter')
+  };
   const [search, setSearch] = useState('');
   const [deck, setDeck] = useState<DeckFilter>('all');
   const [orientation, setOrientation] = useState<OrientationFilter>('all');
@@ -54,20 +49,20 @@ export default function CardGallery({ onBack }: CardGalleryProps) {
   return (
     <main className="gallery-page">
       <header className="gallery-header">
-        <button className="gallery-back" onClick={onBack}>← Back to lobby</button>
+        <button className="gallery-back" onClick={onBack}>← {t('backToLobby')}</button>
         <div>
-          <p className="gallery-kicker">Card reference</p>
-          <h1>Forest Shuffle Card Gallery</h1>
-          <p>Browse all physical cards and inspect both halves of split cards.</p>
+          <p className="gallery-kicker">{t('cardReference')}</p>
+          <h1>{t('galleryTitle')}</h1>
+          <p>{t('galleryIntro')}</p>
         </div>
       </header>
 
-      <section className="gallery-controls" aria-label="Card filters">
+      <section className="gallery-controls" aria-label={t('cardFilters')}>
         <label className="gallery-search">
-          <span>Search</span>
+          <span>{t('search')}</span>
           <input
             type="search"
-            placeholder="Species name or card number"
+            placeholder={t('searchPlaceholder')}
             value={search}
             onChange={event => {
               setSearch(event.target.value);
@@ -76,24 +71,24 @@ export default function CardGallery({ onBack }: CardGalleryProps) {
           />
         </label>
         <label>
-          <span>Deck</span>
+          <span>{t('deck')}</span>
           <select value={deck} onChange={event => {
             setDeck(event.target.value as DeckFilter);
             setSelectedCard(null);
           }}>
-            <option value="all">All decks</option>
+            <option value="all">{t('allDecks')}</option>
             {Object.entries(deckLabels).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </select>
         </label>
         <label>
-          <span>Card type</span>
+          <span>{t('cardType')}</span>
           <select value={orientation} onChange={event => {
             setOrientation(event.target.value as OrientationFilter);
             setSelectedCard(null);
           }}>
-            <option value="all">All types</option>
+            <option value="all">{t('allTypes')}</option>
             {Object.entries(orientationLabels).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
@@ -108,16 +103,16 @@ export default function CardGallery({ onBack }: CardGalleryProps) {
               setSelectedCard(null);
             }}
           />
-          Hide duplicate artwork
+          {t('hideDuplicates')}
         </label>
       </section>
 
       <div className="gallery-summary">
-        <strong>{filteredCards.length}</strong> of {cardCatalog.length} physical cards
+        {t('physicalCards', { shown: filteredCards.length, total: cardCatalog.length })}
       </div>
 
       <div className="gallery-layout">
-        <section className="gallery-grid" aria-label="Cards">
+        <section className="gallery-grid" aria-label={t('cards')}>
           {filteredCards.map(card => (
             <article key={card.cardId} className="gallery-card">
               <Card
@@ -132,7 +127,7 @@ export default function CardGallery({ onBack }: CardGalleryProps) {
             </article>
           ))}
           {filteredCards.length === 0 && (
-            <p className="gallery-empty">No cards match these filters.</p>
+            <p className="gallery-empty">{t('noCards')}</p>
           )}
         </section>
 
@@ -141,10 +136,10 @@ export default function CardGallery({ onBack }: CardGalleryProps) {
             <>
               <div className="gallery-details-heading">
                 <div>
-                  <span>Card #{selectedCard.cardId}</span>
-                  <h2>{selectedCard.species.map(species => species.name).join(' / ') || 'Winter card'}</h2>
+                  <span>{t('cardNumber', { number: selectedCard.cardId })}</span>
+                  <h2>{selectedCard.species.map(species => species.name).join(' / ') || t('winterCard')}</h2>
                 </div>
-                <button onClick={() => setSelectedCard(null)} aria-label="Close card details">×</button>
+                <button onClick={() => setSelectedCard(null)} aria-label={t('closeDetails')}>×</button>
               </div>
               <div className="gallery-details-meta">
                 <span>{deckLabels[selectedCard.deck]}</span>
@@ -154,22 +149,22 @@ export default function CardGallery({ onBack }: CardGalleryProps) {
                 <section key={`${species.name}-${index}`} className="gallery-species-details">
                   <h3>{species.name}</h3>
                   <div className="gallery-species-meta">
-                    <span>Cost {species.speciesData.cost}</span>
-                    {species.treeSymbol && <span>Tree symbol: {species.treeSymbol}</span>}
+                    <span>{t('cost')} {species.speciesData.cost}</span>
+                    {species.treeSymbol && <span>{t('treeSymbol')}: {species.treeSymbol}</span>}
                   </div>
                   <div className="gallery-tags">
                     {species.speciesData.tags.map(tag => <span key={tag}>{tag}</span>)}
                   </div>
-                  {species.speciesData.effect && <p><strong>Effect:</strong> {species.speciesData.effect}</p>}
-                  {species.speciesData.bonus && <p><strong>Bonus:</strong> {species.speciesData.bonus}</p>}
-                  {species.speciesData.points && <p><strong>Points:</strong> {species.speciesData.points}</p>}
+                  {species.speciesData.effect && <p><strong>{t('effect')}:</strong> {species.speciesData.effect}</p>}
+                  {species.speciesData.bonus && <p><strong>{t('bonus')}:</strong> {species.speciesData.bonus}</p>}
+                  {species.speciesData.points && <p><strong>{t('points')}:</strong> {species.speciesData.points}</p>}
                 </section>
               ))}
             </>
           ) : (
             <div className="gallery-details-placeholder">
               <span>↖</span>
-              <p>Select a card to keep its details open.</p>
+              <p>{t('selectCardDetails')}</p>
             </div>
           )}
         </aside>

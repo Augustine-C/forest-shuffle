@@ -6,8 +6,10 @@ import type {
     Player,
     EnhancedCard,
     PlacedTree,
-    PlacedCard
+    PlacedCard,
+    PendingAction
 } from '../../../shared/types';
+import { useI18n } from '../i18n';
 
 type ForestSlot = 'top' | 'bottom' | 'left' | 'right';
 
@@ -24,6 +26,7 @@ interface GameProps {
 }
 
 export default function Game({ gameState, playerId, roomCode, onOpenRules }: GameProps) {
+    const { language, t } = useI18n();
     const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
     const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState<number>(0);
     const [selectedPlacement, setSelectedPlacement] = useState<SelectedPlacement | null>(null);
@@ -54,6 +57,24 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
     const cardChoiceAction = myPendingAction?.kind === 'chooseCardEffectAndBonus' ? myPendingAction : undefined;
     const mulliganAction = myPendingAction?.kind === 'initialMulligan' ? myPendingAction : undefined;
     const drawSourceAction = myPendingAction?.kind === 'chooseDrawSource' ? myPendingAction : undefined;
+    const deckLabel = (deck: string) => deck === 'edge' ? t('edge') : deck === 'alpine' ? t('alpine') : t('baseGame');
+
+    const pendingPrompt = (action: PendingAction) => {
+        if (language === 'en') return action.prompt;
+        switch (action.kind) {
+            case 'initialMulligan': return '起始手牌中没有树，是否重抽？';
+            case 'chooseDrawSource': return '选择这张牌的来源';
+            case 'selectClearingCards': return '从林间空地选择卡牌';
+            case 'playFreeCard': return '免费打出一张符合条件的卡牌';
+            case 'playPaidCards': return '打出任意数量的卡牌';
+            case 'exchangeHandForDeck': return '将手牌放入洞穴并抽取等量卡牌';
+            case 'playSaplings': return '将任意数量的手牌作为树苗打出';
+            case 'takeAllMatching': return '拿取所有符合条件的林间空地卡牌';
+            case 'triggeredDraws': return '选择永久效果的抽牌结算顺序';
+            case 'chooseCardEffectAndBonus': return '选择要使用的卡牌能力';
+            case 'continueCardBonus': return '继续结算卡牌奖励';
+        }
+    };
 
     const resetCardSelection = () => {
         setSelectedCardId(null);
@@ -187,7 +208,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
             ? 0
             : selectedCard.species[speciesIndex]?.speciesData.cost || 0;
         if (costCardIds.length < requiredCost) {
-            alert(`Need ${requiredCost} cards for cost. Selected ${costCardIds.length}.`);
+            alert(t('needCost', { required: requiredCost, selected: costCardIds.length }));
             return;
         }
 
@@ -276,21 +297,21 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
         );
     };
 
-    if (!myPlayer) return <div>Error: Player not found in game state</div>;
+    if (!myPlayer) return <div>{language === 'zh-CN' ? '错误：游戏状态中找不到该玩家' : 'Error: Player not found in game state'}</div>;
 
     if (gameState.gameEnded) {
         return (
             <div className="game-over">
-                <h1>Game Over!</h1>
+                <h1>{t('gameOver')}</h1>
                 <div className="final-scores">
                     {gameState.players.map(p => (
                         <div key={p.id}>
-                            {p.name}: {gameState.finalScores?.[p.id] ?? 0} points {p.id === playerId ? '(You)' : ''}
+                            {p.name}: {t('pointCount', { count: gameState.finalScores?.[p.id] ?? 0 })} {p.id === playerId ? `(${t('you')})` : ''}
                         </div>
                     ))}
                 </div>
-                <button onClick={onOpenRules}>View Rules</button>
-                <button onClick={() => window.location.reload()}>Back to Home</button>
+                <button onClick={onOpenRules}>{t('viewRules')}</button>
+                <button onClick={() => window.location.reload()}>{t('backHome')}</button>
             </div>
         );
     }
@@ -299,19 +320,19 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
         <div className="game-board">
             <div className="game-meta">
                 <div className={`turn-indicator ${isMyTurn ? 'my-turn' : ''}`}>
-                    {isMyTurn ? "It's YOUR Turn!" : `Waiting for ${activePlayer?.name}...`}
+                    {isMyTurn ? t('yourTurn') : t('waitingFor', { name: activePlayer?.name ?? '' })}
                 </div>
                 <div className="game-meta-actions">
-                    <div className="live-score" aria-label={`Your current score is ${gameState.myScore}`}>
-                        <span>My score</span>
+                    <div className="live-score" aria-label={t('currentScore', { score: gameState.myScore })}>
+                        <span>{t('myScore')}</span>
                         <strong>{gameState.myScore}</strong>
                     </div>
                     <div className="deck-info">
-                        🎴 Deck: {gameState.deckCount} cards | ❄️ Winter: {gameState.winterCardsDrawn}/3
-                        {' | '}{gameState.includedDecks.map(deck => deck === 'edge' ? 'Woodland Edge' : deck[0].toUpperCase() + deck.slice(1)).join(' + ')}
+                        🎴 {t('deckCount', { count: gameState.deckCount })} | ❄️ {t('winterCount', { count: gameState.winterCardsDrawn })}
+                        {' | '}{gameState.includedDecks.map(deckLabel).join(' + ')}
                     </div>
                     <button type="button" className="game-rules-button" onClick={onOpenRules}>
-                        <span aria-hidden="true">?</span> Rules
+                        <span aria-hidden="true">?</span> {t('rules')}
                     </button>
                 </div>
             </div>
@@ -319,180 +340,180 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
             <div className="actions">
                 {isMyTurn && mulliganAction && (
                     <div className="pending-action">
-                        <strong>{mulliganAction.prompt}</strong>
-                        <span>Your current six cards will be returned to the box.</span>
+                        <strong>{pendingPrompt(mulliganAction)}</strong>
+                        <span>{t('currentSixRemoved')}</span>
                         <button className="action-btn primary" onClick={() => handlePendingAction(false)}>
-                            Draw replacement hand
+                            {t('replacementHand')}
                         </button>
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
-                            Keep this hand
+                            {t('keepHand')}
                         </button>
                     </div>
                 )}
                 {isMyTurn && drawSourceAction && (
                     <div className="pending-action">
-                        <strong>{drawSourceAction.prompt}</strong>
+                        <strong>{pendingPrompt(drawSourceAction)}</strong>
                         <button className="action-btn primary" onClick={() => handleDrawSource('deck')}>
-                            Draw from deck
+                            {t('drawDeck')}
                         </button>
                         <button
                             className="action-btn"
                             disabled={clearingCardIds.length !== 1}
                             onClick={() => handleDrawSource('clearing')}
                         >
-                            Take selected clearing card
+                            {t('takeSelected')}
                         </button>
                         {drawSourceAction.canCancel && (
                             <button className="action-btn" onClick={() => handlePendingAction(true)}>
-                                Back to turn options
+                                {t('backTurn')}
                             </button>
                         )}
                     </div>
                 )}
                 {isMyTurn && clearingPendingAction && (
                     <div className="pending-action">
-                        <strong>{clearingPendingAction.prompt}</strong>
-                        <span>Select exactly {clearingPendingAction.count} card(s) from the clearing.</span>
+                        <strong>{pendingPrompt(clearingPendingAction)}</strong>
+                        <span>{t('selectExact', { count: clearingPendingAction.count })}</span>
                         <button
                             className="action-btn primary"
                             disabled={clearingCardIds.length !== clearingPendingAction.count}
                             onClick={() => handlePendingAction(false)}
                         >
-                            Confirm selection
+                            {t('confirmSelection')}
                         </button>
                         {clearingPendingAction.optional && (
                             <button className="action-btn" onClick={() => handlePendingAction(true)}>
-                                Decline
+                                {t('decline')}
                             </button>
                         )}
                     </div>
                 )}
                 {isMyTurn && freePlayPendingAction && (
                     <div className="pending-action">
-                        <strong>{freePlayPendingAction.prompt}</strong>
-                        <span>Select an eligible card from your hand, then choose its forest position.</span>
+                        <strong>{pendingPrompt(freePlayPendingAction)}</strong>
+                        <span>{t('selectEligible')}</span>
                         {selectedCard?.orientation === 'Tree' && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                Play {selectedCard.species[selectedSpeciesIndex]?.name} for free
+                                {t('playFree', { name: selectedCard.species[selectedSpeciesIndex]?.name })}
                             </button>
                         )}
                         {selectedCard?.isSplitCard && !selectedPlacement && (
-                            <span>Choose a highlighted forest slot to select the card half.</span>
+                            <span>{t('chooseHalf')}</span>
                         )}
                         {selectedCard?.isSplitCard && selectedPlacement && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                Play {selectedCard.species[selectedSpeciesIndex]?.name} for free
+                                {t('playFree', { name: selectedCard.species[selectedSpeciesIndex]?.name })}
                             </button>
                         )}
                         {freePlayPendingAction.optional && (
                             <button className="action-btn" onClick={() => handlePendingAction(true)}>
-                                {freePlayPendingAction.repeatable ? 'Done' : 'Decline'}
+                                {freePlayPendingAction.repeatable ? t('done') : t('decline')}
                             </button>
                         )}
                     </div>
                 )}
                 {isMyTurn && paidPlayPendingAction && (
                     <div className="pending-action">
-                        <strong>{paidPlayPendingAction.prompt}</strong>
-                        <span>Select and place cards normally. Choose Done after your final play.</span>
+                        <strong>{pendingPrompt(paidPlayPendingAction)}</strong>
+                        <span>{t('paidPlayHelp')}</span>
                         {selectedCard?.orientation === 'Tree' && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                Plant {selectedCard.species[0].name} (Pay {selectedCard.species[0].speciesData.cost})
+                                {t('plantPay', { name: selectedCard.species[0].name, cost: selectedCard.species[0].speciesData.cost })}
                             </button>
                         )}
                         {selectedCard?.isSplitCard && !selectedPlacement && (
-                            <span>Choose a highlighted forest slot to select the card half and its cost.</span>
+                            <span>{t('chooseHalfCost')}</span>
                         )}
                         {selectedCard?.isSplitCard && selectedPlacement && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                Play {selectedCard.species[selectedSpeciesIndex]?.name} (Pay {selectedCard.species[selectedSpeciesIndex]?.speciesData.cost})
+                                {t('playPay', { name: selectedCard.species[selectedSpeciesIndex]?.name, cost: selectedCard.species[selectedSpeciesIndex]?.speciesData.cost })}
                             </button>
                         )}
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
-                            Done
+                            {t('done')}
                         </button>
                     </div>
                 )}
                 {isMyTurn && handExchangePendingAction && (
                     <div className="pending-action">
-                        <strong>{handExchangePendingAction.prompt}</strong>
-                        <span>{costCardIds.length} hand card(s) selected.</span>
+                        <strong>{pendingPrompt(handExchangePendingAction)}</strong>
+                        <span>{t('selectedHandCards', { count: costCardIds.length })}</span>
                         <button className="action-btn primary" onClick={() => handlePendingAction(false)}>
-                            Exchange selected cards
+                            {t('exchangeSelected')}
                         </button>
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
-                            Decline
+                            {t('decline')}
                         </button>
                     </div>
                 )}
                 {isMyTurn && saplingPendingAction && (
                     <div className="pending-action">
-                        <strong>{saplingPendingAction.prompt}</strong>
-                        <span>{costCardIds.length} hand card(s) selected.</span>
+                        <strong>{pendingPrompt(saplingPendingAction)}</strong>
+                        <span>{t('selectedHandCards', { count: costCardIds.length })}</span>
                         <button className="action-btn primary" onClick={() => handlePendingAction(false)}>
-                            Play selected saplings
+                            {t('playSaplings')}
                         </button>
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
-                            Decline
+                            {t('decline')}
                         </button>
                     </div>
                 )}
                 {isMyTurn && takeAllPendingAction && (
                     <div className="pending-action">
-                        <strong>{takeAllPendingAction.prompt}</strong>
-                        <span>The matching cards will all move to your hand.</span>
+                        <strong>{pendingPrompt(takeAllPendingAction)}</strong>
+                        <span>{t('matchingMove')}</span>
                         <button
                             className="action-btn primary"
                             disabled={myPlayer.hand.length + takeAllPendingAction.count > 10}
                             onClick={() => handlePendingAction(false)}
                         >
-                            Take all matching cards
+                            {t('takeMatching')}
                         </button>
                         <button className="action-btn" onClick={() => handlePendingAction(true)}>
-                            Decline
+                            {t('decline')}
                         </button>
                     </div>
                 )}
                 {isMyTurn && triggeredDrawAction && (
                     <div className="pending-action">
-                        <strong>{triggeredDrawAction.prompt}</strong>
-                        <span>Resolve any triggers you want in your chosen order.</span>
+                        <strong>{pendingPrompt(triggeredDrawAction)}</strong>
+                        <span>{t('triggerOrder')}</span>
                         {triggeredDrawAction.triggers.map(trigger => (
                             <button
                                 key={trigger.id}
                                 className="action-btn primary"
                                 onClick={() => handleTriggeredDraw(trigger.id)}
                             >
-                                Draw for {trigger.sourceName}
+                                {t('drawFor', { name: trigger.sourceName })}
                             </button>
                         ))}
                         <button className="action-btn" onClick={() => handleTriggeredDraw()}>
-                            Finish triggers
+                            {t('finishTriggers')}
                         </button>
                     </div>
                 )}
                 {isMyTurn && cardChoiceAction && (
                     <div className="pending-action">
-                        <strong>{cardChoiceAction.cardName}: choose abilities</strong>
-                        {cardChoiceAction.effectText && <span>Effect: {cardChoiceAction.effectText}</span>}
-                        {cardChoiceAction.bonusText && <span>Bonus: {cardChoiceAction.bonusText}</span>}
+                        <strong>{t('chooseAbilities', { name: cardChoiceAction.cardName })}</strong>
+                        {cardChoiceAction.effectText && <span>{t('effect')}: {cardChoiceAction.effectText}</span>}
+                        {cardChoiceAction.bonusText && <span>{t('bonus')}: {cardChoiceAction.bonusText}</span>}
                         {cardChoiceAction.effectText && cardChoiceAction.bonusText && (
                             <button className="action-btn primary" onClick={() => handleCardChoices(true, true)}>
-                                Use effect, then bonus
+                                {t('useBoth')}
                             </button>
                         )}
                         {cardChoiceAction.effectText && (
                             <button className="action-btn" onClick={() => handleCardChoices(true, false)}>
-                                Use effect only
+                                {t('useEffectOnly')}
                             </button>
                         )}
                         {cardChoiceAction.bonusText && (
                             <button className="action-btn" onClick={() => handleCardChoices(false, true)}>
-                                Use bonus only
+                                {t('useBonusOnly')}
                             </button>
                         )}
                         <button className="action-btn" onClick={() => handleCardChoices(false, false)}>
-                            Use neither
+                            {t('useNeither')}
                         </button>
                     </div>
                 )}
@@ -504,36 +525,36 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                             disabled={myPlayer.hand.length >= 10}
                         >
                             {clearingCardIds.length > 0
-                                ? `Take ${clearingCardIds.length} + Draw ${Math.max(0, Math.min(2, 10 - myPlayer.hand.length) - clearingCardIds.length)}`
-                                : myPlayer.hand.length === 9 ? 'Draw 1 Card' : 'Draw 2 Cards'}
+                                ? t('takeAndDraw', { take: clearingCardIds.length, draw: Math.max(0, Math.min(2, 10 - myPlayer.hand.length) - clearingCardIds.length) })
+                                : myPlayer.hand.length === 9 ? t('drawOne') : t('drawTwo')}
                         </button>
                         {selectedCard && selectedCard.orientation === 'Tree' && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                Plant {selectedCard.species[0].name} (Pay {selectedCard.species[0].speciesData.cost})
+                                {t('plantPay', { name: selectedCard.species[0].name, cost: selectedCard.species[0].speciesData.cost })}
                             </button>
                         )}
                         {selectedCard?.isSplitCard && !selectedPlacement && (
-                            <span className="placement-guidance">Choose a highlighted forest slot to select the card half and its cost.</span>
+                            <span className="placement-guidance">{t('chooseHalfCost')}</span>
                         )}
                         {selectedCard?.isSplitCard && selectedPlacement && (
                             <button className="action-btn primary" onClick={() => handlePlayCard()}>
-                                Play {selectedCard.species[selectedSpeciesIndex]?.name} (Pay {selectedCard.species[selectedSpeciesIndex]?.speciesData.cost})
+                                {t('playPay', { name: selectedCard.species[selectedSpeciesIndex]?.name, cost: selectedCard.species[selectedSpeciesIndex]?.speciesData.cost })}
                             </button>
                         )}
                         {selectedCard && (
                             <button className="action-btn" onClick={() => handlePlayCard(undefined, undefined, true)}>
-                                Play as Sapling
+                                {t('playSapling')}
                             </button>
                         )}
                     </>
                 )}
                 {isMyTurn && gameState.pendingAction && !myPendingAction && (
-                    <span>Waiting for the pending action to be resolved.</span>
+                    <span>{t('waitingPending')}</span>
                 )}
             </div>
 
             <section className="my-hand game-section">
-                <h3>My Hand ({myPlayer.hand.length})</h3>
+                <h3>{t('myHand', { count: myPlayer.hand.length })}</h3>
                 <div className="hand-cards">
                     {myPlayer.hand.map((c) => (
                         <Card
@@ -550,8 +571,8 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
 
             <section className="forest-viewer game-section">
                 <div className="forest-viewer-header">
-                    <h3>{isViewingMyForest ? 'My Forest' : `${viewedForestPlayer?.name}'s Forest`}</h3>
-                    <div className="forest-tabs" role="tablist" aria-label="Choose a forest to view">
+                    <h3>{isViewingMyForest ? t('myForest') : t('playerForest', { name: viewedForestPlayer?.name ?? '' })}</h3>
+                    <div className="forest-tabs" role="tablist" aria-label={t('chooseForest')}>
                         {gameState.players.map(player => (
                             <button
                                 key={player.id}
@@ -561,17 +582,17 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                                 className={viewedForestPlayer?.id === player.id ? 'active' : ''}
                                 onClick={() => setViewedForestPlayerId(player.id)}
                             >
-                                {player.id === playerId ? 'My forest' : player.name}
+                                {player.id === playerId ? t('myForestTab') : player.name}
                             </button>
                         ))}
                     </div>
                 </div>
                 {!isViewingMyForest && (
-                    <p className="forest-view-note">Viewing only — switch to My forest to place cards.</p>
+                    <p className="forest-view-note">{t('viewingOnly')}</p>
                 )}
                 <div className={`forest-grid ${isViewingMyForest ? '' : 'read-only'}`}>
                     {viewedForestPlayer?.forest.length === 0 && (
-                        <p>{isViewingMyForest ? 'No trees yet. Plant one!' : 'This forest is empty.'}</p>
+                        <p>{isViewingMyForest ? t('noTrees') : t('emptyForest')}</p>
                     )}
                     {viewedForestPlayer?.forest.map((slot, treeIndex) => {
                         const showTop = isViewingMyForest && canPlaceInSlot(slot, 'top');
@@ -590,7 +611,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                                     {showLeft && <span className="placement-icon shared-placement-icon">+</span>}
                                 </div>
                                 <div className="tree-card">
-                                    {slot.isSapling ? <div className="card sapling-card">Sapling</div> : <Card card={slot.tree} />}
+                                    {slot.isSapling ? <div className="card sapling-card">{t('sapling')}</div> : <Card card={slot.tree} />}
                                 </div>
                                 <div className={`slot right ${showRight ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'right' ? 'chosen' : ''}`} onClick={() => showRight && handleSelectPlacement(treeIndex, 'right')}>
                                     {renderPlacedCards(slot.right, 'right')}
@@ -612,9 +633,9 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
             </section>
 
             <section className="clearing-area game-section">
-                <h3>Clearing (Market)</h3>
+                <h3>{t('clearing')}</h3>
                 <div className="clearing-cards">
-                    {gameState.clearing.length === 0 ? <p>Empty</p> :
+                    {gameState.clearing.length === 0 ? <p>{t('empty')}</p> :
                         gameState.clearing.map(c => (
                             <Card
                                 key={c.cardId}
@@ -628,14 +649,14 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
             </section>
 
             <section className="my-cave game-section">
-                <h3>My Cave ({myPlayer.caveCount ?? myPlayer.cave.length})</h3>
+                <h3>{t('myCave', { count: myPlayer.caveCount ?? myPlayer.cave.length })}</h3>
                 <div className="hand-cards">
                     {myPlayer.cave.map(card => <Card key={card.cardId} card={card} />)}
                 </div>
             </section>
 
             <section className="opponents game-section">
-                <h3>Opponents</h3>
+                <h3>{t('opponents')}</h3>
                 {otherPlayers.map((p: Player) => (
                     <button
                         key={p.id}
@@ -643,8 +664,8 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                         className={`opponent ${viewedForestPlayer?.id === p.id ? 'selected' : ''}`}
                         onClick={() => setViewedForestPlayerId(p.id)}
                     >
-                        👤 {p.name} - Hand: {p.handCount ?? p.hand.length} cards | Forest: {p.forest.length} trees | Cave: {p.caveCount ?? p.cave.length} cards
-                        <span>View forest</span>
+                        👤 {p.name} — {t('handCount', { count: p.handCount ?? p.hand.length })} | {t('forestCount', { count: p.forest.length })} | {t('caveCount', { count: p.caveCount ?? p.cave.length })}
+                        <span>{t('viewForest')}</span>
                     </button>
                 ))}
             </section>

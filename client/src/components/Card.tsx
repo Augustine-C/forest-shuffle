@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { EnhancedCard, SpeciesData } from '../../../shared/types';
 import { getCardArtwork } from './cardArtwork';
+import { useI18n } from '../i18n';
 
 interface CardProps {
     card: EnhancedCard;
@@ -20,6 +21,7 @@ interface TooltipProps {
 }
 
 function TooltipPortal({ species, cardId, deck, anchorRect }: TooltipProps) {
+    const { t } = useI18n();
     if (!anchorRect) return null;
 
     // Calculate position: centered above the element
@@ -41,8 +43,8 @@ function TooltipPortal({ species, cardId, deck, anchorRect }: TooltipProps) {
                 {species.name} <span className="tooltip-id">#{cardId}</span>
             </div>
             <div className="tooltip-meta">
-                <span className="tooltip-cost">Cost: {species.speciesData.cost}</span>
-                <span className="tooltip-deck">Deck: {deck}</span>
+                <span className="tooltip-cost">{t('cost')}: {species.speciesData.cost}</span>
+                <span className="tooltip-deck">{t('deck')}: {deck === 'basic' ? t('baseGame') : deck === 'alpine' ? t('alpine') : t('edge')}</span>
             </div>
             <div className="tooltip-tags">
                 {species.speciesData.tags.map(tag => (
@@ -52,21 +54,21 @@ function TooltipPortal({ species, cardId, deck, anchorRect }: TooltipProps) {
                 ))}
             </div>
             {species.treeSymbol && (
-                <div className="tooltip-symbol">Symbol: 🌳 {species.treeSymbol}</div>
+                <div className="tooltip-symbol">{t('symbol')}: 🌳 {species.treeSymbol}</div>
             )}
             {species.speciesData.effect && (
                 <div className="tooltip-effect">
-                    <strong>Effect:</strong> {species.speciesData.effect}
+                    <strong>{t('effect')}:</strong> {species.speciesData.effect}
                 </div>
             )}
             {species.speciesData.bonus && (
                 <div className="tooltip-bonus">
-                    <strong>Bonus:</strong> {species.speciesData.bonus}
+                    <strong>{t('bonus')}:</strong> {species.speciesData.bonus}
                 </div>
             )}
             {species.speciesData.points && (
                 <div className="tooltip-points">
-                    <strong>Points:</strong> {species.speciesData.points}
+                    <strong>{t('points')}:</strong> {species.speciesData.points}
                 </div>
             )}
         </div>,
@@ -75,6 +77,7 @@ function TooltipPortal({ species, cardId, deck, anchorRect }: TooltipProps) {
 }
 
 export default function Card({ card, isSelected, isCostSelected, selectedSpeciesIndex, onClick, slot }: CardProps) {
+    const { t } = useI18n();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
     const cardRef = useRef<HTMLDivElement>(null);
@@ -125,7 +128,7 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
             ref={cardRef}
             style={artworkStyle}
             role={onClick ? 'button' : undefined}
-            aria-label={card.species.map(species => species.name).join(' / ') || `Winter card ${card.cardId}`}
+            aria-label={card.species.map(species => species.name).join(' / ') || `${t('winterCard')} ${card.cardId}`}
         >
             {!artworkStyle && !slot && <div className="card-id">#{card.cardId}</div>}
             <div className="card-inner">
