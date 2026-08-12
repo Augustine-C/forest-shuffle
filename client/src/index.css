@@ -79,6 +79,69 @@ body {
   border-radius: 8px;
 }
 
+.game-meta-actions {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.live-score {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(112, 214, 142, 0.45);
+  border-radius: 999px;
+  background: rgba(70, 160, 96, 0.14);
+  color: #dff7e5;
+  white-space: nowrap;
+}
+
+.live-score span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.live-score strong {
+  font-size: 1.25rem;
+}
+
+.game-rules-button {
+  flex-shrink: 0;
+  min-height: 38px;
+  border: 1px solid #66635d;
+  border-radius: 8px;
+  background: #262622;
+  color: #f4f0e6;
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.game-rules-button:hover {
+  border-color: #d7a64a;
+}
+
+@media (max-width: 760px) {
+  .game-meta {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .game-meta-actions {
+    justify-content: space-between;
+  }
+
+  .deck-info {
+    font-size: 0.85rem;
+  }
+}
+
 .turn-indicator {
   font-size: 1.4rem;
   font-weight: bold;
@@ -104,7 +167,24 @@ body {
   border: 1px solid #444;
   min-width: 200px;
   flex-shrink: 0;
-  /* Add this */
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.opponent span {
+  display: block;
+  margin-top: 0.35rem;
+  color: #8ed6a3;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.opponent:hover,
+.opponent.selected {
+  border-color: #70d68e;
+  background: #303b33;
 }
 
 .deck-info {
@@ -302,6 +382,51 @@ body {
 }
 
 /* Forest Grid */
+.game-section h3 {
+  margin-top: 0;
+}
+
+.forest-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.forest-viewer-header h3 {
+  margin: 0;
+}
+
+.forest-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.forest-tabs button {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #4b4b4b;
+  border-radius: 999px;
+  background: #292929;
+  color: #ddd;
+  font: inherit;
+  cursor: pointer;
+}
+
+.forest-tabs button:hover,
+.forest-tabs button.active {
+  border-color: #70d68e;
+  background: #31523a;
+  color: #fff;
+}
+
+.forest-view-note {
+  margin: -0.2rem 0 0.7rem;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
 .forest-grid {
   display: flex;
   gap: 50px;
@@ -315,6 +440,11 @@ body {
   align-items: center;
   /* Center trees vertically */
   border: 1px solid #333;
+}
+
+.forest-grid.read-only .slot,
+.forest-grid.read-only .card {
+  cursor: default;
 }
 
 .tree-slot {
@@ -533,7 +663,7 @@ body {
 
 /* Clearing (Market) */
 .clearing-area {
-  margin-bottom: 30px;
+  margin-bottom: 0;
 }
 
 .clearing-cards {

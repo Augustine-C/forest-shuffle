@@ -191,6 +191,7 @@ export type PendingAction =
 
 export interface SerializedGameState {
     players: Player[];
+    myScore: number;
     clearing: EnhancedCard[];
     activePlayerIndex: number;
     deckCount: number;

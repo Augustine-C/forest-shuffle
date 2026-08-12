@@ -20,17 +20,21 @@ interface GameProps {
     gameState: SerializedGameState;
     playerId: string | undefined;
     roomCode: string;
+    onOpenRules: () => void;
 }
 
-export default function Game({ gameState, playerId, roomCode }: GameProps) {
+export default function Game({ gameState, playerId, roomCode, onOpenRules }: GameProps) {
     const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
     const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState<number>(0);
     const [selectedPlacement, setSelectedPlacement] = useState<SelectedPlacement | null>(null);
     const [costCardIds, setCostCardIds] = useState<number[]>([]);
     const [clearingCardIds, setClearingCardIds] = useState<number[]>([]);
+    const [viewedForestPlayerId, setViewedForestPlayerId] = useState(playerId);
 
     const myPlayer = gameState.players.find((p: Player) => p.id === playerId);
     const otherPlayers = gameState.players.filter((p: Player) => p.id !== playerId);
+    const viewedForestPlayer = gameState.players.find((p: Player) => p.id === viewedForestPlayerId) ?? myPlayer;
+    const isViewingMyForest = viewedForestPlayer?.id === playerId;
 
     // Calculate active player
     const activePlayer = gameState.players[gameState.activePlayerIndex];
@@ -84,6 +88,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             }
         } else {
             // Select as card to play
+            setViewedForestPlayerId(playerId);
             setSelectedCardId(card.cardId);
             setSelectedSpeciesIndex(0);
             setSelectedPlacement(null);
@@ -284,6 +289,7 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                         </div>
                     ))}
                 </div>
+                <button onClick={onOpenRules}>View Rules</button>
                 <button onClick={() => window.location.reload()}>Back to Home</button>
             </div>
         );
@@ -295,9 +301,18 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                 <div className={`turn-indicator ${isMyTurn ? 'my-turn' : ''}`}>
                     {isMyTurn ? "It's YOUR Turn!" : `Waiting for ${activePlayer?.name}...`}
                 </div>
-                <div className="deck-info">
-                    🎴 Deck: {gameState.deckCount} cards | ❄️ Winter: {gameState.winterCardsDrawn}/3
-                    {' | '}{gameState.includedDecks.map(deck => deck === 'edge' ? 'Woodland Edge' : deck[0].toUpperCase() + deck.slice(1)).join(' + ')}
+                <div className="game-meta-actions">
+                    <div className="live-score" aria-label={`Your current score is ${gameState.myScore}`}>
+                        <span>My score</span>
+                        <strong>{gameState.myScore}</strong>
+                    </div>
+                    <div className="deck-info">
+                        🎴 Deck: {gameState.deckCount} cards | ❄️ Winter: {gameState.winterCardsDrawn}/3
+                        {' | '}{gameState.includedDecks.map(deck => deck === 'edge' ? 'Woodland Edge' : deck[0].toUpperCase() + deck.slice(1)).join(' + ')}
+                    </div>
+                    <button type="button" className="game-rules-button" onClick={onOpenRules}>
+                        <span aria-hidden="true">?</span> Rules
+                    </button>
                 </div>
             </div>
 
@@ -515,13 +530,98 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
             <div className="opponents">
                 <h3>Opponents</h3>
                 {otherPlayers.map((p: Player) => (
-                    <div key={p.id} className="opponent">
+                    <button
+                        key={p.id}
+                        type="button"
+                        className={`opponent ${viewedForestPlayer?.id === p.id ? 'selected' : ''}`}
+                        onClick={() => setViewedForestPlayerId(p.id)}
+                    >
                         👤 {p.name} - Hand: {p.handCount ?? p.hand.length} cards | Forest: {p.forest.length} trees | Cave: {p.caveCount ?? p.cave.length} cards
-                    </div>
+                        <span>View forest</span>
+                    </button>
                 ))}
             </div>
 
-            <div className="clearing-area">
+            <section className="my-hand game-section">
+                <h3>My Hand ({myPlayer.hand.length})</h3>
+                <div className="hand-cards">
+                    {myPlayer.hand.map((c) => (
+                        <Card
+                            key={c.cardId}
+                            card={c}
+                            isSelected={selectedCardId === c.cardId}
+                            isCostSelected={costCardIds.includes(c.cardId)}
+                            selectedSpeciesIndex={selectedCardId === c.cardId && (!c.isSplitCard || selectedPlacement) ? selectedSpeciesIndex : undefined}
+                            onClick={() => handleCardClick(c)}
+                        />
+                    ))}
+                </div>
+            </section>
+
+            <section className="forest-viewer game-section">
+                <div className="forest-viewer-header">
+                    <h3>{isViewingMyForest ? 'My Forest' : `${viewedForestPlayer?.name}'s Forest`}</h3>
+                    <div className="forest-tabs" role="tablist" aria-label="Choose a forest to view">
+                        {gameState.players.map(player => (
+                            <button
+                                key={player.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={viewedForestPlayer?.id === player.id}
+                                className={viewedForestPlayer?.id === player.id ? 'active' : ''}
+                                onClick={() => setViewedForestPlayerId(player.id)}
+                            >
+                                {player.id === playerId ? 'My forest' : player.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                {!isViewingMyForest && (
+                    <p className="forest-view-note">Viewing only — switch to My forest to place cards.</p>
+                )}
+                <div className={`forest-grid ${isViewingMyForest ? '' : 'read-only'}`}>
+                    {viewedForestPlayer?.forest.length === 0 && (
+                        <p>{isViewingMyForest ? 'No trees yet. Plant one!' : 'This forest is empty.'}</p>
+                    )}
+                    {viewedForestPlayer?.forest.map((slot, treeIndex) => {
+                        const showTop = isViewingMyForest && canPlaceInSlot(slot, 'top');
+                        const showBottom = isViewingMyForest && canPlaceInSlot(slot, 'bottom');
+                        const showLeft = isViewingMyForest && canPlaceInSlot(slot, 'left');
+                        const showRight = isViewingMyForest && canPlaceInSlot(slot, 'right');
+
+                        return (
+                            <div key={treeIndex} className="tree-slot">
+                                <div className={`slot top ${showTop ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'top' ? 'chosen' : ''}`} onClick={() => showTop && handleSelectPlacement(treeIndex, 'top')}>
+                                    {renderPlacedCards(slot.top, 'top')}
+                                    {showTop && <span className="placement-icon shared-placement-icon">+</span>}
+                                </div>
+                                <div className={`slot left ${showLeft ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'left' ? 'chosen' : ''}`} onClick={() => showLeft && handleSelectPlacement(treeIndex, 'left')}>
+                                    {renderPlacedCards(slot.left, 'left')}
+                                    {showLeft && <span className="placement-icon shared-placement-icon">+</span>}
+                                </div>
+                                <div className="tree-card">
+                                    {slot.isSapling ? <div className="card sapling-card">Sapling</div> : <Card card={slot.tree} />}
+                                </div>
+                                <div className={`slot right ${showRight ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'right' ? 'chosen' : ''}`} onClick={() => showRight && handleSelectPlacement(treeIndex, 'right')}>
+                                    {renderPlacedCards(slot.right, 'right')}
+                                    {showRight && <span className="placement-icon shared-placement-icon">+</span>}
+                                </div>
+                                <div className={`slot bottom ${showBottom ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'bottom' ? 'chosen' : ''}`} onClick={() => showBottom && handleSelectPlacement(treeIndex, 'bottom')}>
+                                    {renderPlacedCards(slot.bottom, 'bottom')}
+                                    {showBottom && <span className="placement-icon shared-placement-icon">+</span>}
+                                </div>
+                            </div>
+                        );
+                    })}
+                    {isViewingMyForest && (
+                        <div className="new-tree-zone" onClick={() => selectedCard && handlePlayCard()}>
+                            {selectedCard && (selectedCard.orientation === 'Tree' || !selectedCard.isSplitCard) ? <span className="placement-icon">+</span> : ''}
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            <section className="clearing-area game-section">
                 <h3>Clearing (Market)</h3>
                 <div className="clearing-cards">
                     {gameState.clearing.length === 0 ? <p>Empty</p> :
@@ -535,72 +635,14 @@ export default function Game({ gameState, playerId, roomCode }: GameProps) {
                         ))
                     }
                 </div>
-            </div>
+            </section>
 
-            <div className="my-area">
-                <div className="my-forest">
-                    <h3>My Forest</h3>
-                    <div className="forest-grid">
-                        {myPlayer.forest.length === 0 && <p>No trees yet. Plant one!</p>}
-                        {myPlayer.forest.map((slot, treeIndex) => {
-                            const showTop = canPlaceInSlot(slot, 'top');
-                            const showBottom = canPlaceInSlot(slot, 'bottom');
-                            const showLeft = canPlaceInSlot(slot, 'left');
-                            const showRight = canPlaceInSlot(slot, 'right');
-
-                            return (
-                                <div key={treeIndex} className="tree-slot">
-                                    <div className={`slot top ${showTop ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'top' ? 'chosen' : ''}`} onClick={() => showTop && handleSelectPlacement(treeIndex, 'top')}>
-                                        {renderPlacedCards(slot.top, 'top')}
-                                        {showTop && <span className="placement-icon shared-placement-icon">+</span>}
-                                    </div>
-                                    <div className={`slot left ${showLeft ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'left' ? 'chosen' : ''}`} onClick={() => showLeft && handleSelectPlacement(treeIndex, 'left')}>
-                                        {renderPlacedCards(slot.left, 'left')}
-                                        {showLeft && <span className="placement-icon shared-placement-icon">+</span>}
-                                    </div>
-                                    <div className="tree-card">
-                                        {slot.isSapling ? <div className="card sapling-card">Sapling</div> : <Card card={slot.tree} />}
-                                    </div>
-                                    <div className={`slot right ${showRight ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'right' ? 'chosen' : ''}`} onClick={() => showRight && handleSelectPlacement(treeIndex, 'right')}>
-                                        {renderPlacedCards(slot.right, 'right')}
-                                        {showRight && <span className="placement-icon shared-placement-icon">+</span>}
-                                    </div>
-                                    <div className={`slot bottom ${showBottom ? 'available' : ''} ${selectedPlacement?.treeIndex === treeIndex && selectedPlacement.slot === 'bottom' ? 'chosen' : ''}`} onClick={() => showBottom && handleSelectPlacement(treeIndex, 'bottom')}>
-                                        {renderPlacedCards(slot.bottom, 'bottom')}
-                                        {showBottom && <span className="placement-icon shared-placement-icon">+</span>}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        <div className="new-tree-zone" onClick={() => selectedCard && handlePlayCard()}>
-                            {selectedCard && (selectedCard.orientation === 'Tree' || !selectedCard.isSplitCard) ? <span className="placement-icon">+</span> : ''}
-                        </div>
-                    </div>
+            <section className="my-cave game-section">
+                <h3>My Cave ({myPlayer.caveCount ?? myPlayer.cave.length})</h3>
+                <div className="hand-cards">
+                    {myPlayer.cave.map(card => <Card key={card.cardId} card={card} />)}
                 </div>
-
-                <div className="my-hand">
-                    <h3>My Hand ({myPlayer.hand.length})</h3>
-                    <div className="hand-cards">
-                        {myPlayer.hand.map((c) => (
-                            <Card
-                                key={c.cardId}
-                                card={c}
-                                isSelected={selectedCardId === c.cardId}
-                                isCostSelected={costCardIds.includes(c.cardId)}
-                                selectedSpeciesIndex={selectedCardId === c.cardId && (!c.isSplitCard || selectedPlacement) ? selectedSpeciesIndex : undefined}
-                                onClick={() => handleCardClick(c)}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                <div className="my-cave">
-                    <h3>My Cave ({myPlayer.caveCount ?? myPlayer.cave.length})</h3>
-                    <div className="hand-cards">
-                        {myPlayer.cave.map(card => <Card key={card.cardId} card={card} />)}
-                    </div>
-                </div>
-            </div>
+            </section>
         </div>
     );
 }

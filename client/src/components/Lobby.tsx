@@ -9,9 +9,10 @@ interface LobbyProps {
     isHost: boolean;
     playerId: string | undefined;
     onOpenGallery: () => void;
+    onOpenRules: () => void;
 }
 
-export default function Lobby({ roomCode, players, isHost, playerId, onOpenGallery }: LobbyProps) {
+export default function Lobby({ roomCode, players, isHost, playerId, onOpenGallery, onOpenRules }: LobbyProps) {
     const [joinRoomCode, setJoinRoomCode] = useState('');
     const [playerName, setPlayerName] = useState('');
     const [startingPlayerId, setStartingPlayerId] = useState(playerId ?? '');
@@ -67,12 +68,17 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
                         <h1>Game Lobby</h1>
                         <p>Choose the decks, invite your table, then begin.</p>
                     </div>
-                    <div className="room-code-card">
-                        <span>Room code</span>
-                        <strong>{roomCode}</strong>
-                        <button type="button" onClick={copyRoomCode}>
-                            {roomCodeCopied ? 'Copied!' : 'Copy code'}
+                    <div className="room-header-actions">
+                        <button type="button" className="room-rules-button" onClick={onOpenRules}>
+                            <span aria-hidden="true">?</span> Rules
                         </button>
+                        <div className="room-code-card">
+                            <span>Room code</span>
+                            <strong>{roomCode}</strong>
+                            <button type="button" onClick={copyRoomCode}>
+                                {roomCodeCopied ? 'Copied!' : 'Copy code'}
+                            </button>
+                        </div>
                     </div>
                 </header>
 
@@ -222,6 +228,11 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
                 <button className="gallery-entry" onClick={onOpenGallery}>
                     <span aria-hidden="true">▦</span>
                     <span><strong>Explore the card gallery</strong><small>Browse all 233 cards before playing</small></span>
+                    <span aria-hidden="true">→</span>
+                </button>
+                <button className="gallery-entry rules-entry" onClick={onOpenRules}>
+                    <span aria-hidden="true">?</span>
+                    <span><strong>Read the rules</strong><small>Full reference in English and 中文</small></span>
                     <span aria-hidden="true">→</span>
                 </button>
             </section>

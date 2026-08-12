@@ -3,6 +3,7 @@ import { socket } from './services/socket';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
 import CardGallery from './components/CardGallery';
+import RulesPage from './components/RulesPage';
 import type { Player, SerializedGameState } from '../../shared/types';
 import './App.css';
 
@@ -32,6 +33,7 @@ function App() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [isHost, setIsHost] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
+  const [showRules, setShowRules] = useState(false);
 
   useEffect(() => {
     // Check for existing session
@@ -124,6 +126,7 @@ function App() {
           gameState={gameState}
           playerId={playerId || socket.id}
           roomCode={roomCode || ''}
+          onOpenRules={() => setShowRules(true)}
         />
       ) : showGallery && !roomCode ? (
         <CardGallery onBack={() => setShowGallery(false)} />
@@ -134,6 +137,13 @@ function App() {
           isHost={isHost}
           playerId={playerId}
           onOpenGallery={() => setShowGallery(true)}
+          onOpenRules={() => setShowRules(true)}
+        />
+      )}
+      {showRules && (
+        <RulesPage
+          returnLabel={gameStarted ? 'Back to game' : 'Back to lobby'}
+          onClose={() => setShowRules(false)}
         />
       )}
     </>
