@@ -250,6 +250,15 @@ body {
   z-index: 50;
 }
 
+.card:not([role="button"]) {
+  cursor: default;
+}
+
+.card[role="button"]:focus-visible {
+  outline: 3px solid #ffd166;
+  outline-offset: 3px;
+}
+
 .card.selected {
   border: 3px solid #646cff;
   box-shadow: 0 0 15px rgba(100, 108, 255, 0.6);
@@ -734,6 +743,15 @@ body {
   border-color: rgba(255, 255, 255, 0.3);
 }
 
+.new-tree-zone:not(.available) {
+  cursor: default;
+}
+
+.new-tree-zone.available {
+  border-color: rgba(112, 214, 142, 0.8);
+  background: rgba(70, 160, 96, 0.12);
+}
+
 /* Hand */
 .hand-cards {
   display: flex;
@@ -779,6 +797,62 @@ body {
 
 .action-btn.primary:hover {
   background: #535bf2;
+}
+
+.action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.action-btn.subtle {
+  background: transparent;
+  border: 1px solid #555;
+  color: #ddd;
+}
+
+.actions {
+  position: sticky;
+  top: 2.8rem;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 4rem;
+  padding: 0.75rem;
+  border: 1px solid #454545;
+  border-radius: 12px;
+  background: rgba(30, 30, 30, 0.96);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.actions > .pending-action {
+  width: 100%;
+}
+
+.action-prompt {
+  color: #dff7e5;
+}
+
+.selection-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.25rem 0.5rem;
+}
+
+.selection-summary small {
+  color: #bbb;
+}
+
+@media (max-width: 760px) {
+  .actions {
+    top: 2.55rem;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
 }
 
 /* Animations */

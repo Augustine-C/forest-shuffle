@@ -221,6 +221,13 @@ export default function Card({ card, isSelected, isCostSelected, selectedSpecies
             ref={cardRef}
             style={artworkStyle}
             role={onClick ? 'button' : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            onKeyDown={onClick ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onClick();
+                }
+            } : undefined}
             aria-label={card.species.map(species => language === 'zh-CN' ? translateSpeciesName(species.name) : species.name).join(' / ') || `${t('winterCard')} ${card.cardId}`}
         >
             {!artworkStyle && !slot && <div className="card-id">#{card.cardId}</div>}

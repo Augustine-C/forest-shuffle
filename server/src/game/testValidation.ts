@@ -8,6 +8,7 @@ import type { EnhancedCard } from './cards';
 import { createDeck } from './deck';
 import { checkSharedSlot } from './cardMatching';
 import { serializeGameState } from './serialization';
+import type { PendingAction } from '../../../shared/types';
 
 function acceptCardChoices(gameState: GameState, useEffect = true, useBonus = true) {
     const action = gameState.pendingAction;
@@ -1208,6 +1209,31 @@ sequentialDrawGame.resolvePendingAction('draw', [], false, 'deck');
 assert.deepEqual(sequentialDrawPlayer.hand.map(card => card.cardId), [30, 40]);
 assert.equal(sequentialDrawGame.pendingAction, undefined);
 assert.equal(sequentialDrawGame.activePlayerIndex, 1);
+
+const directDrawGame = new GameState(2);
+directDrawGame.addPlayer('direct', 'socket-direct', 'Direct Draw Tester', true);
+directDrawGame.addPlayer('other', 'socket-other', 'Other Tester');
+const directDrawPlayer = directDrawGame.players.get('direct')!;
+directDrawGame.clearing = [createEnhancedCard(30)!, createEnhancedCard(31)!];
+directDrawGame.deck = [createEnhancedCard(40)!];
+assert.throws(
+    () => directDrawGame.playerDrawsTwo('direct', 'clearing', 9999),
+    /no longer in the clearing/
+);
+assert.equal(directDrawGame.pendingAction, undefined, 'an invalid direct draw must not start the action');
+directDrawGame.playerDrawsTwo('direct', 'clearing', 30);
+assert.deepEqual(directDrawPlayer.hand.map(card => card.cardId), [30]);
+assert.deepEqual(directDrawGame.clearing.map(card => card.cardId), [31]);
+const directPendingAction = directDrawGame.pendingAction as PendingAction | undefined;
+assert.equal(
+    directPendingAction?.kind === 'chooseDrawSource'
+        ? directPendingAction.remaining
+        : 0,
+    1
+);
+directDrawGame.resolvePendingAction('direct', [], false, 'deck');
+assert.deepEqual(directDrawPlayer.hand.map(card => card.cardId), [30, 40]);
+assert.equal(directDrawGame.activePlayerIndex, 1);
 
 const winterDrawGame = new GameState(2);
 winterDrawGame.addPlayer('winter-draw', 'socket-winter', 'Winter Draw Tester', true);

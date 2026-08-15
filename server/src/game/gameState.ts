@@ -178,7 +178,11 @@ export class GameState {
     }
 
     // Actions
-    playerDrawsTwo(playerId: string) {
+    playerDrawsTwo(
+        playerId: string,
+        firstSource?: 'deck' | 'clearing',
+        firstCardId?: number
+    ) {
         this.assertActionAllowed(playerId);
         const activePlayerId = Array.from(this.players.keys())[this.activePlayerIndex];
         const player = this.players.get(activePlayerId);
@@ -188,7 +192,15 @@ export class GameState {
         if (drawCapacity <= 0) {
             throw new Error('A player with 10 cards must play a card');
         }
+        if (firstSource !== undefined && firstSource !== 'deck' && firstSource !== 'clearing') {
+            throw new Error('Choose either the deck or the clearing');
+        }
         const cardsToDraw = Math.min(2, drawCapacity);
+        if (firstSource === 'clearing') {
+            if (firstCardId === undefined || !this.clearing.some(card => card.cardId === firstCardId)) {
+                throw new Error('The selected card is no longer in the clearing');
+            }
+        }
         this.pendingAction = {
             kind: 'chooseDrawSource',
             playerId,
@@ -197,6 +209,14 @@ export class GameState {
             optional: false,
             prompt: `Choose the source for card 1 of ${cardsToDraw}`
         };
+
+        if (firstSource) {
+            this.resolveDrawSource(
+                this.pendingAction,
+                firstSource === 'clearing' && firstCardId !== undefined ? [firstCardId] : [],
+                firstSource
+            );
+        }
     }
 
     /**

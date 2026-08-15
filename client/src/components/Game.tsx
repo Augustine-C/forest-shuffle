@@ -122,14 +122,27 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
         }
     };
 
-    const handleDrawTwo = () => {
-        socket.emit('draw_card', { roomCode, playerId });
+    const handleStartDraw = (source: 'deck' | 'clearing', cardId?: number) => {
+        socket.emit('draw_card', { roomCode, playerId, source, cardId });
         setClearingCardIds([]);
     };
 
     const handleClearingCardClick = (cardId: number) => {
         if (!isMyTurn || selectedCardId !== null) return;
-        const selectionLimit = drawSourceAction ? 1 : clearingPendingAction?.count ?? 2;
+        if (drawSourceAction) {
+            handleDrawSource('clearing', cardId);
+            return;
+        }
+        if (!gameState.pendingAction) {
+            handleStartDraw('clearing', cardId);
+            return;
+        }
+        if (!clearingPendingAction) return;
+        if (clearingPendingAction.count === 1) {
+            socket.emit('resolve_pending_action', { roomCode, playerId, cardIds: [cardId] });
+            return;
+        }
+        const selectionLimit = clearingPendingAction.count;
         setClearingCardIds(current => current.includes(cardId)
             ? current.filter(id => id !== cardId)
             : current.length < selectionLimit ? [...current, cardId] : current
@@ -158,13 +171,13 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
         });
     };
 
-    const handleDrawSource = (choiceId: 'deck' | 'clearing') => {
+    const handleDrawSource = (choiceId: 'deck' | 'clearing', cardId?: number) => {
         if (!drawSourceAction || !playerId) return;
         socket.emit('resolve_pending_action', {
             roomCode,
             playerId,
             choiceId,
-            cardIds: choiceId === 'clearing' ? clearingCardIds : []
+            cardIds: choiceId === 'clearing' ? [cardId ?? clearingCardIds[0]].filter((id): id is number => id !== undefined) : []
         });
         setClearingCardIds([]);
     };
@@ -280,6 +293,21 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
             existingSpecies.every(existing => existing?.speciesData.tags.includes('Butterfly'));
     };
 
+    const selectedCost = selectedCard
+        ? selectedCard.species[selectedSpeciesIndex]?.speciesData.cost ?? 0
+        : 0;
+    const effectiveCost = freePlayPendingAction ? 0 : selectedCost;
+    const hasEnoughPayment = costCardIds.length >= effectiveCost;
+    const selectedName = selectedCard
+        ? speciesName(selectedCard.species[selectedSpeciesIndex]?.name)
+        : '';
+    const canClickClearing = isMyTurn && selectedCardId === null && Boolean(
+        drawSourceAction || clearingPendingAction || !gameState.pendingAction
+    );
+    const canClickHand = isMyTurn && Boolean(
+        handSelectionPendingAction || freePlayPendingAction || paidPlayPendingAction || !gameState.pendingAction
+    );
+
     const renderPlacedCards = (cards: PlacedCard[] | undefined, slot: ForestSlot) => {
         if (!cards || cards.length === 0) return null;
         return (
@@ -364,15 +392,9 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                 {isMyTurn && drawSourceAction && (
                     <div className="pending-action">
                         <strong>{pendingPrompt(drawSourceAction)}</strong>
+                        <span>{t('clickClearingToTake')}</span>
                         <button className="action-btn primary" onClick={() => handleDrawSource('deck')}>
-                            {t('drawDeck')}
-                        </button>
-                        <button
-                            className="action-btn"
-                            disabled={clearingCardIds.length !== 1}
-                            onClick={() => handleDrawSource('clearing')}
-                        >
-                            {t('takeSelected')}
+                            {t('takeDeckNow')}
                         </button>
                         {drawSourceAction.canCancel && (
                             <button className="action-btn" onClick={() => handlePendingAction(true)}>
@@ -404,7 +426,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                         <strong>{pendingPrompt(freePlayPendingAction)}</strong>
                         <span>{t('selectEligible')}</span>
                         {selectedCard?.orientation === 'Tree' && (
-                            <button className="action-btn primary" onClick={() => handlePlayCard()}>
+                            <button className="action-btn primary" disabled={!hasEnoughPayment} onClick={() => handlePlayCard()}>
                                 {t('playFree', { name: speciesName(selectedCard.species[selectedSpeciesIndex]?.name) })}
                             </button>
                         )}
@@ -412,7 +434,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                             <span>{t('chooseHalf')}</span>
                         )}
                         {selectedCard?.isSplitCard && selectedPlacement && (
-                            <button className="action-btn primary" onClick={() => handlePlayCard()}>
+                            <button className="action-btn primary" disabled={!hasEnoughPayment} onClick={() => handlePlayCard()}>
                                 {t('playFree', { name: speciesName(selectedCard.species[selectedSpeciesIndex]?.name) })}
                             </button>
                         )}
@@ -530,17 +552,18 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                 )}
                 {isMyTurn && !gameState.pendingAction && (
                     <>
-                        <button
-                            className="action-btn"
-                            onClick={handleDrawTwo}
-                            disabled={myPlayer.hand.length >= 10}
-                        >
-                            {clearingCardIds.length > 0
-                                ? t('takeAndDraw', { take: clearingCardIds.length, draw: Math.max(0, Math.min(2, 10 - myPlayer.hand.length) - clearingCardIds.length) })
-                                : myPlayer.hand.length === 9 ? t('drawOne') : t('drawTwo')}
-                        </button>
+                        {!selectedCard && <strong className="action-prompt">{t('chooseTurnAction')}</strong>}
+                        {!selectedCard && (
+                            <button
+                                className="action-btn"
+                                onClick={() => handleStartDraw('deck')}
+                                disabled={myPlayer.hand.length >= 10}
+                            >
+                                {t('takeDeckNow')}
+                            </button>
+                        )}
                         {selectedCard && selectedCard.orientation === 'Tree' && (
-                            <button className="action-btn primary" onClick={() => handlePlayCard()}>
+                            <button className="action-btn primary" disabled={!hasEnoughPayment} onClick={() => handlePlayCard()}>
                                 {t('plantPay', { name: speciesName(selectedCard.species[0].name), cost: selectedCard.species[0].speciesData.cost })}
                             </button>
                         )}
@@ -548,14 +571,23 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                             <span className="placement-guidance">{t('chooseHalfCost')}</span>
                         )}
                         {selectedCard?.isSplitCard && selectedPlacement && (
-                            <button className="action-btn primary" onClick={() => handlePlayCard()}>
+                            <button className="action-btn primary" disabled={!hasEnoughPayment} onClick={() => handlePlayCard()}>
                                 {t('playPay', { name: speciesName(selectedCard.species[selectedSpeciesIndex]?.name), cost: selectedCard.species[selectedSpeciesIndex]?.speciesData.cost })}
                             </button>
                         )}
                         {selectedCard && (
-                            <button className="action-btn" onClick={() => handlePlayCard(undefined, undefined, true)}>
-                                {t('playSapling')}
-                            </button>
+                            <>
+                                <span className="selection-summary">
+                                    <strong>{t('selectedPlay', { name: selectedName })}</strong>
+                                    <small>{t('paymentProgress', { selected: costCardIds.length, required: effectiveCost })}</small>
+                                </span>
+                                <button className="action-btn" onClick={() => handlePlayCard(undefined, undefined, true)}>
+                                    {t('playSapling')}
+                                </button>
+                                <button className="action-btn subtle" onClick={resetCardSelection}>
+                                    {t('cancelPlay')}
+                                </button>
+                            </>
                         )}
                     </>
                 )}
@@ -574,7 +606,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                             isSelected={selectedCardId === c.cardId}
                             isCostSelected={costCardIds.includes(c.cardId)}
                             selectedSpeciesIndex={selectedCardId === c.cardId && (!c.isSplitCard || selectedPlacement) ? selectedSpeciesIndex : undefined}
-                            onClick={() => handleCardClick(c)}
+                            onClick={canClickHand ? () => handleCardClick(c) : undefined}
                         />
                     ))}
                 </div>
@@ -636,8 +668,11 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                         );
                     })}
                     {isViewingMyForest && (
-                        <div className="new-tree-zone" onClick={() => selectedCard && handlePlayCard()}>
-                            {selectedCard && (selectedCard.orientation === 'Tree' || !selectedCard.isSplitCard) ? <span className="placement-icon">+</span> : ''}
+                        <div
+                            className={`new-tree-zone ${selectedCard?.orientation === 'Tree' && hasEnoughPayment ? 'available' : ''}`}
+                            onClick={selectedCard?.orientation === 'Tree' && hasEnoughPayment ? () => handlePlayCard() : undefined}
+                        >
+                            {selectedCard?.orientation === 'Tree' && hasEnoughPayment ? <span className="placement-icon">+</span> : ''}
                         </div>
                     )}
                 </div>
@@ -652,7 +687,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                                 key={c.cardId}
                                 card={c}
                                 isCostSelected={clearingCardIds.includes(c.cardId)}
-                                onClick={() => handleClearingCardClick(c.cardId)}
+                                onClick={canClickClearing ? () => handleClearingCardClick(c.cardId) : undefined}
                             />
                         ))
                     }

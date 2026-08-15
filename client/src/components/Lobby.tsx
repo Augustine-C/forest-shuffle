@@ -21,6 +21,11 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
     const [startingPlayerId, setStartingPlayerId] = useState(playerId ?? '');
     const [includedDecks, setIncludedDecks] = useState<DeckType[]>(['basic']);
     const [roomCodeCopied, setRoomCodeCopied] = useState(false);
+    const selectedStartingPlayerId = players.some(player => player.id === startingPlayerId)
+        ? startingPlayerId
+        : players.some(player => player.id === playerId)
+            ? playerId ?? ''
+            : players[0]?.id ?? '';
 
     const toggleExpansion = (deck: 'alpine' | 'edge') => {
         setIncludedDecks(current => current.includes(deck)
@@ -44,7 +49,7 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
             socket.emit('start_game', {
                 roomCode,
                 playerId,
-                startingPlayerId: startingPlayerId || playerId,
+                startingPlayerId: selectedStartingPlayerId,
                 includedDecks
             });
         }
@@ -124,7 +129,7 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
                                 <span>{t('startingPlayer')}</span>
                                 <select
                                     id="starting-player"
-                                    value={startingPlayerId || playerId}
+                                    value={selectedStartingPlayerId}
                                     onChange={event => setStartingPlayerId(event.target.value)}
                                 >
                                     {players.map(player => (
