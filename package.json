@@ -1,0 +1,12 @@
+{
+  "name": "forest-shuffle",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix client ci && npm --prefix server ci",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm --prefix client run build && npm --prefix server run build",
+    "start": "npm --prefix server start",
+    "lint": "npm --prefix client run lint",
+    "test": "npm --prefix server test"
+  }
+}

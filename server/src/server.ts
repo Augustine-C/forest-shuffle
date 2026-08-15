@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
+import fs from 'fs';
 import path from 'path';
 import { GameState } from './game/gameState';
 import { serializeGameState } from './game/serialization';
@@ -17,9 +18,33 @@ const io = new Server(httpServer, {
     }
 });
 
-// Serve static files from client dist
-const clientDist = path.resolve(process.cwd(), '../client/dist');
-app.use(express.static(clientDist));
+const findApplicationRoot = (startDirectory: string): string => {
+    let directory = startDirectory;
+
+    while (true) {
+        const hasClient = fs.existsSync(path.join(directory, 'client'));
+        const hasServer = fs.existsSync(path.join(directory, 'server'));
+        if (hasClient && hasServer) return directory;
+
+        const parent = path.dirname(directory);
+        if (parent === directory) {
+            throw new Error(`Could not locate application root from ${startDirectory}`);
+        }
+        directory = parent;
+    }
+};
+
+// Serve the production client build from the same process and origin as Socket.IO.
+const applicationRoot = findApplicationRoot(__dirname);
+const clientDist = path.join(applicationRoot, 'client', 'dist');
+const clientIndex = path.join(clientDist, 'index.html');
+const hasClientBuild = fs.existsSync(clientIndex);
+
+if (hasClientBuild) {
+    app.use(express.static(clientDist));
+} else {
+    console.warn('Client build not found. Run `npm run build` from the repository root.');
+}
 
 const games = new Map<string, GameState>(); // RoomID -> GameState
 const roomMetadata = new Map<string, { status: 'LOBBY' | 'PLAYING' | 'ENDED' }>();
@@ -276,6 +301,20 @@ io.on('connection', (socket) => {
         console.log('User disconnected:', socket.id);
     });
 });
+
+// Client-side routes should load the React application instead of returning 404.
+if (hasClientBuild) {
+    app.use((request, response, next) => {
+        if (request.method !== 'GET') {
+            next();
+            return;
+        }
+
+        response.sendFile(clientIndex, error => {
+            if (error) next(error);
+        });
+    });
+}
 
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {

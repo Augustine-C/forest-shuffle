@@ -12,29 +12,37 @@ Rules reference: [English rules](help/game-rules/rules.md) · [中文规则](hel
 
 ## Development
 
-Install and start the server:
+Install each application's locked dependencies once:
 
 ```bash
-cd server
-npm ci
+npm run setup
+```
+
+Start the server and Vite development client together:
+
+```bash
 npm run dev
 ```
 
-In another terminal, start the client:
+Open the Vite URL (normally `http://localhost:5173`). Vite proxies Socket.IO traffic to the game server on port `3000`, including when another device joins through the host machine's network address.
+
+## Production
+
+Build both applications, then run the combined server:
 
 ```bash
-cd client
-npm ci
-npm run dev
+npm run build
+npm start
 ```
 
-Open the Vite URL (normally `http://localhost:5173`). The client connects to the server on port `3000` using the browser hostname, so other devices on the same network can join with the host machine's address.
+Open `http://localhost:3000`. Express serves the built React client and Socket.IO from the same process, port, and origin. Set `PORT` to override port `3000`.
 
 ## Validation
 
 ```bash
-cd client && npm run lint && npm run build
-cd ../server && npm run build && npm test
+npm run lint
+npm run build
+npm test
 ```
 
 Server tests cover card-data integrity, core game flow, effects/scoring integration, winter-card termination, and invalid action rejection.
