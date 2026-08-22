@@ -1,6 +1,9 @@
 {
   "name": "forest-shuffle",
   "private": true,
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "setup": "npm --prefix client ci && npm --prefix server ci",
     "dev": "node scripts/dev.mjs",

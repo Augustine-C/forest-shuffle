@@ -1,4 +1,4 @@
-import { EnhancedCard, getCardBonus, getCardCost, getCardEffect, isShrubCard, isTreeCard } from './cards';
+import { EnhancedCard, createEnhancedCard, getCardBonus, getCardCost, getCardEffect, isShrubCard, isTreeCard } from './cards';
 import { createDeck } from './deck';
 import { executeEffect, executeBonus, drawCardsOneByOne, revealCardToClearing } from './effectsEngine';
 import { calculatePlayerScore } from './scoringEngine';
@@ -34,6 +34,45 @@ interface DeferredCardResolution {
     freePlay: boolean;
     pendingPaidPlay: boolean;
     suppressEffectsAndBonus: boolean;
+}
+
+interface DeferredCardResolutionSnapshot {
+    playerId: string;
+    cardId: number;
+    speciesIndex: number;
+    treeIndex: number;
+    targetSlot?: 'top' | 'bottom' | 'left' | 'right';
+    bonusActive: boolean;
+    resolvingPendingAction?: PendingAction;
+    freePlay: boolean;
+    pendingPaidPlay: boolean;
+    suppressEffectsAndBonus: boolean;
+}
+
+export interface GameSnapshotV1 {
+    version: 1;
+    players: Omit<Player, 'socketId'>[];
+    deck: EnhancedCard[];
+    clearing: EnhancedCard[];
+    activePlayerIndex: number;
+    winterCardsDrawn: number;
+    gameEnded: boolean;
+    cardsRemovedFromGame: EnhancedCard[];
+    pendingAction?: PendingAction;
+    pendingActions: PendingAction[];
+    extraTurnsPending: number;
+    turnNumber: number;
+    startingPlayerId: string;
+    includedDecks: DeckType[];
+    deferredCardResolution?: DeferredCardResolutionSnapshot;
+    triggeredDrawCompletion?: 'resumeCard' | 'completeAction';
+    deferredChoiceResolutions: [string, DeferredCardResolutionSnapshot][];
+    deferredBonusResolutions: [string, {
+        resolution: DeferredCardResolutionSnapshot;
+        useBonus: boolean;
+    }][];
+    resolutionSequence: number;
+    mulliganResolved: string[];
 }
 
 export interface Player {
@@ -84,6 +123,136 @@ export class GameState {
         this.deferredBonusResolutions = new Map();
         this.resolutionSequence = 0;
         this.mulliganResolved = new Set();
+    }
+
+    toSnapshot(): GameSnapshotV1 {
+        const snapshot: GameSnapshotV1 = {
+            version: 1,
+            players: Array.from(this.players.values()).map(({ socketId: _socketId, ...player }) => player),
+            deck: this.deck,
+            clearing: this.clearing,
+            activePlayerIndex: this.activePlayerIndex,
+            winterCardsDrawn: this.winterCardsDrawn,
+            gameEnded: this.gameEnded,
+            cardsRemovedFromGame: this.cardsRemovedFromGame,
+            pendingAction: this.pendingAction,
+            pendingActions: this.pendingActions,
+            extraTurnsPending: this.extraTurnsPending,
+            turnNumber: this.turnNumber,
+            startingPlayerId: this.startingPlayerId,
+            includedDecks: this.includedDecks,
+            deferredCardResolution: this.deferredCardResolution
+                ? this.snapshotResolution(this.deferredCardResolution)
+                : undefined,
+            triggeredDrawCompletion: this.triggeredDrawCompletion,
+            deferredChoiceResolutions: Array.from(this.deferredChoiceResolutions, ([id, resolution]) => [
+                id,
+                this.snapshotResolution(resolution)
+            ]),
+            deferredBonusResolutions: Array.from(this.deferredBonusResolutions, ([id, deferred]) => [
+                id,
+                { resolution: this.snapshotResolution(deferred.resolution), useBonus: deferred.useBonus }
+            ]),
+            resolutionSequence: this.resolutionSequence,
+            mulliganResolved: Array.from(this.mulliganResolved)
+        };
+        return JSON.parse(JSON.stringify(snapshot)) as GameSnapshotV1;
+    }
+
+    static fromSnapshot(snapshot: GameSnapshotV1): GameState {
+        if (!snapshot || snapshot.version !== 1) {
+            throw new Error(`Unsupported game snapshot version: ${String(snapshot?.version)}`);
+        }
+        const game = new GameState(Math.max(snapshot.players.length, 2));
+        game.players = new Map(snapshot.players.map(player => [player.id, {
+            ...player,
+            socketId: ''
+        }]));
+        game.deck = snapshot.deck;
+        game.clearing = snapshot.clearing;
+        game.activePlayerIndex = snapshot.activePlayerIndex;
+        game.winterCardsDrawn = snapshot.winterCardsDrawn;
+        game.gameEnded = snapshot.gameEnded;
+        game.cardsRemovedFromGame = snapshot.cardsRemovedFromGame;
+        game.pendingAction = snapshot.pendingAction;
+        game.pendingActions = snapshot.pendingActions;
+        game.extraTurnsPending = snapshot.extraTurnsPending;
+        game.turnNumber = snapshot.turnNumber;
+        game.startingPlayerId = snapshot.startingPlayerId;
+        game.includedDecks = snapshot.includedDecks;
+        game.triggeredDrawCompletion = snapshot.triggeredDrawCompletion;
+        game.resolutionSequence = snapshot.resolutionSequence;
+        game.mulliganResolved = new Set(snapshot.mulliganResolved);
+        game.deferredCardResolution = snapshot.deferredCardResolution
+            ? game.restoreResolution(snapshot.deferredCardResolution)
+            : undefined;
+        game.deferredChoiceResolutions = new Map(snapshot.deferredChoiceResolutions.map(([id, resolution]) => [
+            id,
+            game.restoreResolution(resolution)
+        ]));
+        game.deferredBonusResolutions = new Map(snapshot.deferredBonusResolutions.map(([id, deferred]) => [
+            id,
+            { resolution: game.restoreResolution(deferred.resolution), useBonus: deferred.useBonus }
+        ]));
+        return game;
+    }
+
+    private snapshotResolution(resolution: DeferredCardResolution): DeferredCardResolutionSnapshot {
+        const treeIndex = resolution.player.forest.indexOf(resolution.placedTree);
+        if (treeIndex < 0) throw new Error('Cannot snapshot a deferred resolution with an unknown tree');
+        return {
+            playerId: resolution.player.id,
+            cardId: resolution.card.cardId,
+            speciesIndex: resolution.speciesIndex,
+            treeIndex,
+            targetSlot: resolution.targetSlot,
+            bonusActive: resolution.bonusActive,
+            resolvingPendingAction: resolution.resolvingPendingAction,
+            freePlay: resolution.freePlay,
+            pendingPaidPlay: resolution.pendingPaidPlay,
+            suppressEffectsAndBonus: resolution.suppressEffectsAndBonus
+        };
+    }
+
+    private restoreResolution(snapshot: DeferredCardResolutionSnapshot): DeferredCardResolution {
+        const player = this.players.get(snapshot.playerId);
+        if (!player) throw new Error(`Snapshot references unknown player ${snapshot.playerId}`);
+        const placedTree = player.forest[snapshot.treeIndex];
+        if (!placedTree) throw new Error(`Snapshot references unknown tree ${snapshot.treeIndex}`);
+        const card = this.findCard(snapshot.cardId) ?? createEnhancedCard(snapshot.cardId);
+        if (!card) throw new Error(`Snapshot references unknown card ${snapshot.cardId}`);
+        return {
+            player,
+            card,
+            speciesIndex: snapshot.speciesIndex,
+            placedTree,
+            targetSlot: snapshot.targetSlot,
+            bonusActive: snapshot.bonusActive,
+            resolvingPendingAction: snapshot.resolvingPendingAction,
+            freePlay: snapshot.freePlay,
+            pendingPaidPlay: snapshot.pendingPaidPlay,
+            suppressEffectsAndBonus: snapshot.suppressEffectsAndBonus
+        };
+    }
+
+    private findCard(cardId: number): EnhancedCard | undefined {
+        const directCards = [this.deck, this.clearing, this.cardsRemovedFromGame];
+        for (const cards of directCards) {
+            const found = cards.find(card => card.cardId === cardId);
+            if (found) return found;
+        }
+        for (const player of this.players.values()) {
+            const found = [...player.hand, ...player.cave].find(card => card.cardId === cardId);
+            if (found) return found;
+            for (const tree of player.forest) {
+                if (tree.tree.cardId === cardId) return tree.tree;
+                for (const slot of ['top', 'bottom', 'left', 'right'] as const) {
+                    const placed = tree[slot]?.find(candidate => candidate.card.cardId === cardId);
+                    if (placed) return placed.card;
+                }
+            }
+        }
+        return undefined;
     }
 
     addPlayer(id: string, socketId: string, name: string, isHost: boolean = false) {

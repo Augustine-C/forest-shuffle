@@ -43,3 +43,46 @@
   background: #4b7858;
   color: #fff;
 }
+
+.loading-screen { min-height: 70vh; display: grid; place-items: center; font-size: 1.3rem; }
+.account-shell, .account-home { width: min(1080px, calc(100% - 2rem)); margin: 2rem auto; }
+.auth-shell { min-height: 72vh; display: grid; grid-template-columns: 1.15fr .85fr; align-items: center; gap: clamp(2rem, 7vw, 6rem); }
+.account-brand svg { width: 4rem; height: 4rem; color: #91b576; }
+.account-brand p, .account-home-header p { margin: .7rem 0 .25rem; color: #a9c597; text-transform: uppercase; letter-spacing: .12em; font-size: .75rem; }
+.account-brand h1 { margin: 0; font-family: Georgia, serif; font-size: clamp(3rem, 8vw, 6rem); line-height: .9; }
+.account-brand span { display: block; margin-top: 1.25rem; max-width: 32rem; color: #b9c2bb; }
+.account-card { background: linear-gradient(145deg, rgba(50,70,55,.96), rgba(25,36,29,.98)); border: 1px solid rgba(173,205,153,.25); border-radius: 1.2rem; padding: clamp(1.2rem, 4vw, 2rem); box-shadow: 0 22px 60px rgba(0,0,0,.25); }
+.auth-card, .account-card form { display: grid; gap: 1rem; }
+.account-card label { display: grid; gap: .4rem; text-align: left; }
+.account-card input, .join-account-game input { box-sizing: border-box; width: 100%; padding: .78rem .9rem; border: 1px solid #607265; border-radius: .6rem; background: #18211b; color: white; font: inherit; }
+.account-primary, .account-card button, .account-home-header button, .account-resources button { border: 0; border-radius: .65rem; padding: .75rem 1rem; background: #92b872; color: #142017; font: inherit; font-weight: 700; cursor: pointer; }
+.account-link { background: transparent !important; color: #cbd8c5 !important; font-weight: 400 !important; }
+.account-error { color: #ffb4a8; margin: 0; }
+.account-home-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.account-home-header h1 { margin: 0; font-family: Georgia, serif; font-size: clamp(2.2rem, 6vw, 4rem); }
+.account-home-header span { color: #abb7af; }
+.account-home-header > div:last-child, .account-resources { display: flex; gap: .65rem; flex-wrap: wrap; }
+.account-home-header button, .account-resources button { background: #31473a; color: #e6eee7; }
+.settings-card { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.settings-card form { align-content: start; }
+.settings-card h2 { margin: 0; font-size: 1rem; }
+.settings-card > p { grid-column: 1 / -1; margin: 0; color: #c8d9bd; }
+.account-actions { display: grid; grid-template-columns: 1fr auto minmax(15rem, .6fr); align-items: center; gap: 1rem; }
+.account-actions h2 { margin: 0; }
+.join-account-game { display: grid; grid-template-columns: 1fr auto; gap: .5rem; }
+.games-section { margin: 2rem 0; }
+.saved-games { display: grid; gap: .75rem; }
+.saved-game { width: 100%; display: grid; grid-template-columns: minmax(9rem,.4fr) 1fr auto; align-items: center; gap: 1rem; padding: 1rem 1.2rem; border: 1px solid rgba(173,205,153,.22); border-radius: .8rem; background: #26372d; color: white; text-align: left; cursor: pointer; }
+.saved-game > span:first-child { display: grid; }
+.saved-game strong { font-size: 1.3rem; letter-spacing: .12em; }
+.saved-game small { color: #a9c597; }
+.account-resources { padding: 1rem 0 3rem; }
+
+@media (max-width: 700px) {
+  .auth-shell { grid-template-columns: 1fr; gap: 2rem; margin-top: 3rem; }
+  .account-brand h1 { font-size: 3.5rem; }
+  .account-home-header { align-items: flex-start; flex-direction: column; }
+  .settings-card, .account-actions { grid-template-columns: 1fr; }
+  .saved-game { grid-template-columns: 1fr auto; }
+  .saved-game > span:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+}

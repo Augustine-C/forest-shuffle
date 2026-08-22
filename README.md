@@ -12,6 +12,8 @@ Rules reference: [English rules](help/game-rules/rules.md) · [中文规则](hel
 
 ## Development
 
+Node.js 24 or newer is required. The server uses Node's built-in SQLite module.
+
 Install each application's locked dependencies once:
 
 ```bash
@@ -37,6 +39,14 @@ npm start
 
 Open `http://localhost:3000`. Express serves the built React client and Socket.IO from the same process, port, and origin. Set `PORT` to override port `3000`.
 
+## Accounts and persistent games
+
+The first visit prompts each player to create a username, password, and display name. Login sessions last for 30 days. A player's display name is copied into a game when they join it, so later profile changes affect future games only.
+
+Accounts, sessions, lobbies, active games, pending card resolutions, and completed results are stored in `server/data/forest-shuffle.sqlite`. Set `FOREST_SHUFFLE_DB_PATH` to place the database elsewhere. To make a simple backup, stop the server and copy the database file together with any adjacent `-wal` and `-shm` files. Restore those files while the server is stopped.
+
+The bundled server uses ordinary HTTP and is intended for a trusted local network. Put it behind an HTTPS reverse proxy before exposing it to an untrusted network or the public internet.
+
 ## Validation
 
 ```bash
@@ -51,4 +61,4 @@ Server tests cover card-data integrity, core game flow, effects/scoring integrat
 
 Implemented functionality includes room creation/joining, host-controlled setup, reconnectable player sessions, private hands and caves, turn enforcement, sequential deck/clearing draws, card payment and placement, face-down saplings, shrubs, shared slots, effects and bonuses, permanent triggers, winter replacement draws and game end, and explicit scoring for the supported card database.
 
-Games are held in server memory and are lost when the server restarts. See `TODOs.md` for the remaining rule and validation work.
+See `TODOs.md` for the remaining rule and validation work.

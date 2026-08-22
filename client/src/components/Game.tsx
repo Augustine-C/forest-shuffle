@@ -27,9 +27,10 @@ interface GameProps {
     playerId: string | undefined;
     roomCode: string;
     onOpenRules: () => void;
+    onBackToGames: () => void;
 }
 
-export default function Game({ gameState, playerId, roomCode, onOpenRules }: GameProps) {
+export default function Game({ gameState, playerId, roomCode, onOpenRules, onBackToGames }: GameProps) {
     const { language, t } = useI18n();
     const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
     const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState<number>(0);
@@ -141,7 +142,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
     };
 
     const handleStartDraw = (source: 'deck' | 'clearing', cardId?: number) => {
-        socket.emit('draw_card', { roomCode, playerId, source, cardId });
+        socket.emit('draw_card', { roomCode, source, cardId });
         setClearingCardIds([]);
     };
 
@@ -157,7 +158,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
         }
         if (!clearingPendingAction) return;
         if (clearingPendingAction.count === 1) {
-            socket.emit('resolve_pending_action', { roomCode, playerId, cardIds: [cardId] });
+            socket.emit('resolve_pending_action', { roomCode, cardIds: [cardId] });
             return;
         }
         const selectionLimit = clearingPendingAction.count;
@@ -171,7 +172,6 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
         if (!myPendingAction || !playerId) return;
         socket.emit('resolve_pending_action', {
             roomCode,
-            playerId,
             cardIds: decline ? [] : handSelectionPendingAction ? costCardIds : clearingCardIds,
             decline
         });
@@ -183,7 +183,6 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
         if (!triggeredDrawAction || !playerId) return;
         socket.emit('resolve_pending_action', {
             roomCode,
-            playerId,
             choiceId,
             decline: choiceId === undefined
         });
@@ -193,7 +192,6 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
         if (!drawSourceAction || !playerId) return;
         socket.emit('resolve_pending_action', {
             roomCode,
-            playerId,
             choiceId,
             cardIds: choiceId === 'clearing' ? [cardId ?? clearingCardIds[0]].filter((id): id is number => id !== undefined) : []
         });
@@ -204,7 +202,6 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
         if (!cardChoiceAction || !playerId) return;
         socket.emit('resolve_pending_action', {
             roomCode,
-            playerId,
             useEffect,
             useBonus
         });
@@ -253,7 +250,6 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
             : paidPlayPendingAction ? 'play_pending_paid_card' : 'play_card';
         socket.emit(playEvent, {
             roomCode,
-            playerId,
             cardId: selectedCardId,
             costCardIds: freePlayPendingAction ? [] : costCardIds,
             speciesIndex,
@@ -362,7 +358,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                     ))}
                 </div>
                 <button onClick={onOpenRules}>{t('viewRules')}</button>
-                <button onClick={() => window.location.reload()}>{t('backHome')}</button>
+                <button onClick={onBackToGames}>{t('backHome')}</button>
             </div>
         );
     }
@@ -374,6 +370,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                     {isMyTurn ? t('yourTurn') : t('waitingFor', { name: activePlayer?.name ?? '' })}
                 </div>
                 <div className="game-meta-actions">
+                    <button type="button" className="rules-button" onClick={onBackToGames}>{t('backHome')}</button>
                     <details className="score-panel">
                         <summary className="live-score" aria-label={t('currentScore', { score: gameState.myScore })}>
                             <GameIcon name="points" />

@@ -11,6 +11,24 @@ export type CardTag =
 
 export type DeckType = 'basic' | 'alpine' | 'edge';
 
+export type GameStatus = 'LOBBY' | 'PLAYING' | 'ENDED';
+
+export interface AccountProfile {
+    id: string;
+    username: string;
+    displayName: string;
+}
+
+export interface GameSummary {
+    roomCode: string;
+    status: GameStatus;
+    players: Pick<Player, 'id' | 'name' | 'isHost'>[];
+    currentPlayerId: string;
+    isHost: boolean;
+    updatedAt: string;
+    completedAt?: string;
+}
+
 export type TreeSymbol =
     | 'Birch' | 'Beech' | 'Linden' | 'Oak' | 'Horse Chestnut'
     | 'Douglas Fir' | 'Silver Fir' | 'Sycamore' | 'Larix' | 'Pinus';

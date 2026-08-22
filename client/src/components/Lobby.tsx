@@ -12,12 +12,12 @@ interface LobbyProps {
     playerId: string | undefined;
     onOpenGallery: () => void;
     onOpenRules: () => void;
+    onBackToGames: () => void;
 }
 
-export default function Lobby({ roomCode, players, isHost, playerId, onOpenGallery, onOpenRules }: LobbyProps) {
+export default function Lobby({ roomCode, players, isHost, playerId, onOpenGallery, onOpenRules, onBackToGames }: LobbyProps) {
     const { language, t } = useI18n();
     const [joinRoomCode, setJoinRoomCode] = useState('');
-    const [playerName, setPlayerName] = useState('');
     const [startingPlayerId, setStartingPlayerId] = useState(playerId ?? '');
     const [includedDecks, setIncludedDecks] = useState<DeckType[]>(['basic']);
     const [roomCodeCopied, setRoomCodeCopied] = useState(false);
@@ -35,20 +35,18 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
     };
 
     const handleCreateGame = () => {
-        if (!playerName) return alert(t('enterName'));
-        socket.emit('create_game', { playerName });
+        socket.emit('create_game');
     };
 
     const handleJoinGame = () => {
-        if (!playerName || !joinRoomCode) return alert(t('enterNameAndCode'));
-        socket.emit('join_game', { roomCode: joinRoomCode, playerName });
+        if (!joinRoomCode) return alert(t('enterNameAndCode'));
+        socket.emit('join_game', { roomCode: joinRoomCode });
     };
 
     const handleStartGame = () => {
         if (roomCode) {
             socket.emit('start_game', {
                 roomCode,
-                playerId,
                 startingPlayerId: selectedStartingPlayerId,
                 includedDecks
             });
@@ -77,6 +75,9 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
                         <p>{t('lobbyIntro')}</p>
                     </div>
                     <div className="room-header-actions">
+                        <button type="button" className="room-rules-button" onClick={onBackToGames}>
+                            {t('backHome')}
+                        </button>
                         <button type="button" className="room-rules-button" onClick={onOpenRules}>
                             <span aria-hidden="true">?</span> {t('rules')}
                         </button>
@@ -204,16 +205,6 @@ export default function Lobby({ roomCode, players, isHost, playerId, onOpenGalle
                     <h2>{t('enterForest')}</h2>
                     <p>{t('joinIntro')}</p>
                 </div>
-
-                <label className="lobby-field">
-                    <span>{t('yourName')}</span>
-                    <input
-                        autoComplete="nickname"
-                        placeholder={t('namePlaceholder')}
-                        value={playerName}
-                        onChange={event => setPlayerName(event.target.value)}
-                    />
-                </label>
 
                 <button className="lobby-primary create-game-button" onClick={handleCreateGame}>
                     {t('createGame')} <span aria-hidden="true">→</span>
