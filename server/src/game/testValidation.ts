@@ -3,7 +3,7 @@ import { GameState } from './gameState';
 import { createEnhancedCard, isTreeCard } from './cards';
 import { SPECIES_DATA } from './cardDefinitions';
 import type { DeckType } from './cardDefinitions';
-import { calculateCardPoints, hasScoringRule } from './scoringEngine';
+import { calculateCardPoints, calculatePlayerScoreBreakdown, hasScoringRule } from './scoringEngine';
 import type { EnhancedCard } from './cards';
 import { createDeck } from './deck';
 import { checkSharedSlot } from './cardMatching';
@@ -913,6 +913,27 @@ assert.equal(
     9,
     'duplicate butterflies form a three-species set and a second two-species set'
 );
+const butterflyBreakdownGame = new GameState(2);
+butterflyBreakdownGame.addPlayer('breakdown', 'socket-breakdown', 'Breakdown Tester', true);
+butterflyBreakdownGame.addPlayer('other', 'socket-other', 'Other Tester');
+const butterflyBreakdownPlayer = butterflyBreakdownGame.players.get('breakdown')!;
+butterflyBreakdownPlayer.forest = [{
+    tree: createEnhancedCard(1)!,
+    isSapling: true,
+    top: [120, 121, 133].map(cardId => ({ card: createEnhancedCard(cardId)!, speciesIndex: 0 }))
+}];
+assert.deepEqual(calculatePlayerScoreBreakdown(butterflyBreakdownPlayer, butterflyBreakdownGame), {
+    total: 6,
+    items: [
+        {
+            kind: 'butterflySet',
+            setNumber: 1,
+            speciesNames: ['Camberwell Beauty', 'Large Tortoiseshell', 'Peacock Butterfly'],
+            points: 6
+        },
+        { kind: 'cave', count: 0, points: 0 }
+    ]
+});
 const eightButterflyGame = new GameState(2);
 eightButterflyGame.addPlayer('butterflies', 'socket-butterflies', 'Butterfly Tester', true);
 eightButterflyGame.addPlayer('other', 'socket-other', 'Other Tester');
@@ -1209,6 +1230,27 @@ sequentialDrawGame.resolvePendingAction('draw', [], false, 'deck');
 assert.deepEqual(sequentialDrawPlayer.hand.map(card => card.cardId), [30, 40]);
 assert.equal(sequentialDrawGame.pendingAction, undefined);
 assert.equal(sequentialDrawGame.activePlayerIndex, 1);
+
+const reverseSequentialDrawGame = new GameState(2);
+reverseSequentialDrawGame.addPlayer('reverse-draw', 'socket-reverse-draw', 'Reverse Draw Tester', true);
+reverseSequentialDrawGame.addPlayer('other', 'socket-other', 'Other Tester');
+const reverseSequentialDrawPlayer = reverseSequentialDrawGame.players.get('reverse-draw')!;
+reverseSequentialDrawGame.clearing = [createEnhancedCard(30)!, createEnhancedCard(31)!];
+reverseSequentialDrawGame.deck = [createEnhancedCard(40)!];
+reverseSequentialDrawGame.playerDrawsTwo('reverse-draw', 'deck');
+assert.deepEqual(reverseSequentialDrawPlayer.hand.map(card => card.cardId), [40]);
+assert.deepEqual(reverseSequentialDrawGame.clearing.map(card => card.cardId), [30, 31]);
+assert.equal(
+    reverseSequentialDrawGame.pendingAction?.kind === 'chooseDrawSource'
+        ? reverseSequentialDrawGame.pendingAction.remaining
+        : 0,
+    1
+);
+reverseSequentialDrawGame.resolvePendingAction('reverse-draw', [31], false, 'clearing');
+assert.deepEqual(reverseSequentialDrawPlayer.hand.map(card => card.cardId), [40, 31]);
+assert.deepEqual(reverseSequentialDrawGame.clearing.map(card => card.cardId), [30]);
+assert.equal(reverseSequentialDrawGame.pendingAction, undefined);
+assert.equal(reverseSequentialDrawGame.activePlayerIndex, 1);
 
 const directDrawGame = new GameState(2);
 directDrawGame.addPlayer('direct', 'socket-direct', 'Direct Draw Tester', true);

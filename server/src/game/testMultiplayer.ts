@@ -44,7 +44,16 @@ assert.deepEqual(bobView.players.find(player => player.id === 'alice')?.hand, []
 assert.deepEqual(bobView.players.find(player => player.id === 'alice')?.cave, []);
 assert.equal(aliceView.myScore, 2, 'the viewer receives their own live cave score');
 assert.equal(bobView.myScore, 1, 'each viewer receives a different private live score');
+assert.deepEqual(aliceView.myScoreBreakdown, {
+    total: 2,
+    items: [{ kind: 'cave', count: 2, points: 2 }]
+});
+assert.deepEqual(bobView.myScoreBreakdown, {
+    total: 1,
+    items: [{ kind: 'cave', count: 1, points: 1 }]
+});
 assert.equal('score' in aliceView.players.find(player => player.id === 'bob')!, false);
+assert.equal('scoreBreakdown' in aliceView.players.find(player => player.id === 'bob')!, false);
 
 // Reconnection changes only the transport identity and preserves in-flight actions.
 game.clearing = [createEnhancedCard(35)!];

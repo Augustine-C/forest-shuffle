@@ -3,6 +3,7 @@
 import { EnhancedCard } from './cards';
 import type { CardTag } from './cardDefinitions';
 import { GameState, PlacedTree, Player } from './gameState';
+import type { ScoreBreakdown, ScoreBreakdownItem } from '../../../shared/types';
 import {
     countCardsBelowTrees,
     countCardsWithTag,
@@ -139,26 +140,49 @@ export function hasScoringRule(speciesName: string): boolean {
 }
 
 export function calculatePlayerScore(player: Player, gameState: GameState): number {
-    let totalPoints = 0;
+    return calculatePlayerScoreBreakdown(player, gameState).total;
+}
+
+export function calculatePlayerScoreBreakdown(player: Player, gameState: GameState): ScoreBreakdown {
+    const cardGroups = new Map<string, Extract<ScoreBreakdownItem, { kind: 'cards' }>>();
+
+    const addCard = (card: EnhancedCard, speciesIndex = 0) => {
+        const species = card.species[speciesIndex];
+        if (!species?.speciesData.points || butterflySpecies.has(species.speciesData.name)) return;
+        if (VARIABLE_SCORING[species.speciesData.name]) return;
+
+        const speciesName = species.speciesData.name;
+        const existing = cardGroups.get(speciesName);
+        const points = calculateCardPoints(card, player, gameState, speciesIndex);
+        if (existing) {
+            existing.count++;
+            existing.points += points;
+        } else {
+            cardGroups.set(speciesName, { kind: 'cards', speciesName, count: 1, points });
+        }
+    };
 
     player.forest.forEach(treeSlot => {
-        if (!treeSlot.isSapling) totalPoints += calculateCardPoints(treeSlot.tree, player, gameState);
+        if (!treeSlot.isSapling) addCard(treeSlot.tree);
 
         forestSlots.forEach(slot => {
             getSlotCards(treeSlot, slot).forEach(placedCard => {
-                totalPoints += calculateCardPoints(
-                    placedCard.card,
-                    player,
-                    gameState,
-                    placedCard.speciesIndex
-                );
+                addCard(placedCard.card, placedCard.speciesIndex);
             });
         });
     });
 
-    totalPoints += player.cave.length;
-    totalPoints += calculateGlobalBonuses(player);
-    return totalPoints;
+    const items: ScoreBreakdownItem[] = [
+        ...calculateButterflySetBreakdown(player),
+        ...calculateCollectionBreakdown(player),
+        ...cardGroups.values(),
+        { kind: 'cave', count: player.cave.length, points: player.cave.length }
+    ];
+
+    return {
+        total: items.reduce((total, item) => total + item.points, 0),
+        items
+    };
 }
 
 export function calculateCardPoints(
@@ -361,29 +385,38 @@ function isCardOnShrub(forest: PlacedTree[], cardId: number): boolean {
     return placement?.tree.isShrub === true;
 }
 
-function calculateGlobalBonuses(player: Player): number {
-    const butterflyPoints = calculateButterflySets(player);
+function calculateCollectionBreakdown(player: Player): ScoreBreakdownItem[] {
     const horseChestnutAdjustment = countVioletCarpenterBeesAtTreeSpecies(
         player.forest,
         'Horse Chestnut'
     );
-    return butterflyPoints +
-        variableScore(player, 'Fireflies') +
-        variableScore(player, 'Fire Salamander') +
-        variableScore(player, 'Horse Chestnut', horseChestnutAdjustment);
+    return (['Fireflies', 'Fire Salamander', 'Horse Chestnut'] as const).flatMap(speciesName => {
+        const adjustment = speciesName === 'Horse Chestnut' ? horseChestnutAdjustment : 0;
+        const count = countSpeciesByName(player.forest, speciesName) + adjustment;
+        return count > 0
+            ? [{ kind: 'collection' as const, speciesName, count, points: variableScore(player, speciesName, adjustment) }]
+            : [];
+    });
 }
 
-function calculateButterflySets(player: Player): number {
+function calculateButterflySetBreakdown(player: Player): ScoreBreakdownItem[] {
     const speciesCounts = new Map<string, number>();
     getButterfliesInForest(player.forest).forEach(speciesName => {
         speciesCounts.set(speciesName, (speciesCounts.get(speciesName) ?? 0) + 1);
     });
 
     const numberOfSets = Math.max(0, ...speciesCounts.values());
-    let points = 0;
+    const items: ScoreBreakdownItem[] = [];
     for (let setIndex = 0; setIndex < numberOfSets; setIndex++) {
-        const differentSpecies = Array.from(speciesCounts.values()).filter(count => count > setIndex).length;
-        points += BUTTERFLY_SET_POINTS[Math.min(differentSpecies, 8)] ?? 0;
+        const speciesNames = Array.from(speciesCounts.entries())
+            .filter(([, count]) => count > setIndex)
+            .map(([speciesName]) => speciesName);
+        items.push({
+            kind: 'butterflySet',
+            setNumber: setIndex + 1,
+            speciesNames,
+            points: BUTTERFLY_SET_POINTS[Math.min(speciesNames.length, 8)] ?? 0
+        });
     }
-    return points;
+    return items;
 }

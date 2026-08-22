@@ -190,9 +190,40 @@ export type PendingAction =
     | PendingCardChoices
     | PendingBonusContinuation;
 
+export type ScoreBreakdownItem =
+    | {
+        kind: 'cards';
+        speciesName: string;
+        count: number;
+        points: number;
+    }
+    | {
+        kind: 'butterflySet';
+        setNumber: number;
+        speciesNames: string[];
+        points: number;
+    }
+    | {
+        kind: 'collection';
+        speciesName: string;
+        count: number;
+        points: number;
+    }
+    | {
+        kind: 'cave';
+        count: number;
+        points: number;
+    };
+
+export interface ScoreBreakdown {
+    total: number;
+    items: ScoreBreakdownItem[];
+}
+
 export interface SerializedGameState {
     players: Player[];
     myScore: number;
+    myScoreBreakdown?: ScoreBreakdown;
     clearing: EnhancedCard[];
     activePlayerIndex: number;
     deckCount: number;

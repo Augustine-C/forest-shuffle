@@ -7,7 +7,8 @@ import type {
     EnhancedCard,
     PlacedTree,
     PlacedCard,
-    PendingAction
+    PendingAction,
+    ScoreBreakdownItem
 } from '../../../shared/types';
 import { useI18n } from '../i18n';
 import { translateCardText, translateSpeciesName } from '../data/cardTranslations.zh-CN';
@@ -38,6 +39,7 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
     const [viewedForestPlayerId, setViewedForestPlayerId] = useState(playerId);
 
     const myPlayer = gameState.players.find((p: Player) => p.id === playerId);
+    const scoreBreakdown = gameState.myScoreBreakdown;
     const otherPlayers = gameState.players.filter((p: Player) => p.id !== playerId);
     const viewedForestPlayer = gameState.players.find((p: Player) => p.id === viewedForestPlayerId) ?? myPlayer;
     const isViewingMyForest = viewedForestPlayer?.id === playerId;
@@ -63,6 +65,22 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
     const deckLabel = (deck: string) => deck === 'edge' ? t('edge') : deck === 'alpine' ? t('alpine') : t('baseGame');
     const speciesName = (name: string | undefined) => language === 'zh-CN' && name ? translateSpeciesName(name) : name ?? '';
     const abilityText = (text: string, kind: 'effect' | 'bonus') => language === 'zh-CN' ? translateCardText(text, kind) : text;
+
+    const scoreItemTitle = (item: ScoreBreakdownItem) => {
+        if (item.kind === 'butterflySet') return t('butterflySet', { number: item.setNumber });
+        if (item.kind === 'cave') return language === 'zh-CN' ? '洞穴' : 'Cave';
+        return speciesName(item.speciesName);
+    };
+
+    const scoreItemDetail = (item: ScoreBreakdownItem) => {
+        switch (item.kind) {
+            case 'butterflySet':
+                return `${t('differentButterflies', { count: item.speciesNames.length })} · ${item.speciesNames.map(speciesName).join(language === 'zh-CN' ? '、' : ', ')}`;
+            case 'cards': return t('scoringCards', { count: item.count });
+            case 'collection': return t('collectionCards', { count: item.count });
+            case 'cave': return t('caveCards', { count: item.count });
+        }
+    };
 
     const pendingPrompt = (action: PendingAction) => {
         if (language === 'en') return action.prompt;
@@ -356,11 +374,33 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules }: Gam
                     {isMyTurn ? t('yourTurn') : t('waitingFor', { name: activePlayer?.name ?? '' })}
                 </div>
                 <div className="game-meta-actions">
-                    <div className="live-score" aria-label={t('currentScore', { score: gameState.myScore })}>
-                        <GameIcon name="points" />
-                        <span>{t('myScore')}</span>
-                        <strong>{gameState.myScore}</strong>
-                    </div>
+                    <details className="score-panel">
+                        <summary className="live-score" aria-label={t('currentScore', { score: gameState.myScore })}>
+                            <GameIcon name="points" />
+                            <span>{t('myScore')}</span>
+                            <strong>{gameState.myScore}</strong>
+                            <span className="score-expand" aria-hidden="true">⌄</span>
+                        </summary>
+                        <div className="score-breakdown">
+                            <h3>{t('scoreBreakdown')}</h3>
+                            <div className="score-breakdown-list">
+                                {!scoreBreakdown && <p className="score-breakdown-unavailable">{t('breakdownUnavailable')}</p>}
+                                {scoreBreakdown?.items.map((item, index) => (
+                                    <div className={`score-breakdown-item ${item.points === 0 ? 'zero' : ''}`} key={`${item.kind}-${item.kind === 'butterflySet' ? item.setNumber : item.kind === 'cave' ? 'cave' : item.speciesName}-${index}`}>
+                                        <span>
+                                            <strong>{scoreItemTitle(item)}</strong>
+                                            <small>{scoreItemDetail(item)}</small>
+                                        </span>
+                                        <b>{item.points > 0 ? '+' : ''}{item.points}</b>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="score-breakdown-total">
+                                <span>{t('totalScore')}</span>
+                                <strong>{scoreBreakdown?.total ?? gameState.myScore}</strong>
+                            </div>
+                        </div>
+                    </details>
                     <div className="deck-info">
                         <span>🎴 {t('deckCount', { count: gameState.deckCount })}</span>
                         <span>❄️ {t('winterCount', { count: gameState.winterCardsDrawn })}</span>
