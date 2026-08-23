@@ -84,10 +84,10 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules, onBac
     };
 
     const pendingPrompt = (action: PendingAction) => {
+        if (action.kind === 'chooseDrawSource') return t('chooseTurnAction');
         if (language === 'en') return action.prompt;
         switch (action.kind) {
             case 'initialMulligan': return '起始手牌中没有树，是否重抽？';
-            case 'chooseDrawSource': return '选择这张牌的来源';
             case 'selectClearingCards': return '从林间空地选择卡牌';
             case 'playFreeCard': return '免费打出一张符合条件的卡牌';
             case 'playPaidCards': return '打出任意数量的卡牌';
@@ -429,7 +429,6 @@ export default function Game({ gameState, playerId, roomCode, onOpenRules, onBac
                 {isMyTurn && drawSourceAction && (
                     <div className="pending-action">
                         <strong>{pendingPrompt(drawSourceAction)}</strong>
-                        <span>{t('clickClearingToTake')}</span>
                         <button className="action-btn primary" onClick={() => handleDrawSource('deck')}>
                             {t('takeDeckNow')}
                         </button>
